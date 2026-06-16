@@ -38,6 +38,40 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// ── Intercept invalid refresh token errors ───────────────────
+// Supabase JS v2 emits AuthApiError on failed token refresh.
+// We listen on the auth state change for the SIGNED_OUT event
+// that follows, but also patch the global fetch to catch 400s
+// from the token endpoint and dispatch a custom event so
+// AuthContext can sign the user out cleanly.
+const _origFetch = window.fetch.bind(window);
+window.fetch = async (...args) => {
+  const response = await _origFetch(...args);
+  const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url;
+  if (
+    response.status === 400 &&
+    url.includes('/auth/v1/token') &&
+    url.includes('grant_type=refresh_token')
+  ) {
+    // Clone so the original response body is still readable
+    const clone = response.clone();
+    clone.json().then(body => {
+      if (
+        body?.error_description?.includes('Refresh Token Not Found') ||
+        body?.error_description?.includes('Invalid Refresh Token') ||
+        body?.msg?.includes('Refresh Token Not Found')
+      ) {
+        window.dispatchEvent(
+          new CustomEvent('supabase.auth.error', {
+            detail: { status: 400, message: body.error_description || body.msg },
+          })
+        );
+      }
+    }).catch(() => {});
+  }
+  return response;
+};
+
 // ── Type-safe database access ────────────────────────────────
 export type Database = {
   public: {

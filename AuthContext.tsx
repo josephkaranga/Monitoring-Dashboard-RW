@@ -202,8 +202,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mountedRef.current) return;
 
         if (event === 'INITIAL_SESSION') {
-          // This is the ONLY event that should clear the safety timeout
-          // and mark auth as initialized
           clearTimeout(safetyTimeout);
           initializedRef.current = true;
 
@@ -214,9 +212,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
         } else if (event === 'SIGNED_IN' && session?.user) {
-          // Only handle SIGNED_IN after initialization to avoid double-loading
           if (initializedRef.current) {
-            fetchingRef.current = false; // allow fresh fetch on explicit sign-in
+            fetchingRef.current = false;
             await loadUserData(session.user.id, session);
           }
 
@@ -228,11 +225,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSettings(null);
 
         } else if (event === 'TOKEN_REFRESHED') {
-          // TOKEN_REFRESHED fires frequently — NEVER clear loading here
-          // because loadUserData may still be running from INITIAL_SESSION
-          // Just silently ignore it — the session is still valid
+          // Silently ignore — session is still valid
           if (initializedRef.current && !fetchingRef.current && state.user) {
-            // Already loaded, just keep going
+            // Already loaded, keep going
           }
 
         } else if (event === 'USER_UPDATED' && session?.user) {
@@ -244,10 +239,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    // ── Listen for Supabase 400 refresh token errors ──────────
+    // When the refresh token is invalid/expired, Supabase emits an
+    // AuthApiError. We catch it here and sign the user out cleanly
+    // so they land on the login page instead of a broken state.
+    const handleAuthError = (event: Event) => {
+      const err = (event as CustomEvent)?.detail;
+      if (
+        err?.status === 400 ||
+        err?.message?.includes('Refresh Token Not Found') ||
+        err?.message?.includes('Invalid Refresh Token')
+      ) {
+        console.warn('Refresh token invalid — signing out');
+        profileCache = null;
+        clearSessionCache();
+        supabase.auth.signOut().catch(() => {});
+        if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
+      }
+    };
+    window.addEventListener('supabase.auth.error', handleAuthError);
+
     return () => {
       mountedRef.current = false;
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
+      window.removeEventListener('supabase.auth.error', handleAuthError);
     };
   }, [loadUserData]); // eslint-disable-line react-hooks/exhaustive-deps
 
