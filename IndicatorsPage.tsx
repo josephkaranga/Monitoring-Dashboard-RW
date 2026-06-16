@@ -3,6 +3,31 @@ import { useIndicators } from './useData';
 import { writeAuditEntry } from './dataService';
 import type { Indicator, IndicatorTier, IndicatorStatus } from './index';
 
+// ── Goal config ───────────────────────────────────────────────
+const GOAL_CFG = {
+  A: { label: 'Goal A · Reduce Threats',    sub: 'Targets 1–4',   bg: '#dcfce7', text: '#166534', border: '#bbf7d0', targets: [1,2,3,4] },
+  B: { label: 'Goal B · Meet Needs',         sub: 'Targets 5–8',   bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd', targets: [5,6,7,8] },
+  C: { label: 'Goal C · Tools & Solutions',  sub: 'Targets 9–12',  bg: '#fef9c3', text: '#854d0e', border: '#fde68a', targets: [9,10,11,12] },
+  D: { label: 'Goal D · Means of Impl.',     sub: 'Targets 13–22', bg: '#f3e8ff', text: '#6b21a8', border: '#e9d5ff', targets: [13,14,15,16,17,18,19,20,21,22] },
+} as const;
+
+type GBFGoalKey = keyof typeof GOAL_CFG;
+
+function targetToGoal(targetId: number): GBFGoalKey {
+  if (targetId <= 4) return 'A';
+  if (targetId <= 8) return 'B';
+  if (targetId <= 12) return 'C';
+  return 'D';
+}
+
+// Sample indicator names per tier for the tier panel
+const TIER_SAMPLES: Record<IndicatorTier, string[]> = {
+  headline:      ['% of land/water under biodiversity-inclusive spatial plans', 'Area (ha) of degraded land under restoration', 'Coverage of PAs and OECMs (% of land/sea)'],
+  component:     ['% of spatial plans utilising KBA information', 'Areas of degraded wetland ecosystems restored', 'Area (ha) of Key Biodiversity Areas effectively conserved'],
+  complementary: ['Population density in biodiversity-sensitive areas', 'Socioeconomic drivers of land-use change', 'Governance quality index for protected areas'],
+  binary:        ['National legislation for IAS adopted (Y/N)', 'National biodiversity finance plan in place (Y/N)', 'NBSAP submitted to CBD Secretariat (Y/N)'],
+};
+
 const TIER_CFG: Record<IndicatorTier, { label: string; color: string; bg: string; border: string; icon: string; faIcon: string }> = {
   headline:      { label: 'Headline',      color: '#166534', bg: '#dcfce7', border: '#bbf7d0', icon: '⭐', faIcon: 'fa-star' },
   component:     { label: 'Component',     color: '#1e40af', bg: '#dbeafe', border: '#bfdbfe', icon: '🧩', faIcon: 'fa-puzzle-piece' },
@@ -80,23 +105,49 @@ function IndicatorModal({ indicator: i, onClose }: { indicator: Indicator; onClo
 // ── Main ──────────────────────────────────────────────────────
 export default function IndicatorsPage() {
   const [tierFilter, setTierFilter] = useState('all');
+  const [goalFilter, setGoalFilter] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Indicator | null>(null);
   const [groupByTarget, setGroupByTarget] = useState(false);
 
-  const { data: rawIndicators, loading } = useIndicators({ tier: tierFilter !== 'all' ? tierFilter : undefined }) as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
+  // Always fetch all indicators so goal breakdown counts are accurate
+  const { data: rawIndicators, loading } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
   const indicators: Indicator[] = rawIndicators ?? [];
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return indicators;
-    const q = search.toLowerCase();
-    return indicators.filter(i => i.name.toLowerCase().includes(q) || i.definition?.toLowerCase().includes(q) || i.responsible?.some(r => r.toLowerCase().includes(q)));
-  }, [indicators, search]);
+    return indicators.filter(i => {
+      if (tierFilter !== 'all' && i.tier !== tierFilter) return false;
+      if (goalFilter) {
+        const g = targetToGoal(i.nbsap_target_id);
+        if (g !== goalFilter) return false;
+      }
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!i.name.toLowerCase().includes(q) && !i.definition?.toLowerCase().includes(q) && !i.responsible?.some(r => r.toLowerCase().includes(q))) return false;
+      }
+      return true;
+    });
+  }, [indicators, tierFilter, goalFilter, search]);
 
   const tierCounts = useMemo(() => {
     const c: Record<string, number> = {};
     indicators.forEach(i => { c[i.tier] = (c[i.tier] || 0) + 1; });
     return c;
+  }, [indicators]);
+
+  // Goal breakdown: counts per goal per tier
+  const goalBreakdown = useMemo(() => {
+    const result: Record<GBFGoalKey, Record<IndicatorTier, number>> = {
+      A: { headline: 0, component: 0, complementary: 0, binary: 0 },
+      B: { headline: 0, component: 0, complementary: 0, binary: 0 },
+      C: { headline: 0, component: 0, complementary: 0, binary: 0 },
+      D: { headline: 0, component: 0, complementary: 0, binary: 0 },
+    };
+    indicators.forEach(i => {
+      const g = targetToGoal(i.nbsap_target_id);
+      result[g][i.tier as IndicatorTier]++;
+    });
+    return result;
   }, [indicators]);
 
   const grouped = useMemo(() => {
@@ -142,21 +193,72 @@ export default function IndicatorsPage() {
           <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>Rwanda NBSAP 2025–2030</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => (
-            <div key={key} style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 28, height: 28, background: `${cfg.color}22`, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className={`fa-solid ${cfg.faIcon}`} style={{ color: cfg.color, fontSize: '0.75rem' }} />
-                </span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: cfg.color, fontFamily: "'DM Mono', monospace', letterSpacing: '0.06em'" }}>{cfg.label.toUpperCase()}</span>
-                <span style={{ marginLeft: 'auto', background: cfg.color, color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '1px 7px', borderRadius: 8, fontFamily: "'DM Mono', monospace" }}>{tierCounts[key] || 0}</span>
+          {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => {
+            const tierKey = key as IndicatorTier;
+            const TIER_DESCRIPTIONS: Record<IndicatorTier, string> = {
+              headline:      'High-level metrics tracking overall progress toward each GBF target. One primary headline indicator per national target. Required for CBD national reporting.',
+              component:     'Detailed metrics providing nuanced information on specific aspects of target implementation. 2–4 per target, supporting evidence-based adaptive management.',
+              complementary: 'Contextual metrics that support interpretation of headline and component indicators, including socioeconomic variables influencing biodiversity outcomes.',
+              binary:        'Yes/no assessments of whether specific policy or legal conditions have been met (e.g., whether national legislation for IAS is adopted).',
+            };
+            return (
+              <div key={key} style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 28, height: 28, background: `${cfg.color}22`, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className={`fa-solid ${cfg.faIcon}`} style={{ color: cfg.color, fontSize: '0.75rem' }} />
+                  </span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: cfg.color, fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em' }}>{cfg.label.toUpperCase()}</span>
+                  <span style={{ marginLeft: 'auto', background: cfg.color, color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '1px 7px', borderRadius: 8, fontFamily: "'DM Mono', monospace" }}>{tierCounts[key] || 0}</span>
+                </div>
+                <p style={{ fontSize: '0.72rem', color: cfg.color, lineHeight: 1.5, margin: 0, opacity: 0.85 }}>{TIER_DESCRIPTIONS[tierKey]}</p>
+                <div style={{ borderTop: `1px solid ${cfg.border}`, paddingTop: 8 }}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 700, color: cfg.color, opacity: 0.7, marginBottom: 4, fontFamily: "'DM Mono', monospace", letterSpacing: '0.05em' }}>EXAMPLES</div>
+                  {TIER_SAMPLES[tierKey].map((s, idx) => (
+                    <div key={idx} style={{ fontSize: '0.68rem', color: cfg.color, opacity: 0.8, marginBottom: 3, display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+                      <span style={{ flexShrink: 0, marginTop: 1 }}>·</span><span style={{ lineHeight: 1.4 }}>{s}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setTierFilter(t => t === key ? 'all' : key)}
+                  style={{ marginTop: 4, padding: '5px 0', border: `1px solid ${cfg.border}`, borderRadius: 7, background: 'transparent', color: cfg.color, fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+                  Filter to {tierCounts[key] || 0} {cfg.label.toLowerCase()} →
+                </button>
               </div>
-              <button onClick={() => setTierFilter(t => t === key ? 'all' : key)}
-                style={{ marginTop: 4, padding: '5px 0', border: `1px solid ${cfg.border}`, borderRadius: 7, background: 'transparent', color: cfg.color, fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
-                Filter to {tierCounts[key] || 0} {cfg.label.toLowerCase()} →
-              </button>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Goal Coverage Breakdown */}
+      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: 18, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ fontSize: '0.84rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <i className="fa-solid fa-chart-pie" style={{ color: 'var(--sky-dim)' }} />
+          Goal Coverage Breakdown
+          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>Indicators by GBF Goal</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {(Object.entries(GOAL_CFG) as [GBFGoalKey, typeof GOAL_CFG[GBFGoalKey]][]).map(([gKey, gcfg]) => {
+            const bd = goalBreakdown[gKey];
+            const total = bd.headline + bd.component + bd.complementary + bd.binary;
+            return (
+              <div key={gKey} style={{ background: gcfg.bg, border: `1px solid ${gcfg.border}`, borderRadius: 10, padding: 14 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: gcfg.text, marginBottom: 2 }}>{gcfg.label}</div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: gcfg.text, fontFamily: "'Playfair Display', serif", lineHeight: 1.2 }}>{total}</div>
+                <div style={{ fontSize: '0.68rem', color: gcfg.text, opacity: 0.75, marginBottom: 10 }}>indicators · {gcfg.sub}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {(['headline', 'component', 'complementary', 'binary'] as IndicatorTier[]).map(tier => (
+                    <div key={tier} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem' }}>
+                      <span style={{ color: gcfg.text, opacity: 0.85, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: gcfg.text, display: 'inline-block', opacity: 0.7 }} />
+                        {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                      </span>
+                      <span style={{ fontWeight: 700, color: gcfg.text, fontFamily: "'DM Mono', monospace" }}>{bd[tier]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -175,6 +277,17 @@ export default function IndicatorsPage() {
             </button>
           ))}
         </div>
+        <select
+          id="indicator-goal-filter"
+          value={goalFilter}
+          onChange={e => setGoalFilter(e.target.value)}
+          style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 9, fontSize: '0.78rem', fontFamily: "'DM Sans', sans-serif", background: goalFilter ? 'var(--navy)' : 'var(--surface)', color: goalFilter ? '#fff' : 'var(--text-2)', cursor: 'pointer', outline: 'none' }}>
+          <option value="">All Goals</option>
+          <option value="A">Goal A — Reduce Threats</option>
+          <option value="B">Goal B — Meet Needs</option>
+          <option value="C">Goal C — Tools &amp; Solutions</option>
+          <option value="D">Goal D — Means of Impl.</option>
+        </select>
         <button onClick={() => setGroupByTarget(g => !g)}
           style={{ padding: '6px 13px', border: '1px solid var(--border)', borderRadius: 8, fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", background: groupByTarget ? 'var(--navy)' : 'var(--surface)', color: groupByTarget ? '#fff' : 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
           <i className="fa-solid fa-sitemap" /> {groupByTarget ? 'Table View' : 'Group by Target'}

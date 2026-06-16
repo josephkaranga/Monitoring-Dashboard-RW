@@ -1,7 +1,59 @@
 import React, { useState, useMemo } from 'react';
-import { useAsync } from './useData';
+import { useAsync, useIndicators } from './useData';
 import { fetchTargets } from './dataService';
-import type { NBSAPTarget } from './index';
+import type { NBSAPTarget, Indicator, IndicatorTier } from './index';
+
+// ── Static indicator framework per target ─────────────────────
+const TARGET_INDICATORS: Record<number, { headline: string; component: string[]; complementary: string[] }> = {
+  1:  { headline: '% of land and water bodies covered by biodiversity-inclusive spatial plans', component: ['% of spatial plans utilising KBA information', 'Number of KBAs included in spatial planning'], complementary: [] },
+  2:  { headline: 'Area (ha) of degraded land and inland water under restoration', component: ['Areas of degraded wetland ecosystems restored', 'Areas of degraded natural forest restored'], complementary: [] },
+  3:  { headline: 'Area (ha) of land/inland water conserved; Coverage of PAs and OECMs', component: ['Area (ha) of Key Biodiversity Areas effectively conserved', 'Area (ha) of Ramsar wetlands managed'], complementary: [] },
+  4:  { headline: 'Number of invasive alien species eradicated or controlled', component: ['Number of IAS management plans implemented', 'Area (ha) treated for IAS removal'], complementary: ['Trade volume of potentially invasive species'] },
+  5:  { headline: '% of wild species harvested sustainably', component: ['Number of species with sustainable harvest plans', 'Volume of legally harvested wild species'], complementary: ['Market value of sustainably sourced wild products'] },
+  6:  { headline: 'Area (ha) of aquatic ecosystems managed sustainably', component: ['% of fish stocks within sustainable limits', 'Number of freshwater species with recovery plans'], complementary: [] },
+  7:  { headline: 'Area (ha) under sustainable agriculture, aquaculture and forestry', component: ['% of agricultural land with biodiversity-friendly practices', 'Number of farms with agri-environment schemes'], complementary: ['Pesticide use per hectare of agricultural land'] },
+  8:  { headline: 'Ecological connectivity index across landscapes', component: ['Length (km) of wildlife corridors established', 'Number of transboundary conservation agreements'], complementary: ['Fragmentation index of natural habitats'] },
+  9:  { headline: '% of wild species benefiting people with secure status', component: ['Number of species used in traditional medicine with stable populations', 'Number of community-based NRM agreements'], complementary: ['Household income from wild species use'] },
+  10: { headline: 'Area (ha) of urban green and blue spaces', component: ['% of urban population within 300m of green space', 'Number of urban biodiversity action plans'], complementary: ['Urban heat island intensity'] },
+  11: { headline: 'Benefits from genetic resources shared equitably', component: ['Number of ABS agreements concluded', 'Number of communities benefiting from genetic resource use'], complementary: [] },
+  12: { headline: 'Area (ha) of green and blue infrastructure in urban/peri-urban areas', component: ['Investment (USD) in nature-based solutions', 'Number of ecosystem service valuations completed'], complementary: ['% of infrastructure projects with biodiversity impact assessment'] },
+  13: { headline: 'Biodiversity mainstreamed across all sectors (policy integration index)', component: ['Number of sectoral policies with biodiversity provisions', 'Number of NBSAPs integrated into national development plans'], complementary: ['% of government budget with biodiversity co-benefits'] },
+  14: { headline: 'Total biodiversity finance mobilised (USD)', component: ['Public biodiversity expenditure (USD)', 'Private sector biodiversity investment (USD)', 'International biodiversity finance received (USD)'], complementary: ['Biodiversity-harmful subsidies reformed (USD)'] },
+  15: { headline: 'Businesses reporting on biodiversity dependencies and impacts (%)', component: ['Number of companies with biodiversity commitments', 'Number of financial institutions with biodiversity policies'], complementary: ['Value of biodiversity-related financial products'] },
+  16: { headline: 'Countries with functional national biodiversity monitoring systems (%)', component: ['Number of biodiversity indicators with regular data', 'Frequency of national biodiversity assessments'], complementary: ['Open data availability for biodiversity indicators'] },
+  17: { headline: 'Countries with updated NBSAPs aligned to GBF (%)', component: ['Number of national targets aligned to GBF targets', 'Number of NBSAP implementation reviews completed'], complementary: [] },
+  18: { headline: 'Biodiversity-harmful incentives identified and reformed (USD)', component: ['Number of harmful subsidies identified', 'Number of subsidy reform policies enacted'], complementary: ['Economic value of reformed incentives'] },
+  19: { headline: 'Capacity and technology transfer for biodiversity (index)', component: ['Number of technology transfer agreements', 'Number of capacity-building programmes delivered'], complementary: ['Number of trained biodiversity professionals'] },
+  20: { headline: 'Indigenous and local community participation in governance (%)', component: ['Number of ILC representatives in biodiversity decision-making bodies', 'Area (ha) under ILC-led conservation'], complementary: ['Number of ILC land rights formalised'] },
+  21: { headline: 'Countries with gender-responsive biodiversity policies (%)', component: ['% of women in biodiversity governance roles', 'Number of gender-responsive biodiversity programmes'], complementary: [] },
+  22: { headline: 'Countries with youth engagement in biodiversity governance (%)', component: ['Number of youth biodiversity platforms', 'Number of youth-led biodiversity initiatives funded'], complementary: [] },
+};
+
+// ── Static strategic actions per target ──────────────────────
+const TARGET_ACTIONS: Record<number, string[]> = {
+  1:  ['Integrate biodiversity into district land-use plans', 'Establish KBA monitoring network', 'Develop spatial planning guidelines for biodiversity', 'Train district planners on biodiversity-inclusive zoning'],
+  2:  ['Restore 30,000 ha of degraded wetlands by 2030', 'Implement watershed restoration programmes', 'Establish community-based restoration nurseries', 'Monitor restoration outcomes annually'],
+  3:  ['Expand protected area network to 30% of land', 'Strengthen OECM recognition framework', 'Improve PA management effectiveness scores', 'Develop transboundary conservation agreements'],
+  4:  ['Develop national IAS strategy and action plan', 'Establish IAS early warning system', 'Implement biosecurity measures at border points', 'Eradicate priority IAS from key biodiversity areas'],
+  5:  ['Develop sustainable harvest quotas for key species', 'Strengthen wildlife trade monitoring', 'Support community-based wildlife management', 'Certify sustainable wild product supply chains'],
+  6:  ['Implement integrated water resource management', 'Restore riparian buffer zones', 'Regulate freshwater extraction limits', 'Monitor aquatic biodiversity indicators annually'],
+  7:  ['Scale up agri-environment payment schemes', 'Promote agroforestry and shade-grown crops', 'Reduce pesticide use through IPM programmes', 'Certify sustainable agricultural practices'],
+  8:  ['Map and restore wildlife corridors', 'Reduce road mortality through mitigation measures', 'Establish landscape-level connectivity plans', 'Monitor species movement across corridors'],
+  9:  ['Document traditional ecological knowledge', 'Support community-based natural resource management', 'Develop benefit-sharing mechanisms for wild species use', 'Integrate ILC knowledge into biodiversity monitoring'],
+  10: ['Develop urban biodiversity action plans', 'Increase urban green space coverage', 'Implement green infrastructure in city planning', 'Engage communities in urban nature stewardship'],
+  11: ['Ratify and implement Nagoya Protocol', 'Establish national ABS clearing-house', 'Develop community protocols for genetic resource access', 'Train stakeholders on ABS compliance'],
+  12: ['Value ecosystem services in national accounts', 'Invest in nature-based solutions for climate adaptation', 'Integrate NbS into infrastructure planning', 'Develop payment for ecosystem services schemes'],
+  13: ['Mainstream biodiversity into all sector policies', 'Conduct biodiversity impact assessments for major projects', 'Establish inter-ministerial biodiversity coordination', 'Align national development plans with NBSAP'],
+  14: ['Increase public biodiversity budget allocation', 'Develop biodiversity finance strategy', 'Mobilise private sector biodiversity investment', 'Access international biodiversity finance mechanisms'],
+  15: ['Develop corporate biodiversity reporting standards', 'Engage financial sector on biodiversity risk', 'Promote biodiversity-positive business practices', 'Establish biodiversity performance benchmarks'],
+  16: ['Strengthen national biodiversity monitoring system', 'Digitise biodiversity data infrastructure', 'Publish open biodiversity data annually', 'Train data managers and analysts'],
+  17: ['Update NBSAP to align with GBF', 'Conduct regular NBSAP implementation reviews', 'Strengthen national biodiversity coordination mechanisms', 'Report to CBD on national progress'],
+  18: ['Identify and map biodiversity-harmful subsidies', 'Develop subsidy reform roadmap', 'Redirect harmful subsidies to biodiversity-positive uses', 'Monitor subsidy reform implementation'],
+  19: ['Develop national biodiversity capacity needs assessment', 'Establish technology transfer partnerships', 'Deliver targeted capacity-building programmes', 'Support South-South cooperation on biodiversity'],
+  20: ['Formalise ILC land and resource rights', 'Establish ILC representation in governance bodies', 'Support ILC-led conservation initiatives', 'Document and protect traditional knowledge'],
+  21: ['Conduct gender analysis of biodiversity programmes', 'Increase women\'s participation in biodiversity governance', 'Develop gender-responsive biodiversity indicators', 'Fund women-led conservation initiatives'],
+  22: ['Establish national youth biodiversity platform', 'Integrate biodiversity into school curricula', 'Fund youth-led biodiversity projects', 'Engage youth in national biodiversity reporting'],
+};
 
 const GOAL_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
   A: { bg: '#dcfce7', text: '#166534', border: '#bbf7d0', label: 'Goal A' },
@@ -18,6 +70,8 @@ const card: React.CSSProperties = {
 export default function NationalTargetsPage() {
   const { data: rawTargets } = useAsync(fetchTargets, []);
   const targets: NBSAPTarget[] = (rawTargets as NBSAPTarget[] | null) ?? [];
+  const { data: rawIndicators } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
+  const indicators: Indicator[] = rawIndicators ?? [];
   const [goalFilter, setGoalFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -50,6 +104,13 @@ export default function NationalTargetsPage() {
     targets.forEach(t => { if (c[t.goal] !== undefined) c[t.goal]++; });
     return c;
   }, [targets]);
+
+  // Indicator summary counts
+  const indicatorSummary = useMemo(() => {
+    const c: Record<IndicatorTier, number> = { headline: 0, component: 0, complementary: 0, binary: 0 };
+    indicators.forEach(i => { if (c[i.tier as IndicatorTier] !== undefined) c[i.tier as IndicatorTier]++; });
+    return c;
+  }, [indicators]);
 
   return (
     <div>
@@ -96,6 +157,25 @@ export default function NationalTargetsPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Indicator Summary Bar */}
+      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '12px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', boxShadow: 'var(--shadow-sm)' }}>
+        <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)', fontSize: '0.85rem', marginRight: 4 }} />
+        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-2)', marginRight: 8 }}>Indicator Framework:</span>
+        {([
+          { tier: 'headline' as IndicatorTier,      label: 'Headline',      bg: '#dcfce7', color: '#166534' },
+          { tier: 'component' as IndicatorTier,     label: 'Component',     bg: '#dbeafe', color: '#1e40af' },
+          { tier: 'complementary' as IndicatorTier, label: 'Complementary', bg: '#f3e8ff', color: '#6b21a8' },
+          { tier: 'binary' as IndicatorTier,        label: 'Binary',        bg: '#fef9c3', color: '#854d0e' },
+        ]).map(({ tier, label, bg, color }) => (
+          <span key={tier} style={{ background: bg, color, fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 10, fontFamily: "'DM Mono', monospace" }}>
+            {label}: {indicatorSummary[tier]}
+          </span>
+        ))}
+        <span style={{ marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+          Total: {indicators.length}
+        </span>
       </div>
 
       {/* Filter bar */}
@@ -185,6 +265,65 @@ export default function NationalTargetsPage() {
                       <div style={{ background: '#38bdf8', width: `${t.progress}%`, height: '100%', borderRadius: 6, transition: 'width 1s ease' }} />
                     </div>
                   </div>
+                  {/* Indicator Framework */}
+                  {TARGET_INDICATORS[t.id] && (
+                    <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)' }} /> Indicator Framework
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {/* Headline */}
+                        <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: 8, padding: 10 }}>
+                          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#166534', marginBottom: 4, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <i className="fa-solid fa-star" style={{ fontSize: '0.55rem' }} /> HEADLINE
+                          </div>
+                          <p style={{ fontSize: '0.78rem', color: '#166534', margin: 0, lineHeight: 1.5 }}>{TARGET_INDICATORS[t.id].headline}</p>
+                        </div>
+                        {/* Component */}
+                        {TARGET_INDICATORS[t.id].component.length > 0 && (
+                          <div style={{ background: '#dbeafe', border: '1px solid #bfdbfe', borderRadius: 8, padding: 10 }}>
+                            <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#1e40af', marginBottom: 6, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <i className="fa-solid fa-puzzle-piece" style={{ fontSize: '0.55rem' }} /> COMPONENT
+                            </div>
+                            {TARGET_INDICATORS[t.id].component.map((c, idx) => (
+                              <div key={idx} style={{ fontSize: '0.76rem', color: '#1e40af', marginBottom: 3, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                                <span style={{ flexShrink: 0, marginTop: 2 }}>·</span><span style={{ lineHeight: 1.4 }}>{c}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Complementary */}
+                        {TARGET_INDICATORS[t.id].complementary.length > 0 && (
+                          <div style={{ background: '#f3e8ff', border: '1px solid #e9d5ff', borderRadius: 8, padding: 10 }}>
+                            <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#6b21a8', marginBottom: 6, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <i className="fa-solid fa-circle-info" style={{ fontSize: '0.55rem' }} /> COMPLEMENTARY
+                            </div>
+                            {TARGET_INDICATORS[t.id].complementary.map((c, idx) => (
+                              <div key={idx} style={{ fontSize: '0.76rem', color: '#6b21a8', marginBottom: 3, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                                <span style={{ flexShrink: 0, marginTop: 2 }}>·</span><span style={{ lineHeight: 1.4 }}>{c}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Key Strategic Actions */}
+                  {TARGET_ACTIONS[t.id] && (
+                    <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 14 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <i className="fa-solid fa-list-check" style={{ color: 'var(--sky-dim)' }} /> Key Strategic Actions
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        {TARGET_ACTIONS[t.id].map((action, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.78rem', color: 'var(--text-2)' }}>
+                            <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-3)', flexShrink: 0, marginTop: 1, fontFamily: "'DM Mono', monospace" }}>{idx + 1}</span>
+                            <span style={{ lineHeight: 1.5 }}>{action}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
