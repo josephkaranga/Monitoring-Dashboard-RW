@@ -19,6 +19,9 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    headers: {
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' data:; img-src 'self' data: https:; frame-src https://rbis.ur.ac.rw; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.gbif.org https://www.geoboundaries.org https://*.geoboundaries.org;",
+    },
   },
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
