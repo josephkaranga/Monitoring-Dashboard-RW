@@ -204,6 +204,10 @@ export interface District {
   status: DistrictStatus;
   compliance: number;
   forest_cover: number;
+  latitude?: number;
+  longitude?: number;
+  elevation?: number;
+  wetland_area?: number;
   created_at: string;
   updated_at: string;
 }

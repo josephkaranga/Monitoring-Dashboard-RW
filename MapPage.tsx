@@ -230,6 +230,12 @@ export function MapPage() {
     refresh: refreshGBIF 
   } = useGBIFOccurrences({ country: 'RW', limit: 5000, autoRefresh: true });
   
+  // Log GBIF data for debugging
+  useEffect(() => {
+    console.log('GBIF occurrences loaded:', occurrences.length, 'items');
+    if (gbifError) console.error('GBIF error:', gbifError);
+  }, [occurrences, gbifError]);
+  
   // Load biodiversity data (depends on GBIF occurrences)
   const { data: biodiversityData, loading: biodivLoading } = useBiodiversityData({
     districts,
@@ -242,10 +248,26 @@ export function MapPage() {
     enabled: enabledOverlays.has('protected-areas')
   });
   
+  // Log protected areas for debugging
+  useEffect(() => {
+    if (enabledOverlays.has('protected-areas')) {
+      console.log('Protected areas loaded:', protectedAreas?.features?.length || 0, 'areas');
+      if (areasError) console.error('Protected areas error:', areasError);
+    }
+  }, [protectedAreas, areasError, enabledOverlays]);
+  
   // Load river network (lazy - only when overlay is enabled)
   const { rivers, loading: riversLoading, error: riversError } = useRiverNetwork({
     enabled: enabledOverlays.has('rivers')
   });
+  
+  // Log rivers for debugging
+  useEffect(() => {
+    if (enabledOverlays.has('rivers')) {
+      console.log('Rivers loaded:', rivers?.features?.length || 0, 'rivers');
+      if (riversError) console.error('Rivers error:', riversError);
+    }
+  }, [rivers, riversError, enabledOverlays]);
 
   // Debounce timer refs for hover handlers
   const hoverDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -337,13 +359,17 @@ export function MapPage() {
   
   // Toggle overlay
   const toggleOverlay = useCallback((overlayId: MapOverlay) => {
+    console.log('Toggling overlay:', overlayId);
     setEnabledOverlays(prev => {
       const next = new Set(prev);
       if (next.has(overlayId)) {
         next.delete(overlayId);
+        console.log('Disabled overlay:', overlayId);
       } else {
         next.add(overlayId);
+        console.log('Enabled overlay:', overlayId);
       }
+      console.log('Enabled overlays:', Array.from(next));
       return next;
     });
   }, []);

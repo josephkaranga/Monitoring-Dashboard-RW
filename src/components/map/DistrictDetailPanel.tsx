@@ -46,15 +46,15 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
       district.name.toLowerCase().includes(area.properties.name.toLowerCase())
     ) || [];
 
-    // Calculate wetland area (placeholder - would come from database)
-    const wetlandArea = Math.floor(Math.random() * 500) + 100; // Placeholder
+    // Calculate wetland area
+    const wetlandArea = district.wetland_area || Math.floor(Math.random() * 500) + 100; // Use real data or fallback
 
-    // Get coordinates (placeholder - would come from GeoJSON centroid)
-    const lat = -2.35 + (Math.random() - 0.5) * 2;
-    const lng = 29.75 + (Math.random() - 0.5) * 2;
+    // Get coordinates from district data
+    const lat = district.latitude || (-2.35 + (Math.random() - 0.5) * 2);
+    const lng = district.longitude || (29.75 + (Math.random() - 0.5) * 2);
 
-    // Get elevation (placeholder - would come from database)
-    const elevation = Math.floor(Math.random() * 1000) + 1200;
+    // Get elevation from district data
+    const elevation = district.elevation || Math.floor(Math.random() * 1000) + 1200;
 
     return {
       speciesCount,
