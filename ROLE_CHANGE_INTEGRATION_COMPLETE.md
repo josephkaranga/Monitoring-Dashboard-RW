@@ -67,7 +67,7 @@ npm run dev
    - Click "Submit Request"
 4. **Verify**:
    - Success message appears
-   - Request appears in history timeline
+   - Request appears in review history
    - Status shows "Pending"
 5. **Test cancellation**:
    - Click "Cancel Request" button
@@ -261,7 +261,7 @@ Administration (Admins Only)
 1. `006_role_change_approval.sql` - Database migration
 2. `roleChangeService.ts` - Service layer
 3. `RoleChangeRequestForm.tsx` - Request form component
-4. `RoleChangeHistoryView.tsx` - History timeline component
+4. `RoleChangeHistoryView.tsx` - History view component
 5. `RoleChangeApprovalPanel.tsx` - Admin approval interface
 6. `PendingRequestsBadge.tsx` - Header badge component
 7. `RoleRequestsPage.tsx` - Combined user page

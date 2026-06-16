@@ -1,8 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useDashboardStats, useReports } from './useData';
 import { generateAINarrative } from './aiNarrative';
 import { DashboardSkeleton } from './Skeleton';
+import { NBSAPTargetProgress } from './NBSAPTargetProgress';
+import { fetchDashboardMetrics, type DashboardMetrics, formatMetricValue } from './systemMetricsService';
 import toast from 'react-hot-toast';
 
 // ── Module-level AI cache — persists across navigation ────────
@@ -53,6 +55,26 @@ export default function DashboardPage() {
   const { reports } = useReports({ status: 'approved', pageSize: 4 });
   const [aiText, setAiText] = useState(_cachedAiText);
   const [aiLoading, setAiLoading] = useState(false);
+  const [systemMetrics, setSystemMetrics] = useState<DashboardMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Load automated system metrics
+  useEffect(() => {
+    const loadSystemMetrics = async () => {
+      setMetricsLoading(true);
+      try {
+        const metrics = await fetchDashboardMetrics();
+        setSystemMetrics(metrics);
+        console.log('📊 Automated system metrics loaded:', metrics);
+      } catch (error) {
+        console.error('Failed to load system metrics:', error);
+        toast.error('Failed to load automated metrics');
+      }
+      setMetricsLoading(false);
+    };
+
+    loadSystemMetrics();
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     if (!stats) return;
@@ -146,8 +168,104 @@ export default function DashboardPage() {
 
       {/* Access Layers removed — moved to Settings page */}
 
-      {/* ── Live Toolkit Stats ── */}
-      {s && (
+      {/* ── Automated System Metrics ── */}
+      <div style={{ ...card, marginBottom: 24 }}>
+        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
+            <i className="fa-solid fa-satellite-dish" style={{ color: 'var(--sky-dim)' }} />
+            Automated System Metrics
+            <span style={{ fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#dcfce7', color: '#166534' }}>● Live</span>
+          </div>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 2 }}>Auto-updates when reports are approved - all tools (T01-T07) feed into system metrics</p>
+        </div>
+        <div style={{ padding: '16px 18px' }}>
+          {metricsLoading ? (
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>Loading automated metrics...</div>
+          ) : systemMetrics ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
+                {[
+                  { 
+                    val: formatMetricValue(systemMetrics.totalForestHa, 'hectares'), 
+                    label: 'Forest Restored', 
+                    color: '#10b981',
+                    source: 'T02, T03, T06'
+                  },
+                  { 
+                    val: formatMetricValue(systemMetrics.totalWetlandHa, 'hectares'), 
+                    label: 'Wetland Restored', 
+                    color: '#0891b2',
+                    source: 'T02'
+                  },
+                  { 
+                    val: systemMetrics.districtsActive, 
+                    label: 'Districts Active', 
+                    color: '#8b5cf6',
+                    source: 'T02'
+                  },
+                  { 
+                    val: `${systemMetrics.financeUtilizedMillionRwf.toFixed(1)}M`, 
+                    label: 'Finance Utilized (RWF)', 
+                    color: '#059669',
+                    source: 'T01, T05'
+                  },
+                  { 
+                    val: systemMetrics.totalHwcIncidents || 0, 
+                    label: 'HWC Incidents', 
+                    color: '#f59e0b',
+                    source: 'T03, T04'
+                  },
+                  { 
+                    val: `${systemMetrics.eiaCompliancePercentage.toFixed(1)}%`, 
+                    label: 'EIA Compliance', 
+                    color: systemMetrics.eiaCompliancePercentage >= 80 ? '#10b981' : systemMetrics.eiaCompliancePercentage >= 60 ? '#f59e0b' : '#ef4444',
+                    source: 'T06'
+                  },
+                ].map(({ val, label, color, source }) => (
+                  <div key={label} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Playfair Display', serif", color }}>{val}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{label}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-4)', marginTop: 1, opacity: 0.7 }}>{source}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* EIA Compliance Details */}
+              {systemMetrics.eiaFullCompliance + systemMetrics.eiaPartialCompliance + systemMetrics.eiaNonCompliance > 0 && (
+                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 14, marginTop: 12 }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <i className="fa-solid fa-shield-check" style={{ color: '#10b981' }} />
+                    EIA Compliance Breakdown (T06 - Private Sector)
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                    <div style={{ textAlign: 'center', padding: '8px 4px' }}>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981' }}>{systemMetrics.eiaFullCompliance}</div>
+                      <div style={{ fontSize: '0.6rem', color: 'var(--text-3)' }}>Full Compliance</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '8px 4px' }}>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b' }}>{systemMetrics.eiaPartialCompliance}</div>
+                      <div style={{ fontSize: '0.6rem', color: 'var(--text-3)' }}>Partial Compliance</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '8px 4px' }}>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ef4444' }}>{systemMetrics.eiaNonCompliance}</div>
+                      <div style={{ fontSize: '0.6rem', color: 'var(--text-3)' }}>Non-Compliant</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', marginTop: 12, textAlign: 'center', fontFamily: "'DM Mono', monospace" }}>
+                Last updated: {new Date(systemMetrics.lastUpdated).toLocaleString()} · Auto-calculated from approved reports
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>No automated metrics available</div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Legacy Live Toolkit Stats (Fallback) ── */}
+      {s && !systemMetrics && (
         <div style={{ ...card, marginBottom: 24 }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
@@ -177,8 +295,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Charts + Activity ── */}
-      <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
+      {/* ── Charts + Activity + NBSAP Targets ── */}
+      <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: 16, marginBottom: 24 }}>
         {/* Progress */}
         <div style={{ ...card, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
@@ -218,6 +336,9 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* NBSAP Target Progress */}
+        <NBSAPTargetProgress />
       </div>
 
     </div>
