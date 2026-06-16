@@ -18,6 +18,7 @@ export interface ReportFilters {
   pageSize?: number;
   fromDate?: string;
   toDate?: string;
+  realtime?: boolean;
 }
 
 // ── SUBMIT REPORT ────────────────────────────────────────────

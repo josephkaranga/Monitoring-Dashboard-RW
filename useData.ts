@@ -109,11 +109,12 @@ export function useReports(filters: ReportFilters = {}) {
     return () => { mountedRef.current = false; };
   }, [load]);
 
-  // Single realtime subscription per hook instance
+  // Only subscribe to realtime if explicitly requested
   useEffect(() => {
+    if (!filters.realtime) return;
     const channel = subscribeToReports(() => load());
     return () => { supabase.removeChannel(channel); };
-  }, [load]);
+  }, [load, filters.realtime]);
 
   return { reports, count, loading, error, refetch: load };
 }
