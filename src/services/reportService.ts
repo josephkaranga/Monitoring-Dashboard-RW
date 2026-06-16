@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabase';
+import { triggerExtraction } from './aiExtractionService';
 import { automatedProcessingEngine } from './automatedProcessingEngine';
 import { getToolWeight, getToolDescription, ToolId } from '../types/automaticReporting';
 import type { OrganizationConfig, ProcessingResult, ReportSubmission } from '../types/automaticReporting';
@@ -197,6 +198,9 @@ export async function submitReport(
       formDataComplete: Object.keys(formData).length > 0
     }
   });
+
+  // Trigger async AI extraction — fire-and-forget, does not block submission
+  void triggerExtraction(data as ToolkitReport);
 
   return { data: data as ToolkitReport, error: null };
 }
