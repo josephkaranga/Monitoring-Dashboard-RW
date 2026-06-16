@@ -197,7 +197,7 @@ export async function clearAllReports(): Promise<ApiResponse<null>> {
 
 // ── GET DASHBOARD AGGREGATES ──────────────────────────────────
 let _statsCache: { data: ReturnType<typeof buildStats> | null; ts: number } = { data: null, ts: 0 };
-const STATS_TTL = 30_000; // 30 seconds
+const STATS_TTL = 60_000; // 60 seconds — increased from 30s
 
 function buildStats(reports: any[], indicators: any[], districts: any[], compliance: any[]) {
   const approved = reports.filter(r => r.status === 'approved' || !r.status);

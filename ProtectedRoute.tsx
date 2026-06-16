@@ -24,7 +24,7 @@ const LoadingScreen = () => (
   <div
     style={{
       minHeight: '100vh',
-      background: '#0c1e38',
+      background: 'var(--surface-2, #f8fafc)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -33,17 +33,17 @@ const LoadingScreen = () => (
       fontFamily: "'DM Sans', sans-serif",
     }}
   >
-    <div
-      style={{
-        width: 48,
-        height: 48,
-        borderRadius: '50%',
-        border: '3px solid rgba(56,189,248,0.2)',
-        borderTopColor: '#38bdf8',
-        animation: 'spin 0.8s linear infinite',
-      }}
-    />
-    <p style={{ color: '#7dd3fc', fontSize: '0.82rem' }}>Loading…</p>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#38bdf8,#0ea5e9)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: '#fff', fontSize: 16 }}>🌿</span>
+      </div>
+      <div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1rem', color: '#0f2744', fontWeight: 700 }}>NBSAP</div>
+        <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: "'DM Mono', monospace" }}>Monitoring System</div>
+      </div>
+    </div>
+    <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#0ea5e9', animation: 'spin 0.7s linear infinite' }} />
+    <p style={{ color: '#94a3b8', fontSize: '0.78rem' }}>Loading your dashboard…</p>
     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
 );
