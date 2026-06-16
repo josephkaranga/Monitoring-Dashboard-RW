@@ -160,13 +160,17 @@ export function UserManagementPage() {
   const { user: currentUser, permissions } = useAuth();
   const isAdmin = currentUser?.role === 'dashboard_management';
   const { data: usersResponse, loading, refetch } = useAsync(getAllUsers, []);
-  const users: UserProfile[] = (usersResponse as any)?.data ?? (Array.isArray(usersResponse) ? usersResponse : []);
-  const pendingUsers = users.filter((u: UserProfile) => !u.is_active);
-  const activeUsers = users.filter((u: UserProfile) => u.is_active);
+
+  // ── All hooks must come before any derived values ──
   const [updating, setUpdating] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // ── Derived values (after all hooks) ──
+  const users: UserProfile[] = (usersResponse as any)?.data ?? (Array.isArray(usersResponse) ? usersResponse : []);
+  const pendingUsers = users.filter((u: UserProfile) => !u.is_active);
+  const activeUsers = users.filter((u: UserProfile) => u.is_active);
 
   const filteredUsers = activeUsers.filter((u: UserProfile) => {
     const matchSearch = !search || u.email.toLowerCase().includes(search.toLowerCase()) || u.full_name?.toLowerCase().includes(search.toLowerCase());
