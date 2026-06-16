@@ -1,20 +1,12 @@
-import React, { createContext, useContext, useEffect, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react';
 import { supabase } from './supabase';
 import { fetchUserSettings } from './dataService';
-import type {
-  AuthState,
-  UserProfile,
-  UserSettings,
-  RolePermissions,
-} from './index';
+import type { AuthState, UserProfile, UserSettings, RolePermissions } from './index';
 import { USER_ROLE_PERMISSIONS } from './index';
-
-// ── State & Actions ──────────────────────────────────────────
 
 type AuthAction =
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_SESSION'; user: UserProfile; session: import('@supabase/supabase-js').Session }
-  | { type: 'SET_SETTINGS'; settings: UserSettings }
   | { type: 'CLEAR_SESSION' };
 
 interface AuthContextValue extends AuthState {
@@ -49,8 +41,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
-// ── Context ──────────────────────────────────────────────────
-
 const AuthContext = createContext<AuthContextValue>({
   ...initialState,
   settings: null,
@@ -61,14 +51,27 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
+  const mountedRef = useRef(true);
 
-  const loadUserData = useCallback(async (userId: string, session: import('@supabase/supabase-js').Session) => {
+  const loadUserData = useCallback(async (
+    userId: string,
+    session: import('@supabase/supabase-js').Session
+  ) => {
     try {
-      const { data: profile, error } = await supabase
+      // Race: profile fetch vs 5s timeout
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
+
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as Awaited<typeof profilePromise>;
+
+      if (!mountedRef.current) return;
 
       if (error || !profile) {
         console.error('Profile fetch error:', error);
@@ -76,27 +79,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      dispatch({
-        type: 'SET_SESSION',
-        user: profile as UserProfile,
-        session,
-      });
+      // If user is inactive (pending approval), sign them out
+      if (!profile.is_active) {
+        await supabase.auth.signOut();
+        dispatch({ type: 'CLEAR_SESSION' });
+        return;
+      }
 
-      // Load settings in background
-      fetchUserSettings(userId).then(userSettings => {
-        if (userSettings) setSettings(userSettings);
-      }).catch(console.error);
+      dispatch({ type: 'SET_SESSION', user: profile as UserProfile, session });
 
-      // Update last login in background
+      // Background: load settings + update last_login
+      fetchUserSettings(userId)
+        .then(s => { if (s && mountedRef.current) setSettings(s); })
+        .catch(console.error);
+
       supabase
         .from('profiles')
         .update({ last_login: new Date().toISOString() })
         .eq('id', userId)
         .then(() => {})
         .catch(console.error);
+
     } catch (err) {
       console.error('loadUserData error:', err);
-      dispatch({ type: 'CLEAR_SESSION' });
+      if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
     }
   }, []);
 
@@ -113,51 +119,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Safety timeout — if loading is still true after 8s, clear it
-    const timeout = setTimeout(() => {
-      dispatch({ type: 'SET_LOADING', loading: false });
-    }, 8000);
+    mountedRef.current = true;
 
-    // Auth state change listener handles INITIAL_SESSION, SIGNED_IN, SIGNED_OUT, etc.
+    // Hard safety timeout — 5s max loading state
+    const safetyTimeout = setTimeout(() => {
+      if (mountedRef.current) dispatch({ type: 'SET_LOADING', loading: false });
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        clearTimeout(timeout);
+        clearTimeout(safetyTimeout);
+
+        if (!mountedRef.current) return;
+
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           await loadUserData(session.user.id, session);
         } else if (event === 'SIGNED_OUT') {
           dispatch({ type: 'CLEAR_SESSION' });
           setSettings(null);
-        } else if (event === 'TOKEN_REFRESHED' && session) {
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Don't reload full profile on token refresh — just clear loading
           dispatch({ type: 'SET_LOADING', loading: false });
         } else if (event === 'USER_UPDATED' && session?.user) {
           await loadUserData(session.user.id, session);
         } else if (event === 'INITIAL_SESSION' && !session) {
           dispatch({ type: 'CLEAR_SESSION' });
+        } else {
+          // Any other event — stop loading
+          dispatch({ type: 'SET_LOADING', loading: false });
         }
       }
     );
 
     return () => {
-      clearTimeout(timeout);
+      mountedRef.current = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, [loadUserData]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        settings,
-        signOut: handleSignOut,
-        refreshProfile,
-      }}
-    >
+    <AuthContext.Provider value={{ ...state, settings, signOut: handleSignOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
 }
-
-// ── Custom Hooks ─────────────────────────────────────────────
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
@@ -170,16 +176,13 @@ export function usePermissions(): RolePermissions | null {
 }
 
 export function useIsAdmin(): boolean {
-  const { user } = useAuth();
-  return user?.role === 'dashboard_management';
+  return useAuth().user?.role === 'dashboard_management';
 }
 
 export function useCanSubmit(): boolean {
-  const { permissions } = useAuth();
-  return permissions?.canSubmitReports ?? false;
+  return useAuth().permissions?.canSubmitReports ?? false;
 }
 
 export function useCanApprove(): boolean {
-  const { permissions } = useAuth();
-  return permissions?.canApproveReports ?? false;
+  return useAuth().permissions?.canApproveReports ?? false;
 }
