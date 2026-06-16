@@ -114,7 +114,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
     // Draw occurrences
     displayData.forEach(point => {
       const x = (point.longitude - 28.8) * scale;
-      const y = (point.latitude + 2.9) * scale; // Offset from viewBox origin (latitude is negative)
+      const y = (-2.9 - point.latitude) * scale; // Offset from viewBox origin
       
       const color = getKingdomColor(point.kingdom);
       const radius = 0.015 + (Math.log(point.count) * 0.008);
@@ -209,7 +209,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
           <circle
             key={`gbif-${idx}`}
             cx={point.longitude}
-            cy={point.latitude} // Use latitude directly (already negative for Rwanda)
+            cy={point.latitude}
             r={radius}
             fill={color}
             opacity={0.7}
