@@ -47,26 +47,49 @@ export function MapPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch Rwanda district boundaries from geoBoundaries API
+    // Fetch Rwanda district boundaries from local GeoJSON file
     const fetchGeoData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // First, get the metadata which includes the download URL
-        const metaResponse = await fetch('https://www.geoboundaries.org/api/current/gbOpen/RWA/ADM2/');
-        if (!metaResponse.ok) throw new Error('Failed to fetch boundary metadata');
+        // Fetch from local public folder (no CORS issues)
+        const response = await fetch('/rwanda-districts.geojson');
+        if (!response.ok) throw new Error('Failed to load district boundaries');
         
-        const metadata = await metaResponse.json();
-        const geoJsonUrl = metadata.gjDownloadURL;
+        const geoJson = await response.json();
         
-        // Use allOrigins CORS proxy to fetch the GeoJSON from GitHub
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(geoJsonUrl)}`;
-        const geoResponse = await fetch(proxyUrl);
-        if (!geoResponse.ok) throw new Error('Failed to fetch GeoJSON data');
-        
-        const geoJson = await geoResponse.json();
-        setGeoData(geoJson);
+        // If the file is empty (placeholder), create mock data
+        if (!geoJson.features || geoJson.features.length === 0) {
+          // Create a simple mock map showing districts as rectangles in a grid
+          const mockGeoData: GeoJSONData = {
+            type: 'FeatureCollection',
+            features: districts.map((district, idx) => ({
+              type: 'Feature',
+              properties: {
+                shapeName: district.name,
+                shapeISO: 'RW',
+                shapeID: String(district.id),
+                shapeGroup: 'RWA',
+                shapeType: 'ADM2'
+              },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  // Create a simple rectangle for each district in a 6x5 grid
+                  [29 + (idx % 6) * 0.5, -1 - Math.floor(idx / 6) * 0.4],
+                  [29.5 + (idx % 6) * 0.5, -1 - Math.floor(idx / 6) * 0.4],
+                  [29.5 + (idx % 6) * 0.5, -1.4 - Math.floor(idx / 6) * 0.4],
+                  [29 + (idx % 6) * 0.5, -1.4 - Math.floor(idx / 6) * 0.4],
+                  [29 + (idx % 6) * 0.5, -1 - Math.floor(idx / 6) * 0.4]
+                ]]
+              }
+            }))
+          };
+          setGeoData(mockGeoData);
+        } else {
+          setGeoData(geoJson);
+        }
       } catch (err) {
         console.error('Error loading map data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load map data');
@@ -75,8 +98,10 @@ export function MapPage() {
       }
     };
 
-    fetchGeoData();
-  }, []);
+    if (districts.length > 0) {
+      fetchGeoData();
+    }
+  }, [districts]);
 
   // Match GeoJSON features with district data
   const getDistrictData = (featureName: string): District | null => {
