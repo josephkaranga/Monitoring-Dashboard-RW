@@ -3,6 +3,7 @@ import { useReports } from './useData';
 import { verifyReport } from './reportService';
 import { writeAuditEntry } from './dataService';
 import { useAuth } from './AuthContext';
+import { supabase } from './supabase';
 import toast from 'react-hot-toast';
 
 const TOOL_ICONS: Record<string, string> = {
@@ -25,11 +26,11 @@ const card: React.CSSProperties = {
 };
 
 export default function VerifQueuePage() {
-  const { permissions } = useAuth();
+  const { permissions, user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'dashboard_management';
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
   const [actioning, setActioning] = useState<string | null>(null);
-
   const { reports, count, loading, refetch } = useReports({
     status: statusFilter === 'all' ? undefined : statusFilter as 'pending' | 'approved' | 'rejected',
     pageSize: 25,
@@ -57,6 +58,23 @@ export default function VerifQueuePage() {
     }
     setActioning(null);
   }, [permissions, noteInputs, refetch]);
+
+  const handleDeleteSubmission = useCallback(async (reportId: string, toolName: string) => {
+    if (!window.confirm(`Permanently delete this "${toolName}" submission?\n\nThis cannot be undone.`)) return;
+    setActioning(reportId);
+    const { error } = await supabase
+      .from('toolkit_reports')
+      .delete()
+      .eq('id', reportId);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`Submission deleted`);
+      await writeAuditEntry('delete', `Deleted submission: ${toolName}`);
+      refetch();
+    }
+    setActioning(null);
+  }, [refetch]);
 
   const pendingCount  = reports.filter(r => r.status === 'pending').length;
   const approvedCount = reports.filter(r => r.status === 'approved').length;
@@ -212,6 +230,27 @@ export default function VerifQueuePage() {
                 {report.review_note && (
                   <div style={{ marginTop: 8, fontSize: '0.72rem', color: 'var(--text-2)', fontStyle: 'italic' }}>
                     Note: {report.review_note}
+                  </div>
+                )}
+
+                {/* Delete — admin only */}
+                {isAdmin && (
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--surface-3)', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => handleDeleteSubmission(report.id, report.tool_name)}
+                      disabled={actioning === report.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        padding: '5px 14px', borderRadius: 7, border: '1px solid #fecaca',
+                        background: '#fff1f2', color: '#dc2626',
+                        fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+                        fontFamily: "'DM Sans', sans-serif",
+                        opacity: actioning === report.id ? 0.5 : 1,
+                      }}
+                    >
+                      <i className="fa-solid fa-trash-can" style={{ fontSize: '0.7rem' }} />
+                      Delete Submission
+                    </button>
                   </div>
                 )}
               </div>

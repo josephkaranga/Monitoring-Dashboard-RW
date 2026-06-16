@@ -210,6 +210,19 @@ export function UserManagementPage() {
     setUpdating(null);
   }, [refetch]);
 
+  const handleDeleteUser = useCallback(async (userId: string, userName: string) => {
+    if (userId === currentUser?.id) {
+      toast.error("You can't delete your own account");
+      return;
+    }
+    if (!window.confirm(`Permanently delete ${userName}'s account?\n\nThis will remove their profile and all associated data. This cannot be undone.`)) return;
+    setUpdating(userId);
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) toast.error(error.message);
+    else { toast.success(`${userName}'s account deleted`); refetch(); }
+    setUpdating(null);
+  }, [currentUser?.id, refetch]);
+
   const roleCounts = activeUsers.reduce((acc: Record<UserRole, number>, u: UserProfile) => {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
@@ -332,7 +345,7 @@ export function UserManagementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
               <thead>
                 <tr>
-                  {['User', 'Organization', 'Role', 'Status', 'Last Login', ...(isAdmin ? ['Change Role'] : [])].map(h => (
+                  {['User', 'Organization', 'Role', 'Status', 'Last Login', ...(isAdmin ? ['Change Role', 'Actions'] : [])].map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', background: 'var(--surface-2)' }}>{h}</th>
                   ))}
                 </tr>
@@ -387,6 +400,27 @@ export function UserManagementPage() {
                             <option key={role} value={role}>{label}</option>
                           ))}
                         </select>
+                      </td>
+                    )}
+                    {/* Delete — admin only, can't delete yourself */}
+                    {isAdmin && (
+                      <td style={{ padding: '11px 14px' }}>
+                        <button
+                          onClick={() => handleDeleteUser(u.id, u.full_name || u.email)}
+                          disabled={updating === u.id || u.id === currentUser?.id}
+                          title={u.id === currentUser?.id ? "You can't delete your own account" : `Delete ${u.full_name || u.email}`}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            padding: '5px 12px', borderRadius: 7, border: 'none',
+                            background: u.id === currentUser?.id ? 'var(--surface-2)' : '#fee2e2',
+                            color: u.id === currentUser?.id ? 'var(--text-3)' : '#991b1b',
+                            fontSize: '0.72rem', fontWeight: 700, cursor: u.id === currentUser?.id ? 'not-allowed' : 'pointer',
+                            fontFamily: "'DM Sans', sans-serif", opacity: updating === u.id ? 0.5 : 1,
+                          }}
+                        >
+                          <i className="fa-solid fa-trash-can" style={{ fontSize: '0.7rem' }} />
+                          Delete
+                        </button>
                       </td>
                     )}
                   </tr>
