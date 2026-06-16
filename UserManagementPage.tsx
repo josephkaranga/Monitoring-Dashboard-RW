@@ -161,6 +161,8 @@ export function UserManagementPage() {
   const isAdmin = currentUser?.role === 'dashboard_management';
   const { data: usersResponse, loading, refetch } = useAsync(getAllUsers, []);
   const users: UserProfile[] = (usersResponse as any)?.data ?? (Array.isArray(usersResponse) ? usersResponse : []);
+  const pendingUsers = users.filter((u: UserProfile) => !u.is_active);
+  const activeUsers = users.filter((u: UserProfile) => u.is_active);
   const [updating, setUpdating] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
@@ -208,9 +210,6 @@ export function UserManagementPage() {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
   }, {} as Record<UserRole, number>);
-
-  const pendingUsers = users.filter((u: UserProfile) => !u.is_active);
-  const activeUsers = users.filter((u: UserProfile) => u.is_active);
 
   return (
     <div>

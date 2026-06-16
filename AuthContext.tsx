@@ -58,18 +58,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session: import('@supabase/supabase-js').Session
   ) => {
     try {
-      // Race: profile fetch vs 5s timeout
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-      );
-
-      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as Awaited<typeof profilePromise>;
 
       if (!mountedRef.current) return;
 
