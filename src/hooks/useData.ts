@@ -18,6 +18,7 @@ import {
   subscribeToNotifications,
   getIndicatorsByDistrict,
   getRisksByDistrict,
+  markAllNotificationsRead,
 } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import type {
@@ -213,7 +214,13 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  return { notifications, loading, unreadCount, refetch: load };
+  const markAllRead = useCallback(async () => {
+    if (!user?.id || unreadCount === 0) return;
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    await markAllNotificationsRead(user.id);
+  }, [user?.id, unreadCount]);
+
+  return { notifications, loading, unreadCount, refetch: load, markAllRead };
 }
 
 // ── Notification Preferences ──────────────────────────────────

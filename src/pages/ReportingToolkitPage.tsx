@@ -508,9 +508,7 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
         console.warn('Failed to load organization config, falling back to user settings:', err);
       }
     }
-    const requireVerification = orgConfig
-      ? orgConfig.requireVerification || !orgConfig.automaticUpdatesEnabled
-      : (settings?.require_verification ?? true);
+    const requireVerification = true;
 
     // Include NBSAP target ID, stakeholder, and indicator in the submission
     const nbsapTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;

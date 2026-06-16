@@ -3,7 +3,6 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useAuth } from '../services/AuthContext';
 import { useNotifications, usePendingCount } from '../hooks/useData';
-import { markAllNotificationsRead } from '../services/dataService';
 import { USER_ROLE_LABELS } from '../types/index';
 import toast from 'react-hot-toast';
 import PendingRequestsBadge from './PendingRequestsBadge';
@@ -14,7 +13,7 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const { notifications, unreadCount, refetch: refetchNotifs } = useNotifications();
+  const { notifications, unreadCount, markAllRead } = useNotifications();
   const pendingCount = usePendingCount();
 
   const handleSignOut = useCallback(async () => {
@@ -22,12 +21,6 @@ export default function DashboardLayout() {
     toast.success('Signed out');
     navigate('/auth');
   }, [signOut, navigate]);
-
-  const handleMarkAllRead = useCallback(async () => {
-    if (!user?.id) return;
-    await markAllNotificationsRead(user.id);
-    refetchNotifs();
-  }, [user?.id, refetchNotifs]);
 
   const canSeeReporting = permissions?.canSubmitReports ?? false;
   const canSeeVerifQueue = permissions?.canViewVerifQueue ?? false;
@@ -296,7 +289,7 @@ export default function DashboardLayout() {
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button
-                onClick={() => setNotifOpen(s => !s)}
+                onClick={() => { const opening = !notifOpen; setNotifOpen(opening); if (opening) markAllRead(); }}
                 style={{
                   position: 'relative', width: 36, height: 36, borderRadius: 9,
                   border: '1px solid var(--border)', background: 'var(--surface)',
@@ -334,7 +327,7 @@ export default function DashboardLayout() {
                         </span>
                       )}
                     </h4>
-                    <button onClick={handleMarkAllRead} style={{ background: 'none', border: 'none', color: 'var(--sky-dim)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>
+                    <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: 'var(--sky-dim)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>
                       Mark all read
                     </button>
                   </div>
