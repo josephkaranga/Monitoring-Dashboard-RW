@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import { fetchUserSettings } from '../services/dataService';
 import type { AuthState, UserProfile, UserSettings, RolePermissions } from '../types/index';
 import { USER_ROLE_PERMISSIONS } from '../types/index';
+import toast from 'react-hot-toast';
 
 type AuthAction =
   | { type: 'SET_LOADING'; loading: boolean }
@@ -229,8 +230,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.signOut();
         profileCache = null;
         clearSessionCache();
-        if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
-        throw new Error(statusCheck.message);
+        if (mountedRef.current) {
+          dispatch({ type: 'CLEAR_SESSION' });
+          toast.error(
+            statusCheck.message || 'Account access denied. Please contact the administrator.',
+            { duration: 10000 }
+          );
+        }
+        return;
       }
 
       // If suspension was auto-cleared, refresh the profile
