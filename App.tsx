@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, Component } from 'react';
 import {
   BrowserRouter,
   Routes,
@@ -57,6 +57,54 @@ const PageLoader = () => (
   </div>
 );
 
+// ── Stale chunk error boundary ────────────────────────────────
+// When Vercel deploys a new build, old chunk URLs (e.g. DashboardPage-abc123.js)
+// no longer exist. This catches the "Failed to fetch dynamically imported module"
+// error and forces a hard reload to pick up the new build.
+interface ChunkErrorState { hasError: boolean }
+
+class ChunkErrorBoundary extends Component<{ children: React.ReactNode }, ChunkErrorState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ChunkErrorState {
+    // Detect stale chunk / dynamic import failure
+    const isChunkError =
+      error.message?.includes('Failed to fetch dynamically imported module') ||
+      error.message?.includes('Importing a module script failed') ||
+      error.message?.includes('Unable to preload CSS') ||
+      error.name === 'ChunkLoadError';
+    if (isChunkError) return { hasError: true };
+    throw error; // re-throw non-chunk errors to the next boundary
+  }
+
+  componentDidUpdate(_: unknown, prevState: ChunkErrorState) {
+    if (this.state.hasError && !prevState.hasError) {
+      // Hard reload once to pick up the new deployment
+      window.location.reload();
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', flexDirection: 'column', gap: 12,
+          fontFamily: "'DM Sans', sans-serif", color: '#64748b', textAlign: 'center', padding: 24,
+        }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#0ea5e9', animation: 'spin 0.7s linear infinite' }} />
+          <p style={{ fontSize: '0.85rem' }}>New version available — reloading…</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -82,92 +130,94 @@ export default function App() {
           }}
         />
 
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/auth/reset-password" element={<AuthPage />} />
+        <ChunkErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth/reset-password" element={<AuthPage />} />
 
-            {/* Protected dashboard routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<DashboardLayout />}>
-                {/* All authenticated users */}
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/indicators" element={<IndicatorsPage />} />
-                <Route path="/targets" element={<NationalTargetsPage />} />
-                <Route path="/adaptive-management" element={<AdaptiveManagementPage />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/compliance" element={<CompliancePage />} />
-                <Route path="/stakeholders" element={<StakeholdersPage />} />
-                <Route path="/rbis" element={<RBISPage />} />
-                <Route path="/data-pipeline" element={<DataPipelinePage />} />
+              {/* Protected dashboard routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<DashboardLayout />}>
+                  {/* All authenticated users */}
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/indicators" element={<IndicatorsPage />} />
+                  <Route path="/targets" element={<NationalTargetsPage />} />
+                  <Route path="/adaptive-management" element={<AdaptiveManagementPage />} />
+                  <Route path="/map" element={<MapPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/compliance" element={<CompliancePage />} />
+                  <Route path="/stakeholders" element={<StakeholdersPage />} />
+                  <Route path="/rbis" element={<RBISPage />} />
+                  <Route path="/data-pipeline" element={<DataPipelinePage />} />
 
-                {/* Reporters only */}
-                <Route
-                  element={
-                    <ProtectedRoute
-                      allowedRoles={[
-                        'sector_reporting',
-                        'local_reporting',
-                        'dashboard_management',
-                      ]}
-                    />
-                  }
-                >
-                  <Route path="/reporting-toolkit" element={<ReportingToolkitPage />} />
-                </Route>
+                  {/* Reporters only */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[
+                          'sector_reporting',
+                          'local_reporting',
+                          'dashboard_management',
+                        ]}
+                      />
+                    }
+                  >
+                    <Route path="/reporting-toolkit" element={<ReportingToolkitPage />} />
+                  </Route>
 
-                {/* Risk register: hide from local reporters */}
-                <Route
-                  element={
-                    <ProtectedRoute
-                      allowedRoles={[
-                        'policy_monitoring',
-                        'sector_reporting',
-                        'dashboard_management',
-                        'programme_alignment',
-                      ]}
-                    />
-                  }
-                >
-                  <Route path="/risk" element={<RiskPage />} />
-                </Route>
+                  {/* Risk register: hide from local reporters */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={[
+                          'policy_monitoring',
+                          'sector_reporting',
+                          'dashboard_management',
+                          'programme_alignment',
+                        ]}
+                      />
+                    }
+                  >
+                    <Route path="/risk" element={<RiskPage />} />
+                  </Route>
 
-                {/* Verification queue: approvers only */}
-                <Route
-                  element={
-                    <ProtectedRoute
-                      allowedRoles={['sector_reporting', 'dashboard_management']}
-                      requiredPermission="canApproveReports"
-                    />
-                  }
-                >
-                  <Route path="/verification-queue" element={<VerifQueuePage />} />
-                </Route>
+                  {/* Verification queue: approvers only */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={['sector_reporting', 'dashboard_management']}
+                        requiredPermission="canApproveReports"
+                      />
+                    }
+                  >
+                    <Route path="/verification-queue" element={<VerifQueuePage />} />
+                  </Route>
 
-                {/* Settings: all */}
-                <Route path="/settings" element={<SettingsPage />} />
+                  {/* Settings: all */}
+                  <Route path="/settings" element={<SettingsPage />} />
 
-                {/* User management: admin only */}
-                <Route
-                  element={
-                    <ProtectedRoute
-                      allowedRoles={['dashboard_management']}
-                      requiredPermission="canManageUsers"
-                    />
-                  }
-                >
-                  <Route path="/users" element={<UserManagementPage />} />
+                  {/* User management: admin only */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={['dashboard_management']}
+                        requiredPermission="canManageUsers"
+                      />
+                    }
+                  >
+                    <Route path="/users" element={<UserManagementPage />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
 
-            {/* Redirects */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
+              {/* Redirects */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
+        </ChunkErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   );
