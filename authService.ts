@@ -126,9 +126,29 @@ export async function signUp(
     .from('profiles')
     .select('*')
     .eq('id', data.user.id)
-    .single();
+    .maybeSingle();
 
-  if (profileError) return { data: null, error: profileError.message };
+  if (profileError) {
+    console.error('Profile fetch error:', profileError);
+    return { data: null, error: 'Failed to create user profile. Please contact support.' };
+  }
+
+  if (!profile) {
+    // Profile wasn't created by trigger, wait a bit longer and try again
+    await new Promise((r) => setTimeout(r, 1000));
+    const { data: retryProfile, error: retryError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    if (retryError || !retryProfile) {
+      console.error('Profile still not found after retry:', retryError);
+      return { data: null, error: 'Account created but profile setup failed. Please contact support.' };
+    }
+
+    return { data: retryProfile as UserProfile, error: null };
+  }
 
   return { data: profile as UserProfile, error: null };
 }
