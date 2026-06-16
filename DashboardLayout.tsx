@@ -1,28 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import {
-  Leaf, BarChart3, Layers, Target, RefreshCw, Landmark, Trees, Shield,
-  Users, Coins, Building, FlaskConical, ClipboardCheck, AlertTriangle,
-  FileText, UserCheck, Database, GitBranch, MapPin, FileEdit, Bell,
-  Settings, Download, LogOut, Menu, X, ChevronDown,
-} from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useAuth } from './AuthContext';
-import { useNotifications } from './useData';
-import { usePendingCount } from './useData';
+import { useNotifications, usePendingCount } from './useData';
 import { markAllNotificationsRead } from './dataService';
 import { USER_ROLE_LABELS } from './index';
 import toast from 'react-hot-toast';
-
-// ── Nav Item Config ───────────────────────────────────────────
-
-interface NavItem {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  badge?: number | string;
-  minRole?: string[];
-}
 
 export default function DashboardLayout() {
   const { user, permissions, signOut } = useAuth();
@@ -45,96 +28,79 @@ export default function DashboardLayout() {
     refetchNotifs();
   }, [user?.id, refetchNotifs]);
 
-  const canSeeReporting =
-    permissions?.canSubmitReports ?? false;
-  const canSeeVerifQueue =
-    permissions?.canViewVerifQueue ?? false;
-  const canSeeRisk = permissions?.canViewRiskRegister ?? false;
-  const canSeeAudit = permissions?.canViewAuditLog ?? false;
+  const canSeeReporting = permissions?.canSubmitReports ?? false;
+  const canSeeVerifQueue = permissions?.canViewVerifQueue ?? false;
 
-  const mainNav: NavItem[] = [
-    { to: '/dashboard', icon: <BarChart3 size={15} />, label: 'Dashboard' },
-    { to: '/indicators', icon: <Layers size={15} />, label: 'Indicator Hierarchy' },
-    { to: '/risk', icon: <AlertTriangle size={15} />, label: 'Risk Register', minRole: ['policy_monitoring', 'sector_reporting', 'dashboard_management', 'programme_alignment'] },
+  // ── Nav sections ──────────────────────────────────────────
+  const analyticsNav = [
+    { to: '/dashboard',  icon: 'fa-chart-line',       label: 'Dashboard' },
+    { to: '/indicators', icon: 'fa-layer-group',       label: 'Indicator Hierarchy' },
+    { to: '/risk',       icon: 'fa-triangle-exclamation', label: 'Risk Register' },
   ];
 
-  const reportingNav: NavItem[] = [
-    { to: '/reporting-toolkit?tool=T01', icon: <Landmark size={15} />, label: 'T01 · Institutional' },
-    { to: '/reporting-toolkit?tool=T02', icon: <Trees size={15} />, label: 'T02 · District' },
-    { to: '/reporting-toolkit?tool=T03', icon: <Shield size={15} />, label: 'T03 · Protected Areas' },
-    { to: '/reporting-toolkit?tool=T04', icon: <Users size={15} />, label: 'T04 · Community' },
-    { to: '/reporting-toolkit?tool=T05', icon: <Coins size={15} />, label: 'T05 · Finance' },
-    { to: '/reporting-toolkit?tool=T06', icon: <Building size={15} />, label: 'T06 · Private Sector' },
-    { to: '/reporting-toolkit?tool=T07', icon: <FlaskConical size={15} />, label: 'T07 · Research' },
+  const reportingNav = [
+    { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark',     label: 'T01 · Institutional' },
+    { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree',          label: 'T02 · District' },
+    { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield',        label: 'T03 · Protected Areas' },
+    { to: '/reporting-toolkit?tool=T04', icon: 'fa-people-group',  label: 'T04 · Community' },
+    { to: '/reporting-toolkit?tool=T05', icon: 'fa-coins',         label: 'T05 · Finance' },
+    { to: '/reporting-toolkit?tool=T06', icon: 'fa-building',      label: 'T06 · Private Sector' },
+    { to: '/reporting-toolkit?tool=T07', icon: 'fa-flask',         label: 'T07 · Research' },
   ];
 
-  const governanceNav: NavItem[] = [
-    ...(canSeeVerifQueue
-      ? [{ to: '/verification-queue', icon: <UserCheck size={15} />, label: 'Verification Queue', badge: pendingCount || undefined }]
-      : []),
-    { to: '/compliance', icon: <ClipboardCheck size={15} />, label: 'Compliance' },
-    { to: '/reports', icon: <FileText size={15} />, label: 'Reports' },
+  const governanceNav = [
+    ...(canSeeVerifQueue ? [{ to: '/verification-queue', icon: 'fa-file-circle-check', label: 'Verification Queue', badge: pendingCount || 0 }] : []),
+    { to: '/compliance', icon: 'fa-clipboard-check', label: 'Compliance', badge: 0 },
+    { to: '/reports',    icon: 'fa-file-contract',   label: 'Reports' },
+    { to: '/map',        icon: 'fa-map-location-dot', label: 'District Map' },
   ];
 
-  const systemNav: NavItem[] = [
-    { to: '/map', icon: <MapPin size={15} />, label: 'District Map' },
-    { to: '/settings', icon: <Settings size={15} />, label: 'Settings' },
+  const systemNav = [
+    { to: '/settings', icon: 'fa-gear',  label: 'Settings' },
+    { to: '/users',    icon: 'fa-users', label: 'User Management' },
   ];
 
-  const NavSection = ({ title, items }: { title: string; items: NavItem[] }) => (
-    <div style={{ padding: '4px 0' }}>
-      <div
-        style={{
-          fontSize: '0.6rem',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'rgba(125,211,252,0.5)',
-          padding: '8px 20px 4px',
+  const isActive = (to: string) => location.pathname === to.split('?')[0];
+
+  const NavItem = ({ to, icon, label, badge }: { to: string; icon: string; label: string; badge?: number }) => (
+    <NavLink
+      to={to}
+      onClick={() => setSidebarOpen(false)}
+      style={({ isActive: a }) => ({
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '9px 18px',
+        color: a ? '#38bdf8' : '#bfdbfe',
+        textDecoration: 'none',
+        fontSize: '0.82rem', fontWeight: 500,
+        borderLeft: a ? '3px solid #38bdf8' : '3px solid transparent',
+        background: a ? 'rgba(56,189,248,0.15)' : 'transparent',
+        transition: 'all 0.2s',
+        position: 'relative' as const,
+      })}
+    >
+      <i className={`fa-solid ${icon}`} style={{ width: 16, textAlign: 'center', fontSize: '0.8rem', opacity: 0.85 }} />
+      <span style={{ flex: 1 }}>{label}</span>
+      {badge ? (
+        <span style={{
+          background: '#f43f5e', color: '#fff',
+          fontSize: '0.58rem', padding: '1px 6px',
+          borderRadius: 10, fontWeight: 700,
           fontFamily: "'DM Mono', monospace",
-        }}
-      >
+        }}>{badge}</span>
+      ) : null}
+    </NavLink>
+  );
+
+  const NavSection = ({ title, items }: { title: string; items: any[] }) => (
+    <div style={{ padding: '4px 0' }}>
+      <div style={{
+        fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase',
+        color: 'rgba(125,211,252,0.5)', padding: '8px 20px 4px',
+        fontFamily: "'DM Mono', monospace",
+      }}>
         {title}
       </div>
-      {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          style={({ isActive }) => ({
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '9px 18px',
-            color: isActive ? '#38bdf8' : '#bfdbfe',
-            textDecoration: 'none',
-            fontSize: '0.82rem',
-            fontWeight: 500,
-            borderLeft: isActive ? '3px solid #38bdf8' : '3px solid transparent',
-            background: isActive ? 'rgba(56,189,248,0.15)' : 'transparent',
-            transition: 'all 0.15s',
-          })}
-          onClick={() => setSidebarOpen(false)}
-        >
-          <span style={{ width: 16, textAlign: 'center', opacity: 0.85 }}>
-            {item.icon}
-          </span>
-          <span style={{ flex: 1 }}>{item.label}</span>
-          {item.badge ? (
-            <span
-              style={{
-                background: '#f59e0b',
-                color: '#fff',
-                fontSize: '0.58rem',
-                padding: '1px 6px',
-                borderRadius: 10,
-                fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
-              {item.badge}
-            </span>
-          ) : null}
-        </NavLink>
-      ))}
+      {items.map(item => <NavItem key={item.to} {...item} />)}
     </div>
   );
 
@@ -143,22 +109,19 @@ export default function DashboardLayout() {
       {/* Brand */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 38, height: 38,
-              background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
-              borderRadius: 10,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', flexShrink: 0,
-            }}
-          >
-            <Leaf size={16} />
+          <div style={{
+            width: 38, height: 38,
+            background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
+            borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontSize: 16, flexShrink: 0,
+          }}>
+            <i className="fa-solid fa-leaf" />
           </div>
           <div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.05rem', color: '#fff', letterSpacing: 0.5 }}>
               NBSAP
             </div>
-            <div style={{ fontSize: '0.65rem', color: '#7dd3fc', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '0.65rem', color: '#7dd3fc', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em', marginTop: 1 }}>
               Monitoring System
             </div>
           </div>
@@ -167,37 +130,26 @@ export default function DashboardLayout() {
 
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-        <NavSection title="Analytics" items={mainNav} />
-        {canSeeReporting && (
-          <NavSection title="Reporting Modules" items={reportingNav} />
-        )}
+        <NavSection title="Analytics" items={analyticsNav} />
+        {canSeeReporting && <NavSection title="Reporting Modules" items={reportingNav} />}
         <NavSection title="Governance" items={governanceNav} />
         <NavSection title="System" items={systemNav} />
       </nav>
 
       {/* Footer */}
       <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            borderRadius: 9, padding: '10px 12px',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}
-        >
-          <div
-            style={{
-              width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0,
-              boxShadow: '0 0 0 3px rgba(16,185,129,0.3)',
-            }}
-          />
+        <div style={{
+          background: 'rgba(255,255,255,0.06)', borderRadius: 9,
+          padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0,
+            animation: 'pulse-green 2s infinite',
+          }} />
           <div>
-            <div style={{ fontSize: '0.68rem', color: '#a5f3fc', fontWeight: 600 }}>
-              System Online
-            </div>
+            <div style={{ fontSize: '0.7rem', color: '#a5f3fc', fontWeight: 600 }}>System Online</div>
             <div style={{ fontSize: '0.62rem', color: '#7dd3fc' }}>
-              {user
-                ? USER_ROLE_LABELS[user.role]
-                : 'Not signed in'}
+              {user ? (USER_ROLE_LABELS[user.role] ?? user.role) : 'Not signed in'}
             </div>
           </div>
         </div>
@@ -206,195 +158,177 @@ export default function DashboardLayout() {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
-      {/* ── DESKTOP SIDEBAR ── */}
-      <aside
-        style={{
-          position: 'fixed', left: 0, top: 0, bottom: 0,
-          width: 248,
-          background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
-          display: 'flex', flexDirection: 'column',
-          boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
-          zIndex: 200,
-          transition: 'transform 0.3s ease',
-        }}
-        className="desktop-sidebar"
-      >
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface-2)' }}>
+
+      {/* Desktop sidebar */}
+      <aside style={{
+        position: 'fixed', left: 0, top: 0, bottom: 0, width: 'var(--sidebar-w)',
+        background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
+        display: 'flex', flexDirection: 'column',
+        boxShadow: '4px 0 20px rgba(0,0,0,0.2)', zIndex: 200,
+      }} className="desktop-sidebar">
         {sidebarContent}
       </aside>
 
-      {/* ── MOBILE SIDEBAR OVERLAY ── */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 199,
-            background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(4px)',
-          }}
+          style={{ position: 'fixed', inset: 0, zIndex: 199, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <aside
-        style={{
-          position: 'fixed', left: 0, top: 0, bottom: 0,
-          width: 248, zIndex: 200,
-          background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
-          display: 'flex', flexDirection: 'column',
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-          transition: 'transform 0.3s ease',
-          boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
-        }}
-        className="mobile-sidebar"
-      >
+
+      {/* Mobile sidebar */}
+      <aside style={{
+        position: 'fixed', left: 0, top: 0, bottom: 0, width: 'var(--sidebar-w)', zIndex: 200,
+        background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
+        display: 'flex', flexDirection: 'column',
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s ease',
+        boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
+      }} className="mobile-sidebar">
         {sidebarContent}
       </aside>
 
-      {/* ── MAIN ── */}
-      <main style={{ marginLeft: 248, flex: 1, display: 'flex', flexDirection: 'column' }}>
+      {/* Main */}
+      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
         {/* Topbar */}
-        <header
-          style={{
-            position: 'sticky', top: 0, zIndex: 100,
-            background: 'rgba(248,250,252,0.95)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid #e2e8f0',
-            padding: '12px 28px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}
-        >
+        <header style={{
+          position: 'sticky', top: 0, zIndex: 100,
+          background: 'rgba(248,250,252,0.95)', backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--border)',
+          padding: '12px 28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Hamburger */}
             <button
-              onClick={() => setSidebarOpen((s) => !s)}
-              style={{
-                display: 'none',
-                width: 36, height: 36,
-                borderRadius: 8, border: '1px solid #e2e8f0',
-                background: '#fff', cursor: 'pointer',
-                alignItems: 'center', justifyContent: 'center',
-                color: '#64748b',
-              }}
+              onClick={() => setSidebarOpen(s => !s)}
               className="hamburger-btn"
+              style={{
+                display: 'none', width: 36, height: 36, borderRadius: 8,
+                border: '1px solid var(--border)', background: 'var(--surface)',
+                alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'var(--text-2)',
+              }}
             >
-              {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
+              <i className={`fa-solid ${sidebarOpen ? 'fa-xmark' : 'fa-bars'}`} style={{ fontSize: 14 }} />
             </button>
             <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-1)' }}>
                 {getPageTitle(location.pathname)}
-              </div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-                National Biodiversity Strategy & Action Plan 2025–2030
-              </div>
+              </h2>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+                National Biodiversity Strategy &amp; Action Plan 2025–2030
+              </p>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Notification button */}
+            {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button
-                onClick={() => setNotifOpen((s) => !s)}
+                onClick={() => setNotifOpen(s => !s)}
                 style={{
-                  width: 36, height: 36, borderRadius: 9,
-                  border: '1px solid #e2e8f0', background: '#fff',
+                  position: 'relative', width: 36, height: 36, borderRadius: 9,
+                  border: '1px solid var(--border)', background: 'var(--surface)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', color: '#64748b',
+                  cursor: 'pointer', color: 'var(--text-2)',
                 }}
               >
-                <Bell size={14} />
+                <i className="fa-solid fa-bell" style={{ fontSize: '0.85rem' }} />
                 {unreadCount > 0 && (
-                  <span
-                    style={{
-                      position: 'absolute', top: -4, right: -4,
-                      background: '#f43f5e', color: '#fff',
-                      fontSize: '0.55rem', width: 16, height: 16,
-                      borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 700, border: '2px solid #f8fafc',
-                    }}
-                  >
+                  <span style={{
+                    position: 'absolute', top: -4, right: -4,
+                    background: '#f43f5e', color: '#fff',
+                    fontSize: '0.55rem', width: 16, height: 16,
+                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 700, border: '2px solid var(--surface-2)',
+                  }}>
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
 
-              {/* Notification Drawer */}
               {notifOpen && (
-                <div
-                  style={{
-                    position: 'absolute', top: 44, right: 0, width: 340,
-                    background: '#fff', borderRadius: 14,
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.14)',
-                    zIndex: 300, overflow: 'hidden',
-                  }}
-                >
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                <div style={{
+                  position: 'absolute', top: 44, right: 0, width: 340,
+                  background: 'var(--surface)', borderRadius: 'var(--radius)',
+                  border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)',
+                  zIndex: 400, overflow: 'hidden',
+                }}>
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>
                       Notifications
                       {unreadCount > 0 && (
-                        <span style={{ marginLeft: 6, background: '#fee2e2', color: '#991b1b', fontSize: '0.65rem', padding: '1px 6px', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>
+                        <span style={{ marginLeft: 6, background: '#fee2e2', color: '#991b1b', fontSize: '0.7rem', padding: '1px 6px', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>
                           {unreadCount}
                         </span>
                       )}
-                    </span>
-                    <button onClick={handleMarkAllRead} style={{ background: 'none', border: 'none', color: '#0ea5e9', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>
+                    </h4>
+                    <button onClick={handleMarkAllRead} style={{ background: 'none', border: 'none', color: 'var(--sky-dim)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>
                       Mark all read
                     </button>
                   </div>
                   <div style={{ maxHeight: 360, overflowY: 'auto' }}>
                     {notifications.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                        No notifications
-                      </div>
-                    ) : (
-                      notifications.slice(0, 8).map((n) => (
-                        <div
-                          key={n.id}
-                          style={{
-                            padding: '12px 16px', borderBottom: '1px solid #f8fafc',
-                            cursor: 'pointer', background: n.is_read ? 'transparent' : '#fafbff',
-                          }}
-                          onClick={() => {
-                            if (n.action_tab) navigate('/' + n.action_tab);
-                            setNotifOpen(false);
-                          }}
-                        >
-                          <p style={{ fontSize: '0.78rem', fontWeight: 500, color: '#0f172a', lineHeight: 1.4 }}>
-                            {n.title}
-                          </p>
-                          <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>
-                            {n.message}
-                          </p>
-                          <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 4, display: 'block' }}>
+                      <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>No notifications</div>
+                    ) : notifications.slice(0, 8).map(n => (
+                      <div
+                        key={n.id}
+                        onClick={() => { if (n.action_tab) navigate('/' + n.action_tab); setNotifOpen(false); }}
+                        style={{
+                          display: 'flex', gap: 10, padding: '12px 16px',
+                          borderBottom: '1px solid var(--surface-3)',
+                          cursor: 'pointer', background: n.is_read ? 'transparent' : '#fafbff',
+                          transition: '0.15s',
+                        }}
+                      >
+                        <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fee2e2', color: '#991b1b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0 }}>
+                          <i className="fa-solid fa-bell" />
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-1)', lineHeight: 1.3 }}>{n.title}</p>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: 2, display: 'block' }}>
                             {new Date(n.created_at).toLocaleString()}
                           </span>
                         </div>
-                      ))
-                    )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* User chip */}
-            <div
+            {/* Settings shortcut */}
+            <button
+              onClick={() => navigate('/settings')}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '4px 4px 4px 12px',
-                background: '#fff', border: '1px solid #e2e8f0', borderRadius: 20,
-                cursor: 'pointer',
+                width: 36, height: 36, borderRadius: 9,
+                border: '1px solid var(--border)', background: 'var(--surface)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'var(--text-2)',
               }}
             >
-              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>
+              <i className="fa-solid fa-gear" style={{ fontSize: '0.85rem' }} />
+            </button>
+
+            {/* User chip */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '4px 4px 4px 12px',
+              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20,
+            }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-2)' }}>
                 {user ? (user.full_name || user.email) : '—'}
               </span>
-              <div
-                style={{
-                  width: 28, height: 28,
-                  background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
-                  borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: '0.65rem', fontWeight: 700,
-                }}
-              >
+              <div style={{
+                width: 28, height: 28,
+                background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: '0.65rem', fontWeight: 700,
+              }}>
                 {user?.avatar_initials ?? '??'}
               </div>
             </div>
@@ -405,12 +339,12 @@ export default function DashboardLayout() {
               title="Sign Out"
               style={{
                 width: 36, height: 36, borderRadius: 9,
-                border: '1px solid #e2e8f0', background: '#fff',
+                border: '1px solid var(--border)', background: 'var(--surface)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#64748b',
+                cursor: 'pointer', color: 'var(--text-2)',
               }}
             >
-              <LogOut size={14} />
+              <i className="fa-solid fa-right-from-bracket" style={{ fontSize: '0.85rem' }} />
             </button>
           </div>
         </header>
@@ -424,35 +358,32 @@ export default function DashboardLayout() {
       </main>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'DM Sans', sans-serif; }
+        .desktop-sidebar { display: flex !important; }
+        .mobile-sidebar  { display: flex !important; }
+        nav a:hover { background: rgba(56,189,248,0.1) !important; color: #7dd3fc !important; }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           main { margin-left: 0 !important; }
           .hamburger-btn { display: flex !important; }
+          header { padding: 10px 16px 10px 56px !important; flex-wrap: wrap; gap: 8px; }
         }
-        nav a:hover { background: rgba(56,189,248,0.1) !important; color: #7dd3fc !important; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
       `}</style>
     </div>
   );
 }
 
 function getPageTitle(pathname: string): string {
-  const titles: Record<string, string> = {
-    '/dashboard': 'Monitoring Dashboard',
-    '/indicators': 'Indicator Hierarchy',
-    '/reporting-toolkit': 'Reporting Modules',
+  const map: Record<string, string> = {
+    '/dashboard':          'Monitoring Dashboard',
+    '/indicators':         '4-Tier Indicator Hierarchy',
+    '/reporting-toolkit':  'Reporting Modules',
     '/verification-queue': 'Verification Queue',
-    '/compliance': 'Compliance & Accountability',
-    '/risk': 'Risk Register',
-    '/reports': 'Reports & Documentation',
-    '/map': 'District Map',
-    '/settings': 'Settings',
-    '/users': 'User Management',
+    '/compliance':         'Compliance & Accountability',
+    '/risk':               'Risk Register & Mitigation Matrix',
+    '/reports':            'Reports & Documentation',
+    '/map':                'District Map',
+    '/settings':           'Settings',
+    '/users':              'User Management',
   };
-  return titles[pathname] || 'NBSAP Dashboard';
+  return map[pathname] ?? 'NBSAP Dashboard';
 }
