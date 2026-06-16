@@ -12,6 +12,7 @@ import { RiverNetworkOverlay } from './src/components/map/RiverNetworkOverlay';
 import { MapLoadingSkeleton } from './src/components/map/MapLoadingSkeleton';
 import { ExportButton } from './src/components/map/ExportButton';
 import { RefreshButton } from './src/components/map/RefreshButton';
+import { DistrictDetailPanel } from './src/components/map/DistrictDetailPanel';
 import { useGBIFOccurrences } from './src/hooks/useGBIFOccurrences';
 import { useProtectedAreas } from './src/hooks/useProtectedAreas';
 import { useRiverNetwork } from './src/hooks/useRiverNetwork';
@@ -211,6 +212,9 @@ export function MapPage() {
   
   // Tooltip state
   const [tooltip, setTooltip] = useState<{ d: District; x: number; y: number } | null>(null);
+  
+  // Selected district state for detail panel
+  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
   
   // GeoJSON state
   const [geoData, setGeoData] = useState<GeoJSONData | null>(null);
@@ -911,6 +915,12 @@ export function MapPage() {
                         cursor: 'pointer', 
                         transition: 'opacity 0.3s, fill 0.4s',
                       }}
+                      onClick={() => {
+                        if (districtData) {
+                          setSelectedDistrict(districtData);
+                          setTooltip(null); // Hide tooltip when detail panel opens
+                        }
+                      }}
                       onMouseEnter={(e) => {
                         if (districtData) {
                           e.currentTarget.style.opacity = '1';
@@ -1069,6 +1079,17 @@ export function MapPage() {
           ))}
         </div>
       </div>
+
+      {/* District Detail Panel */}
+      <DistrictDetailPanel
+        district={selectedDistrict}
+        onClose={() => setSelectedDistrict(null)}
+        occurrences={occurrences}
+        protectedAreas={protectedAreas}
+        biodiversityData={biodiversityData}
+        threatData={threatLevelData}
+        nbsapData={nbsapProgressData}
+      />
     </div>
   );
 }

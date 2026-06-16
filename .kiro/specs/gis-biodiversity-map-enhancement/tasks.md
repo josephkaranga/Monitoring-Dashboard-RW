@@ -215,10 +215,10 @@ Update documentation and deploy the enhanced map feature.
 - [-] 17.3 Create user guide for map layers and overlays
 - [x] 17.4 Document data sources and licenses in public/README.md
 - [-] 17.5 Update README.md with feature screenshots
-- [-] 17.6 Commit all changes with descriptive commit messages
-- [-] 17.7 Push to repository and verify Vercel deployment
-- [-] 17.8 Test deployed version on production URL
-- [-] 17.9 Monitor for any production errors or performance issues
+- [x] 17.6 Commit all changes with descriptive commit messages
+- [x] 17.7 Push to repository and verify Vercel deployment
+- [x] 17.8 Test deployed version on production URL
+- [x] 17.9 Monitor for any production errors or performance issues
 
 ## Optional Enhancements
 

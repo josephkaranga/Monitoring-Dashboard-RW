@@ -11,6 +11,7 @@ export { OverlayToggles } from './OverlayToggles';
 export { RefreshButton } from './RefreshButton';
 export { MapLegend } from './MapLegend';
 export { ExportButton } from './ExportButton';
+export { DistrictDetailPanel } from './DistrictDetailPanel';
 
 /**
  * Map Overlay Components
