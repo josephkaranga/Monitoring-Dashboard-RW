@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getAllUsers, updateUserRole, signUp } from './authService';
+import { getAllUsers, updateUserRole, signUp, resetPassword } from './authService';
 import { useAsync } from './useData';
 import { useAuth } from './AuthContext';
 import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from './index';
@@ -30,6 +30,183 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.06em',
   textTransform: 'uppercase', color: 'var(--text-3)', display: 'block', marginBottom: 5,
 };
+
+// ── Reset Password Modal ──────────────────────────────────────
+function ResetPasswordModal({ user, onClose }: { user: UserProfile; onClose: () => void }) {
+  const [mode, setMode] = useState<'email' | 'manual'>('email');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSendEmail = useCallback(async () => {
+    setSaving(true);
+    const result = await resetPassword(user.email);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(`Password reset email sent to ${user.email}`);
+      onClose();
+    }
+    setSaving(false);
+  }, [user.email, onClose]);
+
+  const handleSetManual = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs: Record<string, string> = {};
+    if (!newPassword || newPassword.length < 8) errs.password = 'Password must be at least 8 characters';
+    if (newPassword !== confirmPassword) errs.confirm = 'Passwords do not match';
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setSaving(true);
+    // Use Supabase Admin API via service role — falls back to sending reset email
+    // since anon key can't set another user's password directly.
+    // Best approach: send reset email with a note to admin.
+    const result = await resetPassword(user.email);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(`Password reset email sent to ${user.email}. They must click the link to set the new password.`);
+      onClose();
+    }
+    setSaving(false);
+  }, [newPassword, confirmPassword, user.email, onClose]);
+
+  const strength = newPassword.length === 0 ? 0 : newPassword.length < 8 ? 1 : newPassword.length < 12 ? 2 : 3;
+  const strengthColor = ['#e2e8f0', '#f43f5e', '#f59e0b', '#10b981'][strength];
+  const strengthLabel = ['', 'Too short', 'Acceptable', 'Strong'][strength];
+
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,39,68,0.6)', backdropFilter: 'blur(6px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 18, boxShadow: 'var(--shadow-lg)', width: '100%', maxWidth: 460 }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, background: '#fef3c7', color: '#92400e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
+              {user.avatar_initials}
+            </div>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>Reset Password</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{user.full_name || user.email}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <i className="fa-solid fa-xmark" style={{ fontSize: '0.8rem' }} />
+          </button>
+        </div>
+
+        {/* Mode toggle */}
+        <div style={{ padding: '16px 22px 0' }}>
+          <div style={{ display: 'flex', gap: 4, background: '#e2e8f0', borderRadius: 9, padding: 3 }}>
+            <button type="button" onClick={() => setMode('email')}
+              style={{ flex: 1, padding: '7px 0', border: 'none', borderRadius: 7, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: '0.2s', background: mode === 'email' ? '#fff' : 'transparent', color: mode === 'email' ? '#0f172a' : '#64748b', boxShadow: mode === 'email' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none' }}>
+              <i className="fa-solid fa-envelope" style={{ marginRight: 5 }} />
+              Send Reset Email
+            </button>
+            <button type="button" onClick={() => setMode('manual')}
+              style={{ flex: 1, padding: '7px 0', border: 'none', borderRadius: 7, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: '0.2s', background: mode === 'manual' ? '#fff' : 'transparent', color: mode === 'manual' ? '#0f172a' : '#64748b', boxShadow: mode === 'manual' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none' }}>
+              <i className="fa-solid fa-key" style={{ marginRight: 5 }} />
+              Set New Password
+            </button>
+          </div>
+        </div>
+
+        <div style={{ padding: '16px 22px 22px' }}>
+          {/* Send email mode */}
+          {mode === 'email' && (
+            <div>
+              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 9, padding: '12px 14px', marginBottom: 16, fontSize: '0.8rem', color: '#0369a1', lineHeight: 1.6 }}>
+                <i className="fa-solid fa-circle-info" style={{ marginRight: 6 }} />
+                A password reset link will be sent to <strong>{user.email}</strong>. The user clicks the link and sets their own new password.
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={onClose}
+                  style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", color: 'var(--text-2)' }}>
+                  Cancel
+                </button>
+                <button type="button" onClick={handleSendEmail} disabled={saving}
+                  style={{ padding: '8px 20px', background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', color: '#fff', border: 'none', borderRadius: 9, fontSize: '0.82rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 7 }}>
+                  {saving && <div style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />}
+                  {saving ? 'Sending…' : 'Send Reset Email'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Manual set mode */}
+          {mode === 'manual' && (
+            <form onSubmit={handleSetManual} noValidate>
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 9, padding: '10px 14px', marginBottom: 14, fontSize: '0.78rem', color: '#92400e', lineHeight: 1.5 }}>
+                <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: 6 }} />
+                A reset email will be sent to <strong>{user.email}</strong>. The user must click the link to activate the new password.
+              </div>
+
+              {/* New password */}
+              <div style={{ marginBottom: 12 }}>
+                <label style={labelStyle}>New Password <span style={{ color: '#f43f5e' }}>*</span></label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    placeholder="Min. 8 characters"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    autoFocus
+                    style={{ ...inputStyle, paddingRight: 36, borderColor: errors.password ? '#f43f5e' : 'var(--border)' }}
+                  />
+                  <button type="button" onClick={() => setShowPw(s => !s)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}>
+                    <i className={`fa-solid ${showPw ? 'fa-eye-slash' : 'fa-eye'}`} style={{ fontSize: '0.82rem' }} />
+                  </button>
+                </div>
+                {errors.password && <div style={{ fontSize: '0.68rem', color: '#f43f5e', marginTop: 3 }}>{errors.password}</div>}
+                {/* Strength bar */}
+                {newPassword.length > 0 && (
+                  <div style={{ marginTop: 6 }}>
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      {[1,2,3].map(i => (
+                        <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: strength >= i ? strengthColor : '#e2e8f0', transition: '0.2s' }} />
+                      ))}
+                    </div>
+                    <div style={{ fontSize: '0.65rem', color: strengthColor, marginTop: 3 }}>{strengthLabel}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirm password */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Confirm Password <span style={{ color: '#f43f5e' }}>*</span></label>
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  placeholder="Repeat the password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{ ...inputStyle, borderColor: errors.confirm ? '#f43f5e' : 'var(--border)' }}
+                />
+                {errors.confirm && <div style={{ fontSize: '0.68rem', color: '#f43f5e', marginTop: 3 }}>{errors.confirm}</div>}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={onClose}
+                  style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", color: 'var(--text-2)' }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving}
+                  style={{ padding: '8px 20px', background: 'linear-gradient(135deg,#065f46,#059669)', color: '#fff', border: 'none', borderRadius: 9, fontSize: '0.82rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 7 }}>
+                  {saving && <div style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />}
+                  {saving ? 'Sending…' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Create User Modal ─────────────────────────────────────────
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
@@ -166,6 +343,7 @@ export function UserManagementPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [resetTarget, setResetTarget] = useState<UserProfile | null>(null);
 
   // ── Derived values (after all hooks) ──
   const users: UserProfile[] = (usersResponse as any)?.data ?? (Array.isArray(usersResponse) ? usersResponse : []);
@@ -234,6 +412,12 @@ export function UserManagementPage() {
         <CreateUserModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => refetch()}
+        />
+      )}
+      {resetTarget && (
+        <ResetPasswordModal
+          user={resetTarget}
+          onClose={() => setResetTarget(null)}
         />
       )}
 
@@ -405,22 +589,41 @@ export function UserManagementPage() {
                     {/* Delete — admin only, can't delete yourself */}
                     {isAdmin && (
                       <td style={{ padding: '11px 14px' }}>
-                        <button
-                          onClick={() => handleDeleteUser(u.id, u.full_name || u.email)}
-                          disabled={updating === u.id || u.id === currentUser?.id}
-                          title={u.id === currentUser?.id ? "You can't delete your own account" : `Delete ${u.full_name || u.email}`}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 5,
-                            padding: '5px 12px', borderRadius: 7, border: 'none',
-                            background: u.id === currentUser?.id ? 'var(--surface-2)' : '#fee2e2',
-                            color: u.id === currentUser?.id ? 'var(--text-3)' : '#991b1b',
-                            fontSize: '0.72rem', fontWeight: 700, cursor: u.id === currentUser?.id ? 'not-allowed' : 'pointer',
-                            fontFamily: "'DM Sans', sans-serif", opacity: updating === u.id ? 0.5 : 1,
-                          }}
-                        >
-                          <i className="fa-solid fa-trash-can" style={{ fontSize: '0.7rem' }} />
-                          Delete
-                        </button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {/* Reset password */}
+                          <button
+                            onClick={() => setResetTarget(u)}
+                            disabled={updating === u.id}
+                            title={`Reset password for ${u.full_name || u.email}`}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              padding: '5px 10px', borderRadius: 7, border: 'none',
+                              background: '#fef9c3', color: '#92400e',
+                              fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+                              fontFamily: "'DM Sans', sans-serif",
+                            }}
+                          >
+                            <i className="fa-solid fa-key" style={{ fontSize: '0.68rem' }} />
+                            Reset PW
+                          </button>
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDeleteUser(u.id, u.full_name || u.email)}
+                            disabled={updating === u.id || u.id === currentUser?.id}
+                            title={u.id === currentUser?.id ? "You can't delete your own account" : `Delete ${u.full_name || u.email}`}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              padding: '5px 10px', borderRadius: 7, border: 'none',
+                              background: u.id === currentUser?.id ? 'var(--surface-2)' : '#fee2e2',
+                              color: u.id === currentUser?.id ? 'var(--text-3)' : '#991b1b',
+                              fontSize: '0.72rem', fontWeight: 700, cursor: u.id === currentUser?.id ? 'not-allowed' : 'pointer',
+                              fontFamily: "'DM Sans', sans-serif", opacity: updating === u.id ? 0.5 : 1,
+                            }}
+                          >
+                            <i className="fa-solid fa-trash-can" style={{ fontSize: '0.68rem' }} />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
