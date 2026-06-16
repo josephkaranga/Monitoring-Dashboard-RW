@@ -6,25 +6,28 @@
 
 export type UserRole =
   | 'policy_monitoring'
-  | 'sector_reporting'
+  | 'lead_government_ministry_reporting'
   | 'local_reporting'
   | 'dashboard_management'
-  | 'programme_alignment';
+  | 'programme_alignment'
+  | 'public_viewer';
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
   policy_monitoring: 'Policy Monitor',
-  sector_reporting: 'Sector Reporter',
+  lead_government_ministry_reporting: 'Lead Government Ministry Reporter',
   local_reporting: 'Local Reporter',
   dashboard_management: 'REMA Administrator',
   programme_alignment: 'Development Partner',
+  public_viewer: 'Public Viewer',
 };
 
 export const USER_ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   policy_monitoring: 'Read-only access to strategic dashboards and national progress summaries.',
-  sector_reporting: 'Upload and review sector-level indicator data via T01–T07 reporting modules.',
+  lead_government_ministry_reporting: 'Upload and review sector-level indicator data via T01–T07 reporting modules.',
   local_reporting: 'Enter and validate district-level biodiversity monitoring data.',
   dashboard_management: 'Full system access: verification queue, audit log, user management, all exports.',
   programme_alignment: 'Analytical viewing access for programme alignment and donor reporting.',
+  public_viewer: 'External read-only access to view dashboards, reports, indicators, and maps without modification privileges.',
 };
 
 export const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
@@ -39,10 +42,10 @@ export const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewCompliance: true,
     canViewAnalytics: true,
   },
-  sector_reporting: {
+  lead_government_ministry_reporting: {
     canSubmitReports: true,
     canApproveReports: true,
-    canViewVerifQueue: false,
+    canViewVerifQueue: true,
     canViewAuditLog: false,
     canManageUsers: false,
     canExportRaw: true,
@@ -83,6 +86,17 @@ export const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewCompliance: true,
     canViewAnalytics: true,
   },
+  public_viewer: {
+    canSubmitReports: false,
+    canApproveReports: false,
+    canViewVerifQueue: false,
+    canViewAuditLog: false,
+    canManageUsers: false,
+    canExportRaw: false,
+    canViewRiskRegister: false,
+    canViewCompliance: false,
+    canViewAnalytics: false,
+  },
 };
 
 export interface RolePermissions {
@@ -97,6 +111,19 @@ export interface RolePermissions {
   canViewAnalytics: boolean;
 }
 
+/**
+ * Check if a user role has a specific permission
+ * @param role - The user role to check
+ * @param permission - The permission key to check
+ * @returns true if the role has the permission, false otherwise
+ */
+export function hasPermission(
+  role: UserRole,
+  permission: keyof RolePermissions
+): boolean {
+  return USER_ROLE_PERMISSIONS[role][permission];
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -106,10 +133,83 @@ export interface UserProfile {
   department: string | null;
   phone: string | null;
   is_active: boolean;
+  suspended_at: string | null;
+  suspended_by: string | null;
+  suspension_reason: string | null;
+  suspension_end_date: string | null;
   last_login: string | null;
   avatar_initials: string;
   created_at: string;
   updated_at: string;
+}
+
+export type AccountStatus = 'active' | 'deactivated' | 'suspended' | 'suspended_expired';
+
+export interface AccountStatusInfo {
+  status: AccountStatus;
+  message: string;
+  canLogin: boolean;
+  suspendedBy?: string;
+  suspensionReason?: string;
+  suspensionEndDate?: string;
+}
+
+/**
+ * Get account status information for a user profile
+ * @param profile - The user profile to check
+ * @returns AccountStatusInfo object with status details
+ */
+export function getAccountStatus(profile: UserProfile): AccountStatusInfo {
+  // Check if account is deactivated
+  if (!profile.is_active) {
+    return {
+      status: 'deactivated',
+      message: 'This account has been deactivated by an administrator.',
+      canLogin: false,
+    };
+  }
+
+  // Check if account is suspended
+  if (profile.suspended_at) {
+    // Check if suspension has expired
+    if (profile.suspension_end_date) {
+      const endDate = new Date(profile.suspension_end_date);
+      const now = new Date();
+      
+      if (endDate < now) {
+        return {
+          status: 'suspended_expired',
+          message: 'Account suspension has expired and will be automatically reactivated.',
+          canLogin: true,
+        };
+      }
+      
+      return {
+        status: 'suspended',
+        message: `This account is suspended until ${endDate.toLocaleDateString()}.`,
+        canLogin: false,
+        suspendedBy: profile.suspended_by || undefined,
+        suspensionReason: profile.suspension_reason || undefined,
+        suspensionEndDate: profile.suspension_end_date,
+      };
+    }
+    
+    // Indefinite suspension
+    return {
+      status: 'suspended',
+      message: 'This account is suspended indefinitely. Contact an administrator for more information.',
+      canLogin: false,
+      suspendedBy: profile.suspended_by || undefined,
+      suspensionReason: profile.suspension_reason || undefined,
+    };
+  }
+
+  // Account is active
+  return {
+    status: 'active',
+    message: 'Account is active and in good standing.',
+    canLogin: true,
+  };
 }
 
 // ── INDICATORS ───────────────────────────────────────────────

@@ -281,3 +281,206 @@ export async function updateUserRoleDirectly(
 
   return { data: data as UserProfile, error: null };
 }
+
+// ── DEACTIVATE USER ACCOUNT (admin only) ─────────────────────
+export async function deactivateUserAccount(
+  userId: string,
+  reason?: string
+): Promise<ApiResponse<UserProfile>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session?.user) {
+    return { data: null, error: 'Not authenticated' };
+  }
+
+  // Verify admin role
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', sessionData.session.user.id)
+    .single();
+
+  if (adminProfile?.role !== 'dashboard_management') {
+    return { data: null, error: 'Only administrators can deactivate accounts' };
+  }
+
+  // Get target user info
+  const { data: targetProfile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', userId)
+    .single();
+
+  if (!targetProfile) {
+    return { data: null, error: 'User not found' };
+  }
+
+  // Deactivate account
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ is_active: false })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  // Log in audit trail
+  await supabase.from('audit_log').insert({
+    user_id: sessionData.session.user.id,
+    action_type: 'deactivate_account',
+    action: 'Administrator deactivated user account',
+    detail: `Deactivated account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason || 'Not specified'}`,
+    role: 'dashboard_management'
+  });
+
+  // Notify the user
+  await supabase.from('notifications').insert({
+    user_id: userId,
+    title: 'Account Deactivated',
+    message: `Your account has been deactivated by an administrator. ${reason ? `Reason: ${reason}` : 'Please contact support for more information.'}`,
+    type: 'warning'
+  });
+
+  return { data: data as UserProfile, error: null };
+}
+
+// ── SUSPEND USER ACCOUNT (admin only) ────────────────────────
+export async function suspendUserAccount(
+  userId: string,
+  reason: string,
+  endDate?: Date
+): Promise<ApiResponse<UserProfile>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session?.user) {
+    return { data: null, error: 'Not authenticated' };
+  }
+
+  // Verify admin role
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', sessionData.session.user.id)
+    .single();
+
+  if (adminProfile?.role !== 'dashboard_management') {
+    return { data: null, error: 'Only administrators can suspend accounts' };
+  }
+
+  // Get target user info
+  const { data: targetProfile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', userId)
+    .single();
+
+  if (!targetProfile) {
+    return { data: null, error: 'User not found' };
+  }
+
+  // Suspend account
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      suspended_at: new Date().toISOString(),
+      suspended_by: sessionData.session.user.id,
+      suspension_reason: reason,
+      suspension_end_date: endDate?.toISOString() || null
+    })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  // Log in audit trail
+  await supabase.from('audit_log').insert({
+    user_id: sessionData.session.user.id,
+    action_type: 'suspend_account',
+    action: 'Administrator suspended user account',
+    detail: `Suspended account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason}. End date: ${endDate?.toISOString() || 'Indefinite'}`,
+    role: 'dashboard_management'
+  });
+
+  // Notify the user
+  await supabase.from('notifications').insert({
+    user_id: userId,
+    title: 'Account Suspended',
+    message: `Your account has been suspended. Reason: ${reason}. ${endDate ? `Suspension ends: ${endDate.toLocaleDateString()}` : 'Contact administrator for more information.'}`,
+    type: 'error'
+  });
+
+  return { data: data as UserProfile, error: null };
+}
+
+// ── REACTIVATE USER ACCOUNT (admin only) ─────────────────────
+export async function reactivateUserAccount(
+  userId: string
+): Promise<ApiResponse<UserProfile>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session?.user) {
+    return { data: null, error: 'Not authenticated' };
+  }
+
+  // Verify admin role
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', sessionData.session.user.id)
+    .single();
+
+  if (adminProfile?.role !== 'dashboard_management') {
+    return { data: null, error: 'Only administrators can reactivate accounts' };
+  }
+
+  // Get target user info
+  const { data: targetProfile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', userId)
+    .single();
+
+  if (!targetProfile) {
+    return { data: null, error: 'User not found' };
+  }
+
+  // Reactivate account
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      is_active: true,
+      suspended_at: null,
+      suspended_by: null,
+      suspension_reason: null,
+      suspension_end_date: null
+    })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  // Log in audit trail
+  await supabase.from('audit_log').insert({
+    user_id: sessionData.session.user.id,
+    action_type: 'reactivate_account',
+    action: 'Administrator reactivated user account',
+    detail: `Reactivated account for ${targetProfile.full_name} (${targetProfile.email})`,
+    role: 'dashboard_management'
+  });
+
+  // Notify the user
+  await supabase.from('notifications').insert({
+    user_id: userId,
+    title: 'Account Reactivated',
+    message: 'Your account has been reactivated. You can now log in and access the system.',
+    type: 'success'
+  });
+
+  return { data: data as UserProfile, error: null };
+}

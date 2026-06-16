@@ -159,7 +159,7 @@ export default function App() {
                     element={
                       <ProtectedRoute
                         allowedRoles={[
-                          'sector_reporting',
+                          'lead_government_ministry_reporting',
                           'local_reporting',
                           'dashboard_management',
                         ]}
@@ -175,7 +175,7 @@ export default function App() {
                       <ProtectedRoute
                         allowedRoles={[
                           'policy_monitoring',
-                          'sector_reporting',
+                          'lead_government_ministry_reporting',
                           'dashboard_management',
                           'programme_alignment',
                         ]}
@@ -189,7 +189,7 @@ export default function App() {
                   <Route
                     element={
                       <ProtectedRoute
-                        allowedRoles={['sector_reporting', 'dashboard_management']}
+                        allowedRoles={['lead_government_ministry_reporting', 'dashboard_management']}
                         requiredPermission="canApproveReports"
                       />
                     }

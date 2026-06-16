@@ -63,6 +63,7 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
 
   /**
    * Convert GeoJSON coordinates to SVG path string for lines
+   * Applies coordinate transformation to match SVG coordinate system (negate latitude)
    */
   const coordinatesToPath = (coords: number[][]): string => {
     if (!coords || coords.length === 0) return '';
@@ -70,7 +71,7 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
     return coords.map((point, i) => {
       const [lon, lat] = point;
       const command = i === 0 ? 'M' : 'L';
-      return `${command}${lon},${lat}`; // Use lat directly (already negative for Rwanda)
+      return `${command}${lon},${-lat}`; // Negate latitude for correct north-south orientation
     }).join(' ');
   };
 

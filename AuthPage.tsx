@@ -11,10 +11,11 @@ type AuthMode = 'login' | 'signup' | 'reset';
 
 const ROLE_COLORS: Record<UserRole, string> = {
   policy_monitoring:    '#10b981',
-  sector_reporting:     '#0ea5e9',
+  lead_government_ministry_reporting: '#0ea5e9',
   local_reporting:      '#f59e0b',
   dashboard_management: '#f43f5e',
   programme_alignment:  '#8b5cf6',
+  public_viewer:        '#64748b',
 };
 
 // ── Shared styles (defined outside component to avoid re-creation) ──
@@ -378,7 +379,7 @@ export default function AuthPage() {
             )}
 
             <div style={{ textAlign: 'center', marginTop: 24, fontSize: '0.72rem', color: '#94a3b8', fontFamily: "'DM Mono', monospace" }}>
-              NBSAP Monitoring System · Rwanda · 2025–2030
+              NBSAP Monitoring System · Rwanda · 2020–2030
             </div>
           </div>
         </div>

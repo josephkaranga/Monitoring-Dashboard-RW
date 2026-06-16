@@ -48,6 +48,88 @@ const AuthContext = createContext<AuthContextValue>({
   refreshProfile: async () => {},
 });
 
+// ── Account Status Check Result ──────────────────────────────
+interface AccountStatusCheckResult {
+  allowed: boolean;
+  message?: string;
+  suspensionCleared?: boolean;
+  updatedProfile?: UserProfile;
+}
+
+/**
+ * Check account status and handle deactivation, suspension, and auto-reactivation
+ * Requirements: 4.4, 4.5, 4.6, 4.11
+ */
+async function checkAccountStatus(profile: UserProfile): Promise<AccountStatusCheckResult> {
+  // Check if account is deactivated
+  if (!profile.is_active) {
+    return {
+      allowed: false,
+      message: 'Your account has been deactivated. Please contact an administrator.'
+    };
+  }
+
+  // Check if account is suspended
+  if (profile.suspended_at) {
+    // Check if suspension has expired
+    if (profile.suspension_end_date) {
+      const endDate = new Date(profile.suspension_end_date);
+      const now = new Date();
+      
+      if (endDate < now) {
+        // Auto-reactivate expired suspension
+        const { data: updatedProfile, error } = await supabase
+          .from('profiles')
+          .update({
+            suspended_at: null,
+            suspended_by: null,
+            suspension_reason: null,
+            suspension_end_date: null
+          })
+          .eq('id', profile.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Failed to auto-reactivate expired suspension:', error);
+          return {
+            allowed: false,
+            message: 'Your account suspension has expired, but auto-reactivation failed. Please contact an administrator.'
+          };
+        }
+
+        // Log the auto-reactivation
+        await supabase.from('audit_log').insert({
+          user_id: profile.id,
+          action_type: 'auto_reactivate_account',
+          action: 'System auto-reactivated expired suspension',
+          detail: `Suspension expired on ${endDate.toISOString()}. Account automatically reactivated.`,
+          role: 'system'
+        }).catch(console.error);
+
+        return {
+          allowed: true,
+          suspensionCleared: true,
+          updatedProfile: updatedProfile as UserProfile
+        };
+      }
+    }
+
+    // Suspension is still active
+    const endDateMsg = profile.suspension_end_date 
+      ? ` Your suspension will end on ${new Date(profile.suspension_end_date).toLocaleDateString()}.`
+      : '';
+    
+    return {
+      allowed: false,
+      message: `Your account is currently suspended.${endDateMsg} Please contact an administrator.`
+    };
+  }
+
+  // Account is active and not suspended
+  return { allowed: true };
+}
+
 // ── In-memory profile cache (5 min TTL) ──────────────────────
 let profileCache: { userId: string; profile: UserProfile; ts: number } | null = null;
 const PROFILE_CACHE_TTL = 5 * 60 * 1000;
@@ -137,13 +219,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!mountedRef.current) return;
 
-      // Block inactive users
-      if (!profile.is_active) {
+      // Check account status
+      const statusCheck = await checkAccountStatus(profile);
+      if (!statusCheck.allowed) {
         await supabase.auth.signOut();
         profileCache = null;
         clearSessionCache();
         if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
-        return;
+        throw new Error(statusCheck.message);
+      }
+
+      // If suspension was auto-cleared, refresh the profile
+      if (statusCheck.suspensionCleared) {
+        profile = statusCheck.updatedProfile!;
+        profileCache = { userId, profile, ts: Date.now() };
+        writeSessionCache(userId, profile);
       }
 
       dispatch({ type: 'SET_SESSION', user: profile, session });

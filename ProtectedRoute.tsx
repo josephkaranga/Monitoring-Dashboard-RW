@@ -187,7 +187,7 @@ export function AdminOnly() {
 export function ReporterRoute() {
   return (
     <ProtectedRoute
-      allowedRoles={['sector_reporting', 'local_reporting', 'dashboard_management']}
+      allowedRoles={['lead_government_ministry_reporting', 'local_reporting', 'dashboard_management']}
     />
   );
 }
@@ -196,7 +196,7 @@ export function ReporterRoute() {
 export function ApproverRoute() {
   return (
     <ProtectedRoute
-      allowedRoles={['sector_reporting', 'dashboard_management']}
+      allowedRoles={['lead_government_ministry_reporting', 'dashboard_management']}
     />
   );
 }

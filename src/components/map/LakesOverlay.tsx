@@ -1,23 +1,24 @@
 import React from 'react';
-import type { ProtectedAreasCollection, ProtectedArea } from '../../types/overlays';
+import type { LakesCollection, LakeFeature } from '../../types/overlays';
 
-interface ProtectedAreasOverlayProps {
-  areas: ProtectedAreasCollection | null;
-  onHover: (area: ProtectedArea | null) => void;
+interface LakesOverlayProps {
+  lakes: LakesCollection | null;
+  onHover: (lake: LakeFeature | null) => void;
+  onClick: (lake: LakeFeature) => void;
   loading?: boolean;
   error?: string | null;
   viewBox?: { minLon: number; maxLon: number; minLat: number; maxLat: number };
 }
 
 /**
- * ProtectedAreasOverlay Component
+ * LakesOverlay Component
  * 
- * Renders protected areas (national parks, reserves, wetlands) as polygons on the map.
+ * Renders major lakes as polygons on the map.
  * Features:
- * - Polygon rendering with semi-transparent fill
+ * - Polygon rendering with semi-transparent blue fill
  * - Border highlighting
- * - Hover tooltips showing area information
- * - Different colors by designation type
+ * - Hover tooltips showing lake information
+ * - Click events to show detailed lake information
  * - Loading and error states
  * 
  * Performance optimizations:
@@ -25,18 +26,19 @@ interface ProtectedAreasOverlayProps {
  * - Memoized path generation
  * - React.memo to prevent unnecessary re-renders
  */
-export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
-  areas,
+export const LakesOverlay = React.memo(function LakesOverlay({
+  lakes,
   onHover,
+  onClick,
   loading = false,
   error = null,
   viewBox = { minLon: 28.8, maxLon: 32.3, minLat: -2.9, maxLat: -1.0 }
-}: ProtectedAreasOverlayProps) {
+}: LakesOverlayProps) {
   /**
-   * Check if an area is within the viewport (simple bounds check)
+   * Check if a lake is within the viewport (simple bounds check)
    */
-  const isInViewport = (area: ProtectedArea): boolean => {
-    // Get rough bounds of the area
+  const isInViewport = (lake: LakeFeature): boolean => {
+    // Get rough bounds of the lake
     let minLon = Infinity, maxLon = -Infinity;
     let minLat = Infinity, maxLat = -Infinity;
     
@@ -49,17 +51,17 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
       });
     };
     
-    if (area.geometry.type === 'Polygon') {
-      const [exterior] = area.geometry.coordinates as number[][][];
+    if (lake.geometry.type === 'Polygon') {
+      const [exterior] = lake.geometry.coordinates as number[][][];
       extractBounds(exterior);
-    } else if (area.geometry.type === 'MultiPolygon') {
-      (area.geometry.coordinates as number[][][][]).forEach(polygon => {
+    } else if (lake.geometry.type === 'MultiPolygon') {
+      (lake.geometry.coordinates as number[][][][]).forEach(polygon => {
         const [exterior] = polygon;
         extractBounds(exterior);
       });
     }
     
-    // Check if area bounds intersect with viewport
+    // Check if lake bounds intersect with viewport
     return !(maxLon < viewBox.minLon || minLon > viewBox.maxLon ||
              maxLat < viewBox.minLat || minLat > viewBox.maxLat);
   };
@@ -81,7 +83,7 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
   /**
    * Render a polygon (handles both Polygon and MultiPolygon)
    */
-  const renderPolygon = (geometry: ProtectedArea['geometry']): string => {
+  const renderPolygon = (geometry: LakeFeature['geometry']): string => {
     if (geometry.type === 'Polygon') {
       // First ring is exterior, rest are holes
       const [exterior, ...holes] = geometry.coordinates as number[][][];
@@ -98,23 +100,10 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
     return '';
   };
 
-  /**
-   * Get color based on designation type
-   */
-  const getDesignationColor = (designationType: string): string => {
-    const colors: Record<string, string> = {
-      'National Park': '#16a34a',
-      'Reserve': '#0891b2',
-      'Wetland': '#0ea5e9',
-      'Forest Reserve': '#059669',
-    };
-    return colors[designationType] || '#10b981';
-  };
-
   // Show loading state
   if (loading) {
     return (
-      <g className="protected-areas-overlay">
+      <g className="lakes-overlay">
         <text
           x="30"
           y="-1.5"
@@ -122,7 +111,7 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
           fill="var(--text-3)"
           fontFamily="'DM Sans', sans-serif"
         >
-          Loading protected areas...
+          Loading lakes...
         </text>
       </g>
     );
@@ -131,7 +120,7 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
   // Show error state
   if (error) {
     return (
-      <g className="protected-areas-overlay">
+      <g className="lakes-overlay">
         <text
           x="30"
           y="-1.5"
@@ -139,53 +128,53 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
           fill="#f43f5e"
           fontFamily="'DM Sans', sans-serif"
         >
-          Error loading protected areas
+          Error loading lakes
         </text>
       </g>
     );
   }
 
   // No data
-  if (!areas || areas.features.length === 0) {
+  if (!lakes || lakes.features.length === 0) {
     return null;
   }
 
   return (
-    <g className="protected-areas-overlay" aria-label="Protected areas">
-      {areas.features.filter(isInViewport).map((area, idx) => {
-        const pathData = renderPolygon(area.geometry);
-        const color = getDesignationColor(area.properties.designationType);
+    <g className="lakes-overlay" aria-label="Major lakes">
+      {lakes.features.filter(isInViewport).map((lake, idx) => {
+        const pathData = renderPolygon(lake.geometry);
 
         return (
           <path
-            key={`protected-area-${idx}`}
+            key={`lake-${idx}`}
             d={pathData}
-            fill={color}
-            fillOpacity={0.2}
-            stroke={color}
-            strokeWidth="0.008"
+            fill="#3b82f6"
+            fillOpacity={0.3}
+            stroke="#3b82f6"
+            strokeWidth="0.01"
             strokeOpacity={0.8}
             style={{
               cursor: 'pointer',
               transition: 'fill-opacity 0.2s, stroke-width 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.fillOpacity = '0.35';
-              e.currentTarget.style.strokeWidth = '0.012';
-              onHover(area);
+              e.currentTarget.style.fillOpacity = '0.5';
+              e.currentTarget.style.strokeWidth = '0.015';
+              onHover(lake);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.fillOpacity = '0.2';
-              e.currentTarget.style.strokeWidth = '0.008';
+              e.currentTarget.style.fillOpacity = '0.3';
+              e.currentTarget.style.strokeWidth = '0.01';
               onHover(null);
             }}
-            aria-label={`${area.properties.name} - ${area.properties.designationType}`}
+            onClick={() => onClick(lake)}
+            aria-label={`${lake.properties.name}`}
           >
             <title>
-              {area.properties.name}
-              {'\n'}Type: {area.properties.designationType}
-              {'\n'}Area: {area.properties.area.toFixed(2)} km²
-              {area.properties.established && `\nEstablished: ${area.properties.established}`}
+              {lake.properties.name}
+              {'\n'}Area: {lake.properties.area_km2} km²
+              {'\n'}Max Depth: {lake.properties.max_depth_m} m
+              {'\n'}Elevation: {lake.properties.elevation_m} m
             </title>
           </path>
         );
@@ -194,4 +183,4 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
   );
 });
 
-export default ProtectedAreasOverlay;
+export default LakesOverlay;

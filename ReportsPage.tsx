@@ -21,7 +21,7 @@ export function ReportsPage() {
       doc.text('NBSAP Monitoring Dashboard — Rwanda', 15, 12);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('National Biodiversity Strategy & Action Plan 2025-2030', 15, 19);
+      doc.text('National Biodiversity Strategy & Action Plan 2020-2030', 15, 19);
       doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 25);
       let y = 38;
       doc.setFont('helvetica', 'bold');
@@ -56,11 +56,11 @@ export function ReportsPage() {
   }, [reports]);
 
   const reportRows = [
-    { title: 'Annual NBSAP Report',    period: '2025',         status: 'Completed', sBg: '#dcfce7', sColor: '#166534', due: 'Mar 30, 2026', dl: '✓ Done',  dlBg: '#dcfce7', dlColor: '#166534' },
-    { title: 'Q4 Operational Update',  period: 'Oct–Dec 2025', status: 'In Review', sBg: '#dbeafe', sColor: '#1e40af', due: 'Jan 15, 2026', dl: '✓ Done',  dlBg: '#dcfce7', dlColor: '#166534' },
-    { title: 'Gender Monitoring Report',period: '2025',         status: 'Pending',   sBg: '#fef9c3', sColor: '#854d0e', due: 'Apr 15, 2026', dl: '16 days', dlBg: '#ffedd5', dlColor: '#9a3412' },
+    { title: 'Annual NBSAP Report',    period: '2030',         status: 'Completed', sBg: '#dcfce7', sColor: '#166534', due: 'Mar 30, 2031', dl: '✓ Done',  dlBg: '#dcfce7', dlColor: '#166534' },
+    { title: 'Q4 Operational Update',  period: 'Oct–Dec 2030', status: 'In Review', sBg: '#dbeafe', sColor: '#1e40af', due: 'Jan 15, 2031', dl: '✓ Done',  dlBg: '#dcfce7', dlColor: '#166534' },
+    { title: 'Gender Monitoring Report',period: '2030',         status: 'Pending',   sBg: '#fef9c3', sColor: '#854d0e', due: 'Apr 15, 2031', dl: '16 days', dlBg: '#ffedd5', dlColor: '#9a3412' },
     { title: 'Mid-Term Evaluation',     period: '2025–2027',    status: 'Scheduled', sBg: '#f1f5f9', sColor: '#475569', due: 'Q3 2027',      dl: '17+ mo',  dlBg: '#dcfce7', dlColor: '#166534' },
-    { title: 'CBD National Report',     period: '2025–2029',    status: 'Scheduled', sBg: '#f1f5f9', sColor: '#475569', due: 'Jun 2029',     dl: '39 mo',   dlBg: '#dcfce7', dlColor: '#166534' },
+    { title: 'CBD National Report',     period: '2025–2030',    status: 'Scheduled', sBg: '#f1f5f9', sColor: '#475569', due: 'Jun 2030',     dl: '39 mo',   dlBg: '#dcfce7', dlColor: '#166534' },
   ];
 
   return (
@@ -68,9 +68,9 @@ export function ReportsPage() {
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
-          { icon: 'fa-file-pdf',      bg: '#dbeafe', iconColor: '#1e40af', title: 'Annual Reports',      desc: 'Progress against 22 NBSAP targets',    btnColor: '#1e40af', btnLabel: 'Download 2025 Report', onClick: handlePDF },
-          { icon: 'fa-chart-line',    bg: '#dcfce7', iconColor: '#16a34a', title: 'Quarterly Updates',   desc: 'Operational updates on activities',     btnColor: '#16a34a', btnLabel: 'Export Q4 2025 CSV',   onClick: handleCSV },
-          { icon: 'fa-file-contract', bg: '#f3e8ff', iconColor: '#9333ea', title: 'CBD National Report', desc: 'International reporting obligations',   btnColor: '#7c3aed', btnLabel: 'Due: Jun 2029',         onClick: () => {} },
+          { icon: 'fa-file-pdf',      bg: '#dbeafe', iconColor: '#1e40af', title: 'Annual Reports',      desc: 'Progress against 22 NBSAP targets',    btnColor: '#1e40af', btnLabel: 'Download 2030 Report', onClick: handlePDF },
+          { icon: 'fa-chart-line',    bg: '#dcfce7', iconColor: '#16a34a', title: 'Quarterly Updates',   desc: 'Operational updates on activities',     btnColor: '#16a34a', btnLabel: 'Export Q4 2030 CSV',   onClick: handleCSV },
+          { icon: 'fa-file-contract', bg: '#f3e8ff', iconColor: '#9333ea', title: 'CBD National Report', desc: 'International reporting obligations',   btnColor: '#7c3aed', btnLabel: 'Due: Jun 2030',         onClick: () => {} },
         ].map(c => (
           <div key={c.title} style={{ ...card, padding: 18, textAlign: 'center' }}>
             <div style={{ width: 52, height: 52, background: c.bg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>

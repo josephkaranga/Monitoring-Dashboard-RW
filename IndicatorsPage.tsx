@@ -80,7 +80,7 @@ function IndicatorModal({ indicator: i, onClose, onViewTarget }: { indicator: In
           </div>
           {/* Info grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            {[['Definition', i.definition], ['Target 2030', i.target_2030], ['Baseline 2025', i.baseline], ['Midterm 2027', i.midterm]].map(([label, value]) => (
+            {[['Definition', i.definition], ['Target 2030', i.target_2030], ['Baseline (2020)', i.baseline], ['Midterm 2027', i.midterm]].map(([label, value]) => (
               <div key={label} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
                 <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 5, fontFamily: "'DM Mono', monospace" }}>{label}</div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{value || '—'}</div>
@@ -199,7 +199,7 @@ export default function IndicatorsPage() {
         <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 'var(--radius)', padding: 16, color: '#fff', position: 'relative', overflow: 'hidden' }}>
           <div style={{ fontSize: '0.72rem', opacity: 0.8, marginBottom: 4 }}>Total Indicators</div>
           <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: "'Playfair Display', serif" }}>{indicators.length}</div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 4 }}>NBSAP 2025–2030</div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 4 }}>NBSAP 2020–2030</div>
           <i className="fa-solid fa-layer-group" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: '2rem', opacity: 0.2 }} />
         </div>
         {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => (
@@ -218,7 +218,7 @@ export default function IndicatorsPage() {
         <div style={{ fontSize: '0.84rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
           <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)' }} />
           KM-GBF Aligned 4-Tier Indicator Hierarchy
-          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>Rwanda NBSAP 2025–2030</span>
+          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>Rwanda NBSAP 2020–2030</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => {

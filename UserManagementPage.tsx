@@ -9,10 +9,11 @@ import toast from 'react-hot-toast';
 
 const ROLE_COLORS: Record<UserRole, string> = {
   policy_monitoring:    '#10b981',
-  sector_reporting:     '#0ea5e9',
+  lead_government_ministry_reporting: '#0ea5e9',
   local_reporting:      '#f59e0b',
   dashboard_management: '#f43f5e',
   programme_alignment:  '#8b5cf6',
+  public_viewer:        '#64748b',
 };
 
 const card: React.CSSProperties = {

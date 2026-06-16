@@ -31,16 +31,50 @@ export default function DashboardLayout() {
 
   const canSeeReporting = permissions?.canSubmitReports ?? false;
   const canSeeVerifQueue = permissions?.canViewVerifQueue ?? false;
+  const canSeeRiskRegister = permissions?.canViewRiskRegister ?? false;
+  const canSeeCompliance = permissions?.canViewCompliance ?? false;
+  const canSeeAnalytics = permissions?.canViewAnalytics ?? false;
+  const canManageUsers = permissions?.canManageUsers ?? false;
+  const canViewAuditLog = permissions?.canViewAuditLog ?? false;
 
-  // ── Nav sections ──────────────────────────────────────────
+  // ── Nav sections with role-based filtering ──────────────────────────────────────────
+  // Role-based navigation filtering following the permission matrix:
+  // 
+  // All roles (including public_viewer) can see:
+  //   - Dashboard, Indicators, Targets, Reports, Stakeholders, Map
+  // 
+  // public_viewer CANNOT see:
+  //   - Reporting Modules (T01-T07)
+  //   - Verification Queue
+  //   - Compliance
+  //   - Analytics (Adaptive Management)
+  //   - Risk Register
+  //   - RBIS Integration
+  //   - Data Pipeline
+  //   - User Management
+  //   - Audit Log
+  // 
+  // lead_government_ministry_reporting has:
+  //   - Full reporting access (T01-T07)
+  //   - Verification Queue access
+  //   - Compliance, Analytics, Risk Register access
+  //   - RBIS and Data Pipeline access
+  //   - NO User Management or Audit Log access
+  // 
+  // dashboard_management has:
+  //   - Full access to all features
+  
   const analyticsNav = [
-    { to: '/dashboard',           icon: 'fa-chart-line',          label: 'Dashboard' },
-    { to: '/indicators',          icon: 'fa-layer-group',          label: 'Indicator Hierarchy' },
-    { to: '/targets',             icon: 'fa-bullseye',             label: '22 National Targets', badge: 22 },
-    { to: '/adaptive-management', icon: 'fa-rotate',               label: 'Adaptive Management' },
-    { to: '/risk',                icon: 'fa-triangle-exclamation', label: 'Risk Register' },
-  ];
+    { to: '/dashboard',           icon: 'fa-chart-line',           label: 'Dashboard', visible: true },
+    { to: '/indicators',          icon: 'fa-layer-group',          label: 'Indicator Hierarchy', visible: true },
+    { to: '/targets',             icon: 'fa-bullseye',             label: '22 National Targets', badge: 22, visible: true },
+    { to: '/adaptive-management', icon: 'fa-rotate',               label: 'Adaptive Management', visible: canSeeAnalytics },
+    { to: '/risk',                icon: 'fa-triangle-exclamation', label: 'Risk Register', visible: canSeeRiskRegister },
+  ].filter(item => item.visible);
 
+  // Reporting modules - only visible to users with canSubmitReports permission
+  // Roles with access: lead_government_ministry_reporting, local_reporting, dashboard_management
+  // public_viewer does NOT have access
   const reportingNav = [
     { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark',    label: 'T01 · Institutional' },
     { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree',         label: 'T02 · District' },
@@ -52,22 +86,39 @@ export default function DashboardLayout() {
   ];
 
   const governanceNav = [
-    ...(canSeeVerifQueue ? [{ to: '/verification-queue', icon: 'fa-file-circle-check', label: 'Verification Queue', badge: pendingCount || 0 }] : []),
-    { to: '/compliance',  icon: 'fa-clipboard-check',  label: 'Compliance', badge: 0 },
-    { to: '/reports',     icon: 'fa-file-contract',    label: 'Reports' },
-    { to: '/stakeholders',icon: 'fa-users',             label: 'Stakeholders' },
-    { to: '/map',         icon: 'fa-map-location-dot',  label: 'District Map' },
-  ];
+    // Verification Queue - only for lead_government_ministry_reporting and dashboard_management
+    // Controlled by canViewVerifQueue permission
+    ...(canSeeVerifQueue ? [{ to: '/verification-queue', icon: 'fa-file-circle-check', label: 'Verification Queue', badge: pendingCount || 0, visible: true }] : []),
+    // Compliance - visible to all roles EXCEPT public_viewer
+    // Controlled by canViewCompliance permission
+    { to: '/compliance',  icon: 'fa-clipboard-check',  label: 'Compliance', badge: 0, visible: canSeeCompliance },
+    // Reports - visible to all roles including public_viewer
+    { to: '/reports',     icon: 'fa-file-contract',    label: 'Reports', visible: true },
+    // Stakeholders - visible to all roles including public_viewer
+    { to: '/stakeholders',icon: 'fa-users',             label: 'Stakeholders', visible: true },
+    // Map - visible to all roles including public_viewer
+    { to: '/map',         icon: 'fa-map-location-dot',  label: 'District Map', visible: true },
+  ].filter(item => item.visible);
 
   const systemNav = [
-    { to: '/rbis',          icon: 'fa-database',       label: 'RBIS Integration' },
-    { to: '/data-pipeline', icon: 'fa-diagram-project', label: 'Data Pipeline' },
-    { to: '/role-requests', icon: 'fa-user-clock',     label: 'Role Requests' },
-    { to: '/settings',      icon: 'fa-gear',            label: 'Settings' },
-    { to: '/users',         icon: 'fa-users-gear',      label: 'User Management' },
-  ];
+    // RBIS Integration - visible to all roles EXCEPT public_viewer and local_reporting
+    // Controlled by canViewAnalytics permission
+    { to: '/rbis',          icon: 'fa-database',       label: 'RBIS Integration', visible: canSeeAnalytics },
+    // Data Pipeline - visible to all roles EXCEPT public_viewer and local_reporting
+    // Controlled by canViewAnalytics permission
+    { to: '/data-pipeline', icon: 'fa-diagram-project', label: 'Data Pipeline', visible: canSeeAnalytics },
+    // Role Requests - visible to all roles
+    { to: '/role-requests', icon: 'fa-user-clock',     label: 'Role Requests', visible: true },
+    // Settings - visible to all roles
+    { to: '/settings',      icon: 'fa-gear',            label: 'Settings', visible: true },
+    // User Management - only for dashboard_management
+    // Controlled by canManageUsers permission
+    { to: '/users',         icon: 'fa-users-gear',      label: 'User Management', visible: canManageUsers },
+  ].filter(item => item.visible);
 
-  const adminNav = user?.role === 'dashboard_management' ? [
+  // Admin navigation - only for dashboard_management
+  // Controlled by canViewAuditLog permission
+  const adminNav = canViewAuditLog ? [
     { to: '/role-requests/admin', icon: 'fa-user-check', label: 'Approve Requests' },
   ] : [];
 

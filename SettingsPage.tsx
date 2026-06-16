@@ -179,7 +179,7 @@ export default function SettingsPage() {
               <SettingRow label="Auto-refresh Dashboard" sub="Refresh metrics every 60 seconds">
                 <Toggle checked={!!settings.auto_refresh} onChange={v => setSettings(s => ({ ...s, auto_refresh: v }))} />
               </SettingRow>
-              <SettingRow label="Show Baseline Data on Charts" sub="Include 2025 baseline in trend charts">
+              <SettingRow label="Show Baseline Data on Charts" sub="Include 2020 baseline in trend charts">
                 <Toggle checked={!!settings.show_baseline} onChange={v => setSettings(s => ({ ...s, show_baseline: v }))} />
               </SettingRow>
               <SettingRow label="Require Verification Before Dashboard Update" sub="New toolkit submissions stay pending until approved by REMA reviewer">

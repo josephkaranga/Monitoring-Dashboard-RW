@@ -12,7 +12,7 @@ const TOOLKIT_TOOLS = [
   { id: 'T01', name: 'National Institutional Reporting', icon: '🏛️', color: '#1B6CA8', accent: '#4CA3DD', frequency: 'Quarterly', output: 'Institutional Compliance Scorecard',
     fields: [
       { key: 'institution', label: 'Reporting Institution', type: 'select', options: ['Environment Ministry','Agriculture Ministry','Infrastructure Ministry','Forestry Authority','Wildlife Authority','National Statistics Office','Water Resources Authority'], required: true },
-      { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'], required: true },
+      { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
       { key: 'nbsap_target', label: 'NBSAP Target Number', type: 'text', placeholder: 'e.g. TARGET-03', required: true },
       { key: 'current_status', label: 'Current Status / Value', type: 'number', placeholder: '0', required: true },
       { key: 'milestone', label: 'Target Milestone', type: 'number', placeholder: '0', required: true },
@@ -25,7 +25,7 @@ const TOOLKIT_TOOLS = [
     fields: [
       { key: 'district', label: 'District Name', type: 'text', placeholder: 'e.g. Nyarugenge', required: true },
       { key: 'officer', label: 'Reporting Officer', type: 'text', placeholder: 'Officer name', required: true },
-      { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'], required: true },
+      { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
       { key: 'forest_ha', label: 'Forest Restoration (ha)', type: 'number', placeholder: '0', required: true },
       { key: 'wetland_ha', label: 'Wetland Rehabilitation (ha)', type: 'number', placeholder: '0', required: true },
       { key: 'agroforestry_hh', label: 'Agroforestry Households', type: 'number', placeholder: '0', required: false },
@@ -39,7 +39,7 @@ const TOOLKIT_TOOLS = [
     fields: [
       { key: 'area_name', label: 'Protected Area Name', type: 'text', placeholder: 'e.g. Nyungwe National Park', required: true },
       { key: 'agency', label: 'Managing Agency', type: 'text', placeholder: 'Agency name', required: true },
-      { key: 'period', label: 'Reporting Period', type: 'select', options: ['H1 2024','H2 2024','H1 2025','H2 2025'], required: true },
+      { key: 'period', label: 'Reporting Period', type: 'select', options: ['H1 2024','H2 2024','H1 2025','H2 2025','H1 2026','H2 2026','H1 2027','H2 2027','H1 2028','H2 2028','H1 2029','H2 2029','H1 2030','H2 2030'], required: true },
       { key: 'coverage_change_ha', label: 'Coverage Change (ha)', type: 'number', placeholder: '0', required: true },
       { key: 'species_trend', label: 'Species Population Trend', type: 'select', options: ['Increasing','Stable','Declining','Unknown'], required: true },
       { key: 'habitat_quality', label: 'Habitat Quality (1–10)', type: 'number', placeholder: '1', required: true },
@@ -53,7 +53,7 @@ const TOOLKIT_TOOLS = [
       { key: 'community', label: 'Community / Village', type: 'text', placeholder: 'Community name', required: true },
       { key: 'reporter', label: 'Reporter / Group Name', type: 'text', placeholder: 'Name or group', required: true },
       { key: 'reporter_type', label: 'Reporter Type', type: 'select', options: ['Community Conservation Committee','Youth Environmental Club','Women\'s Cooperative','Indigenous Knowledge Holder','Other'], required: true },
-      { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'], required: true },
+      { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
       { key: 'hwc_incidents', label: 'Human-Wildlife Conflict Incidents', type: 'number', placeholder: '0', required: true },
       { key: 'tree_planting_hh', label: 'Tree Planting Households', type: 'number', placeholder: '0', required: false },
       { key: 'water_source_status', label: 'Water Source Condition', type: 'select', options: ['Good','Fair','Degraded','Dry / Absent'], required: false },
@@ -64,7 +64,7 @@ const TOOLKIT_TOOLS = [
     fields: [
       { key: 'institution', label: 'Institution Name', type: 'text', placeholder: 'Institution or partner', required: true },
       { key: 'institution_type', label: 'Institution Type', type: 'select', options: ['Ministry of Finance','Environment Ministry','Development Partner','NGO','Private Sector','Other'], required: true },
-      { key: 'year', label: 'Fiscal Year', type: 'select', options: ['2023','2024','2025'], required: true },
+      { key: 'year', label: 'Fiscal Year', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
       { key: 'budget_allocated', label: 'Budget Allocated (RWF)', type: 'number', placeholder: '0', required: true },
       { key: 'budget_disbursed', label: 'Budget Disbursed (RWF)', type: 'number', placeholder: '0', required: true },
       { key: 'implementation_pct', label: 'Implementation Status (%)', type: 'number', placeholder: '0', required: true },
@@ -75,7 +75,7 @@ const TOOLKIT_TOOLS = [
     fields: [
       { key: 'company', label: 'Company Name', type: 'text', placeholder: 'Company name', required: true },
       { key: 'sector', label: 'Sector', type: 'select', options: ['Infrastructure','Agribusiness','Mining','Tourism','Finance / Investment','Other'], required: true },
-      { key: 'year', label: 'Reporting Year', type: 'select', options: ['2023','2024','2025'], required: true },
+      { key: 'year', label: 'Reporting Year', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
       { key: 'eia_compliance', label: 'EIA Compliance', type: 'select', options: ['Full compliance','Partial compliance','Non-compliant','Not applicable'], required: true },
       { key: 'restoration_ha', label: 'Restoration Commitments (ha)', type: 'number', placeholder: '0', required: false },
       { key: 'esg_score', label: 'ESG Biodiversity Score (1–100)', type: 'number', placeholder: '0', required: false },
@@ -86,7 +86,7 @@ const TOOLKIT_TOOLS = [
     fields: [
       { key: 'institution', label: 'Research Institution', type: 'text', placeholder: 'University or institute', required: true },
       { key: 'study_title', label: 'Study Title', type: 'text', placeholder: 'Full title', required: true },
-      { key: 'year', label: 'Year Completed', type: 'select', options: ['2021','2022','2023','2024','2025'], required: true },
+      { key: 'year', label: 'Year Completed', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
       { key: 'ecosystem_assessed', label: 'Ecosystem Assessed', type: 'select', options: ['Forest','Wetland','Savanna','Aquatic','Agricultural','Urban','Multiple'], required: true },
       { key: 'key_findings', label: 'Key Findings Summary', type: 'textarea', placeholder: 'Summarize main findings...', required: true },
       { key: 'policy_relevance', label: 'Policy Relevance & NBSAP Linkage', type: 'textarea', placeholder: 'How does this support NBSAP?', required: false },

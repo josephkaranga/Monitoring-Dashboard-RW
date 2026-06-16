@@ -1,0 +1,253 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Kivu",
+        "area_km2": 2700,
+        "max_depth_m": 480,
+        "elevation_m": 1460,
+        "ecological_significance": "One of the African Great Lakes with unique methane reserves, supports diverse fish species and local fisheries. Important for regional water supply and biodiversity.",
+        "related_indicators": [12, 15, 23, 45]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.05, -1.55],
+          [29.25, -1.55],
+          [29.35, -1.65],
+          [29.35, -1.85],
+          [29.25, -2.05],
+          [29.15, -2.15],
+          [29.05, -2.25],
+          [28.95, -2.35],
+          [28.85, -2.35],
+          [28.85, -2.25],
+          [28.85, -2.15],
+          [28.85, -2.05],
+          [28.85, -1.95],
+          [28.85, -1.85],
+          [28.85, -1.75],
+          [28.85, -1.65],
+          [28.95, -1.55],
+          [29.05, -1.55]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Muhazi",
+        "area_km2": 34.5,
+        "max_depth_m": 5,
+        "elevation_m": 1450,
+        "ecological_significance": "Long narrow lake important for local fisheries, water supply, and tourism. Supports aquatic biodiversity and surrounding wetland ecosystems.",
+        "related_indicators": [15, 23, 34]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.05, -1.95],
+          [30.35, -1.95],
+          [30.45, -1.95],
+          [30.55, -1.95],
+          [30.55, -2.00],
+          [30.45, -2.00],
+          [30.35, -2.00],
+          [30.05, -2.00],
+          [30.05, -1.95]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Burera",
+        "area_km2": 55,
+        "max_depth_m": 152,
+        "elevation_m": 1862,
+        "ecological_significance": "Highland lake in volcanic region, supports local fisheries and provides water for agriculture. Part of twin lakes system with Lake Ruhondo.",
+        "related_indicators": [12, 15, 23]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.65, -1.45],
+          [29.75, -1.45],
+          [29.75, -1.55],
+          [29.65, -1.55],
+          [29.65, -1.45]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Ruhondo",
+        "area_km2": 28,
+        "max_depth_m": 68,
+        "elevation_m": 1764,
+        "ecological_significance": "Highland lake connected to Lake Burera, important for local water supply and fisheries. Scenic lake supporting tourism and biodiversity.",
+        "related_indicators": [12, 15, 23]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.65, -1.55],
+          [29.75, -1.55],
+          [29.75, -1.65],
+          [29.65, -1.65],
+          [29.65, -1.55]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Ihema",
+        "area_km2": 90,
+        "max_depth_m": 7,
+        "elevation_m": 1292,
+        "ecological_significance": "Largest lake in Akagera National Park, critical for wildlife including hippos, crocodiles, and diverse bird species. Important wetland ecosystem.",
+        "related_indicators": [12, 15, 23, 45, 56]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.65, -2.25],
+          [30.75, -2.25],
+          [30.75, -2.35],
+          [30.65, -2.35],
+          [30.65, -2.25]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Rweru",
+        "area_km2": 133,
+        "max_depth_m": 3,
+        "elevation_m": 1350,
+        "ecological_significance": "Shared with Burundi, important for fisheries and water supply. Supports wetland biodiversity and migratory bird populations.",
+        "related_indicators": [15, 23, 34]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.35, -2.35],
+          [30.45, -2.35],
+          [30.45, -2.45],
+          [30.35, -2.45],
+          [30.35, -2.35]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Cyohoha South",
+        "area_km2": 15,
+        "max_depth_m": 4,
+        "elevation_m": 1380,
+        "ecological_significance": "Part of Akagera wetland complex, important for aquatic biodiversity and bird habitat. Supports local fishing communities.",
+        "related_indicators": [15, 23, 45]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.55, -2.15],
+          [30.65, -2.15],
+          [30.65, -2.25],
+          [30.55, -2.25],
+          [30.55, -2.15]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Hago",
+        "area_km2": 8,
+        "max_depth_m": 3,
+        "elevation_m": 1310,
+        "ecological_significance": "Small lake in Akagera National Park, provides habitat for aquatic species and waterbirds. Part of park's wetland ecosystem.",
+        "related_indicators": [15, 23, 45]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.65, -2.15],
+          [30.70, -2.15],
+          [30.70, -2.20],
+          [30.65, -2.20],
+          [30.65, -2.15]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Kivumba",
+        "area_km2": 6,
+        "max_depth_m": 2,
+        "elevation_m": 1300,
+        "ecological_significance": "Small lake in Akagera region, supports local biodiversity and provides water for wildlife. Part of wetland corridor.",
+        "related_indicators": [15, 23]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.55, -2.05],
+          [30.60, -2.05],
+          [30.60, -2.10],
+          [30.55, -2.10],
+          [30.55, -2.05]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Shakani",
+        "area_km2": 5,
+        "max_depth_m": 2,
+        "elevation_m": 1295,
+        "ecological_significance": "Small lake in Akagera National Park, provides habitat for aquatic birds and fish. Contributes to park's wetland biodiversity.",
+        "related_indicators": [15, 23, 45]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.70, -2.20],
+          [30.75, -2.20],
+          [30.75, -2.25],
+          [30.70, -2.25],
+          [30.70, -2.20]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lake Mihindi",
+        "area_km2": 4,
+        "max_depth_m": 2,
+        "elevation_m": 1305,
+        "ecological_significance": "Small lake in Akagera wetland system, important for local aquatic biodiversity and bird populations. Part of protected wetland habitat.",
+        "related_indicators": [15, 23]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.60, -2.10],
+          [30.65, -2.10],
+          [30.65, -2.15],
+          [30.60, -2.15],
+          [30.60, -2.10]
+        ]]
+      }
+    }
+  ]
+}

@@ -23,3 +23,5 @@ export { DistrictDetailPanel } from './DistrictDetailPanel';
 export { GBIFOccurrencesOverlay } from './GBIFOccurrencesOverlay';
 export { ProtectedAreasOverlay } from './ProtectedAreasOverlay';
 export { RiverNetworkOverlay } from './RiverNetworkOverlay';
+export { LakesOverlay } from './LakesOverlay';
+export { LakePopup } from './LakePopup';

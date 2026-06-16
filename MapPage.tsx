@@ -21,6 +21,65 @@ import { logAuditEvent } from './dataService';
 import type { GBIFOccurrence } from './src/types/biodiversity';
 import type { ProtectedArea, RiverFeature } from './src/types/overlays';
 
+// Rwanda Geographic Bounding Box (WGS84 coordinates)
+// Source: Natural Earth Data and OpenStreetMap
+const RWANDA_BOUNDS = {
+  minLon: 28.8617546,  // Western border (Lake Kivu region)
+  maxLon: 30.8990738,  // Eastern border (Tanzania border)
+  minLat: -2.8389804,  // Southern border (Burundi border)
+  maxLat: -1.0474083   // Northern border (Uganda border)
+};
+
+// Calculate viewBox dimensions for proper map orientation
+// SVG coordinate system: Y increases downward, but latitude increases upward
+// To display Rwanda correctly (north at top), we need to invert the Y-axis
+const RWANDA_VIEWBOX = {
+  x: RWANDA_BOUNDS.minLon,
+  y: -RWANDA_BOUNDS.maxLat,  // Negative of maxLat for correct north-south orientation
+  width: RWANDA_BOUNDS.maxLon - RWANDA_BOUNDS.minLon,  // ~2.037 degrees
+  height: RWANDA_BOUNDS.maxLat - RWANDA_BOUNDS.minLat  // ~1.792 degrees (always positive)
+};
+
+/**
+ * Validates that GeoJSON coordinates fall within Rwanda's bounding box
+ * This ensures the map displays with correct geographic orientation
+ */
+function validateGeoJSONCoordinates(geoData: GeoJSONData): boolean {
+  try {
+    for (const feature of geoData.features) {
+      const coords = feature.geometry.coordinates;
+      
+      // Check a sample of coordinates from each feature
+      const checkCoords = (coordArray: any): boolean => {
+        if (Array.isArray(coordArray)) {
+          if (typeof coordArray[0] === 'number' && typeof coordArray[1] === 'number') {
+            const [lon, lat] = coordArray;
+            // Validate coordinates are within Rwanda bounds
+            if (lon < RWANDA_BOUNDS.minLon || lon > RWANDA_BOUNDS.maxLon ||
+                lat < RWANDA_BOUNDS.minLat || lat > RWANDA_BOUNDS.maxLat) {
+              console.warn(`Coordinate out of bounds: [${lon}, ${lat}]`);
+              return false;
+            }
+            return true;
+          } else {
+            // Recursively check nested arrays
+            return coordArray.every(checkCoords);
+          }
+        }
+        return true;
+      };
+      
+      if (!checkCoords(coords)) {
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Error validating GeoJSON coordinates:', error);
+    return false;
+  }
+}
+
 interface GeoJSONFeature {
   type: string;
   properties: {
@@ -693,6 +752,20 @@ export function MapPage() {
           };
           setGeoData(mockGeoData);
         } else {
+          // Validate coordinates are within Rwanda bounds
+          const isValid = validateGeoJSONCoordinates(geoJson);
+          if (!isValid) {
+            console.warn('Some GeoJSON coordinates are outside Rwanda bounds, but continuing...');
+          }
+          
+          // Log bounding box info for debugging
+          console.log('Rwanda map loaded with correct orientation:');
+          console.log(`  Longitude range: ${RWANDA_BOUNDS.minLon}° to ${RWANDA_BOUNDS.maxLon}° (West to East)`);
+          console.log(`  Latitude range: ${RWANDA_BOUNDS.minLat}° to ${RWANDA_BOUNDS.maxLat}° (South to North)`);
+          console.log(`  SVG viewBox: x=${RWANDA_VIEWBOX.x}, y=${RWANDA_VIEWBOX.y}, width=${RWANDA_VIEWBOX.width}, height=${RWANDA_VIEWBOX.height}`);
+          console.log(`  Coordinate transformation: Latitude values are negated for correct north-up orientation`);
+          console.log(`  Features loaded: ${geoJson.features.length}`);
+          
           setGeoData(geoJson);
         }
       } catch (err) {
@@ -887,7 +960,7 @@ export function MapPage() {
             
             {!loading && !error && geoData && (
               <svg 
-                viewBox="28.8 -2.9 3.5 2.8" 
+                viewBox={`${RWANDA_VIEWBOX.x} ${RWANDA_VIEWBOX.y} ${RWANDA_VIEWBOX.width} ${RWANDA_VIEWBOX.height}`}
                 style={{ 
                   width: '100%', 
                   height: isMobile ? 300 : 400, 
@@ -900,26 +973,39 @@ export function MapPage() {
                 onTouchEnd={isMobile ? handleTouchEnd : undefined}
               >
                 <g transform={isMobile ? `scale(${touchState.scale})` : undefined}>
-                <rect x="28.8" y="-2.9" width="3.5" height="2.8" fill="#f0f9ff" />
+                <rect 
+                  x={RWANDA_VIEWBOX.x} 
+                  y={RWANDA_VIEWBOX.y} 
+                  width={RWANDA_VIEWBOX.width} 
+                  height={RWANDA_VIEWBOX.height} 
+                  fill="#f0f9ff" 
+                />
                 
                 {/* District base layer */}
                 {geoData.features.map((feature, idx) => {
                   const districtData = getDistrictData(feature.properties.shapeName);
                   const color = districtData ? getColor(districtData, layer, biodiversityData, nbsapProgressData, threatLevelData) : '#e2e8f0';
                   
-                  // Convert coordinates to SVG path
+                  // Convert GeoJSON coordinates to SVG path with proper orientation
+                  // GeoJSON uses [longitude, latitude] where latitude is positive north
+                  // SVG uses [x, y] where y increases downward
+                  // To display north at the top, we negate the latitude values
+                  const transformCoordinate = (lon: number, lat: number): string => {
+                    return `${lon},${-lat}`;  // Negate latitude to flip north-south orientation
+                  };
+
                   const renderGeometry = (coords: any, type: string): string => {
                     if (type === 'Polygon') {
                       return coords.map((ring: any) => {
                         return ring.map((point: any, i: number) => 
-                          `${i === 0 ? 'M' : 'L'}${point[0]},${point[1]}`
+                          `${i === 0 ? 'M' : 'L'}${transformCoordinate(point[0], point[1])}`
                         ).join(' ') + ' Z';
                       }).join(' ');
                     } else if (type === 'MultiPolygon') {
                       return coords.map((polygon: any) => 
                         polygon.map((ring: any) => {
                           return ring.map((point: any, i: number) => 
-                            `${i === 0 ? 'M' : 'L'}${point[0]},${point[1]}`
+                            `${i === 0 ? 'M' : 'L'}${transformCoordinate(point[0], point[1])}`
                           ).join(' ') + ' Z';
                         }).join(' ')
                       ).join(' ');
@@ -976,6 +1062,7 @@ export function MapPage() {
                   if (!districtData) return null;
                   
                   // Calculate centroid (simplified - average of all coordinates)
+                  // Apply the same coordinate transformation for proper positioning
                   const calculateCentroid = (coords: any, type: string): [number, number] | null => {
                     let allPoints: [number, number][] = [];
                     
@@ -990,7 +1077,8 @@ export function MapPage() {
                     const sumX = allPoints.reduce((sum, p) => sum + p[0], 0);
                     const sumY = allPoints.reduce((sum, p) => sum + p[1], 0);
                     
-                    return [sumX / allPoints.length, sumY / allPoints.length];
+                    // Return transformed coordinates (negate latitude for SVG)
+                    return [sumX / allPoints.length, -(sumY / allPoints.length)];
                   };
                   
                   const centroid = calculateCentroid(feature.geometry.coordinates, feature.geometry.type);

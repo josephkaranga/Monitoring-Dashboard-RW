@@ -2,7 +2,7 @@
 
 import type { GBIFOccurrence, ClusteredPoint } from './biodiversity';
 
-export type MapOverlay = 'gbif' | 'protected-areas' | 'rivers';
+export type MapOverlay = 'gbif' | 'protected-areas' | 'rivers' | 'lakes';
 
 export interface OverlayConfig {
   id: MapOverlay;
@@ -46,6 +46,27 @@ export interface RiverFeature {
 export interface RiverNetworkCollection {
   type: 'FeatureCollection';
   features: RiverFeature[];
+}
+
+export interface LakeFeature {
+  type: 'Feature';
+  properties: {
+    name: string;
+    area_km2: number;
+    max_depth_m: number;
+    elevation_m: number;
+    ecological_significance: string;
+    related_indicators: number[];
+  };
+  geometry: {
+    type: 'Polygon' | 'MultiPolygon';
+    coordinates: number[][][] | number[][][][];
+  };
+}
+
+export interface LakesCollection {
+  type: 'FeatureCollection';
+  features: LakeFeature[];
 }
 
 export interface OccurrenceOverlayData {

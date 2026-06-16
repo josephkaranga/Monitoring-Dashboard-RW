@@ -44,7 +44,7 @@ lerna-debug.log*
 .branches/
 .temp/
 
-# Kiro specs (development artifacts)
+# Kiro AI assistant files
 .kiro/
 
 # Documentation (keep only main README.md and spec files)

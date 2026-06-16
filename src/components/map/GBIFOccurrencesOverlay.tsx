@@ -209,7 +209,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
           <circle
             key={`gbif-${idx}`}
             cx={point.longitude}
-            cy={point.latitude}
+            cy={-point.latitude}
             r={radius}
             fill={color}
             opacity={0.7}

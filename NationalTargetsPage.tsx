@@ -86,7 +86,7 @@ export default function NationalTargetsPage() {
         <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 'var(--radius)', padding: 16, color: '#fff', position: 'relative', overflow: 'hidden' }}>
           <div style={{ fontSize: '0.72rem', opacity: 0.8, marginBottom: 4 }}>Total Targets</div>
           <div style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: "'Playfair Display', serif" }}>{targets.length || 22}</div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 4 }}>NBSAP 2025–2030</div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 4 }}>NBSAP 2020–2030</div>
           <i className="fa-solid fa-bullseye" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: '2rem', opacity: 0.2 }} />
         </div>
         {[
