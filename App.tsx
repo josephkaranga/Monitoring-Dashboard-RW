@@ -23,7 +23,7 @@ const RiskPage = lazy(() => import('./RiskPage'));
 const MapPage = lazy(() => import('./MapPage'));
 const ReportsPage = lazy(() => import('./ReportsPage'));
 const StakeholdersPage = lazy(() => import('./StakeholdersPage'));
-const RBISPage = lazy(() => import('./RBISPage'));
+const RBISPage = lazy(() => import('./src/pages/RBISPage'));
 const DataPipelinePage = lazy(() => import('./DataPipelinePage'));
 const SettingsPage = lazy(() => import('./SettingsPage'));
 const UserManagementPage = lazy(() => import('./UserManagementPage'));
