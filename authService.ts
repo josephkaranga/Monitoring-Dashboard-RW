@@ -61,27 +61,6 @@ export async function signIn(
 export async function signUp(
   userData: SignupData
 ): Promise<ApiResponse<UserProfile>> {
-  // Check if user already exists
-  const { data: existingUser } = await supabase
-    .from('profiles')
-    .select('email, is_active')
-    .eq('email', userData.email.trim().toLowerCase())
-    .maybeSingle();
-
-  if (existingUser) {
-    if (existingUser.is_active) {
-      return { 
-        data: null, 
-        error: 'This email is already registered. Please sign in or use the "Forgot password" option if you cannot access your account.' 
-      };
-    } else {
-      return { 
-        data: null, 
-        error: 'An account with this email is pending approval. Please wait for REMA Administrator approval or contact support.' 
-      };
-    }
-  }
-
   const { data, error } = await supabase.auth.signUp({
     email: userData.email.trim().toLowerCase(),
     password: userData.password,
@@ -96,17 +75,49 @@ export async function signUp(
   });
 
   if (error) {
-    // Provide user-friendly error messages
-    if (error.message.includes('already registered') || error.message.includes('already exists')) {
+    // Provide user-friendly error messages for duplicate emails
+    if (error.message.includes('already registered') || 
+        error.message.includes('already exists') ||
+        error.message.includes('User already registered')) {
       return { 
         data: null, 
-        error: 'This email is already registered. Please sign in or use the "Forgot password" option.' 
+        error: 'This email is already registered. Please sign in or use the "Forgot password" option if you cannot access your account.' 
       };
     }
     return { data: null, error: error.message };
   }
   
   if (!data.user) return { data: null, error: 'Signup failed' };
+
+  // Check if this is a duplicate signup (Supabase sometimes returns success for existing users)
+  // This happens when email confirmation is disabled
+  if (data.user && !data.session) {
+    // User exists but no session created - likely already registered
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('email, is_active, created_at')
+      .eq('email', userData.email.trim().toLowerCase())
+      .maybeSingle();
+
+    if (existingProfile) {
+      // Check if profile was just created (within last 2 seconds) or is old
+      const profileAge = Date.now() - new Date(existingProfile.created_at).getTime();
+      if (profileAge > 2000) {
+        // Profile is old, user already exists
+        if (existingProfile.is_active) {
+          return { 
+            data: null, 
+            error: 'This email is already registered. Please sign in or use the "Forgot password" option.' 
+          };
+        } else {
+          return { 
+            data: null, 
+            error: 'An account with this email is pending approval. Please wait for REMA Administrator approval.' 
+          };
+        }
+      }
+    }
+  }
 
   // Profile is created automatically via DB trigger
   // Fetch the created profile
