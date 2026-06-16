@@ -348,8 +348,9 @@ export function subscribeToReports(
     old: Record<string, unknown>;
   }) => void
 ) {
+  const channelName = `toolkit_reports_changes:${Math.random().toString(36).slice(2)}`;
   return supabase
-    .channel('toolkit_reports_changes')
+    .channel(channelName)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'toolkit_reports' },
