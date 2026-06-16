@@ -456,29 +456,17 @@ export function UserManagementPage() {
     if (!window.confirm(`Reject and delete ${userName}'s account? This cannot be undone.`)) return;
     setUpdating(userId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error('Not authenticated'); return; }
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-      const result = await res.json();
-      if (!res.ok || result.error) {
-        toast.error(result.error || 'Failed to reject user');
+      const { data, error } = await supabase.rpc('admin_delete_user', { target_user_id: userId });
+      if (error) {
+        toast.error(error.message);
+      } else if (data?.error) {
+        toast.error(data.error);
       } else {
         toast.success(`${userName}'s account rejected and removed`);
         refetch();
       }
     } catch {
-      toast.error('Network error — could not reject user');
+      toast.error('Failed to reject user');
     }
     setUpdating(null);
   }, [refetch]);
@@ -492,31 +480,18 @@ export function UserManagementPage() {
 
     setUpdating(userId);
     try {
-      // Must use the Edge Function — anon key cannot delete from auth.users
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error('Not authenticated'); return; }
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-
-      const result = await res.json();
-      if (!res.ok || result.error) {
-        toast.error(result.error || 'Failed to delete user');
+      // Call the SECURITY DEFINER DB function — no Edge Function needed
+      const { data, error } = await supabase.rpc('admin_delete_user', { target_user_id: userId });
+      if (error) {
+        toast.error(error.message);
+      } else if (data?.error) {
+        toast.error(data.error);
       } else {
         toast.success(`${userName}'s account deleted`);
         refetch();
       }
     } catch (err) {
-      toast.error('Network error — could not delete user');
+      toast.error('Failed to delete user');
     }
     setUpdating(null);
   }, [currentUser?.id, refetch]);
