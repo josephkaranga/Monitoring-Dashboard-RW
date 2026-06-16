@@ -318,7 +318,6 @@ export default function NationalTargetsPage() {
                       complementary: { bg: '#f3e8ff', color: '#6b21a8', border: '#e9d5ff', icon: 'fa-circle-info' },
                       binary:        { bg: '#fef9c3', color: '#854d0e', border: '#fde68a', icon: 'fa-toggle-on' },
                     };
-                    const STATUS_COLOR: Record<string, string> = { 'on-track': '#10b981', 'at-risk': '#f59e0b', 'behind': '#f43f5e' };
                     return (
                       <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 14, marginTop: 12 }}>
                         <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -342,7 +341,7 @@ export default function NationalTargetsPage() {
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 7 }}>
                                 {inds.map(ind => {
-                                  const sc = STATUS_COLOR[ind.status] || '#94a3b8';
+                                  const ipc = progressColor(ind.progress);
                                   return (
                                     <div key={ind.id} onClick={() => navigate(`/indicators?target=${t.id}`)}
                                       style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', cursor: 'pointer', transition: '0.15s' }}
@@ -351,13 +350,13 @@ export default function NationalTargetsPage() {
                                       <div style={{ fontSize: '0.77rem', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.35, marginBottom: 5 }}>{ind.name}</div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                         <div style={{ flex: 1, height: 5, background: 'var(--surface-3)', borderRadius: 3, overflow: 'hidden' }}>
-                                          <div style={{ height: '100%', width: `${ind.progress}%`, background: sc, borderRadius: 3 }} />
+                                          <div style={{ height: '100%', width: `${ind.progress}%`, background: ipc.color, borderRadius: 3 }} />
                                         </div>
-                                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: sc, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>{ind.progress}%</span>
+                                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: ipc.color, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>{ind.progress}%</span>
                                       </div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ fontSize: '0.64rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>{ind.periodicity}</span>
-                                        <span style={{ fontSize: '0.62rem', padding: '1px 7px', borderRadius: 8, background: `${sc}22`, color: sc, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{ind.status}</span>
+                                        <span style={{ fontSize: '0.62rem', padding: '1px 7px', borderRadius: 8, background: ipc.bg, color: ipc.color, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{ipc.label}</span>
                                       </div>
                                     </div>
                                   );

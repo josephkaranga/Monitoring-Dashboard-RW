@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useIndicators } from '../hooks/useData';
 import { writeAuditEntry } from '../services/dataService';
 import { TableRowSkeleton } from '../components/Skeleton';
+import { progressColor } from '../utils/progressColors';
 import type { Indicator, IndicatorTier, IndicatorStatus } from '../types/index';
 
 // ── Goal config ───────────────────────────────────────────────
@@ -37,10 +38,10 @@ const TIER_CFG: Record<IndicatorTier, { label: string; color: string; bg: string
   binary:        { label: 'Binary',        color: '#854d0e', bg: '#fef9c3', border: '#fde68a', icon: '🔀', faIcon: 'fa-toggle-on' },
 };
 
-const STATUS_CFG: Record<IndicatorStatus, { color: string; bg: string; label: string }> = {
-  'on-track': { color: '#166534', bg: '#dcfce7', label: '▲ On Track' },
-  'at-risk':  { color: '#854d0e', bg: '#fef9c3', label: '⚠ At Risk'  },
-  'behind':   { color: '#991b1b', bg: '#fee2e2', label: '▼ Behind'   },
+const STATUS_CFG: Record<IndicatorStatus, { color: string; bg: string; border: string; label: string }> = {
+  'on-track': { color: '#16a34a', bg: '#dcfce7', border: '#bbf7d0', label: '▲ On Track' },
+  'at-risk':  { color: '#d97706', bg: '#fef3c7', border: '#fde68a', label: '⚠ At Risk'  },
+  'behind':   { color: '#dc2626', bg: '#fee2e2', border: '#fecaca', label: '▼ Behind'   },
 };
 
 // ── Modal ─────────────────────────────────────────────────────
@@ -65,19 +66,27 @@ function IndicatorModal({ indicator: i, onClose, onViewTarget }: { indicator: In
             <span style={{ background: status.bg, color: status.color, fontSize: '0.62rem', padding: '2px 10px', borderRadius: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{status.label}</span>
           </div>
           {/* Progress */}
-          <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 12, padding: 18, color: '#fff', marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Progress toward 2030 target</span>
-              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#38bdf8' }}>{i.progress}%</span>
+          {(() => {
+            const mpc = progressColor(i.progress);
+            return (
+            <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 12, padding: 18, color: '#fff', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Progress toward 2030 target</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: mpc.bg, color: mpc.color, fontFamily: "'DM Mono', monospace" }}>{mpc.label}</span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: mpc.color }}>{i.progress}%</span>
+                </div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 6, height: 10, overflow: 'hidden' }}>
+                <div style={{ background: mpc.color, width: `${i.progress}%`, height: '100%', borderRadius: 6, transition: 'width 1s ease' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.75rem', opacity: 0.75 }}>
+                <span>Current: <strong style={{ color: '#fff' }}>{i.current_value}</strong></span>
+                <span>Target: <strong style={{ color: '#fff' }}>{i.final_target || i.target_2030}</strong></span>
+              </div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 6, height: 10, overflow: 'hidden' }}>
-              <div style={{ background: '#38bdf8', width: `${i.progress}%`, height: '100%', borderRadius: 6, transition: 'width 1s ease' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.75rem', opacity: 0.75 }}>
-              <span>Current: <strong style={{ color: '#fff' }}>{i.current_value}</strong></span>
-              <span>Target: <strong style={{ color: '#fff' }}>{i.final_target || i.target_2030}</strong></span>
-            </div>
-          </div>
+            );
+          })()}
           {/* Info grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             {[['Definition', i.definition], ['Target 2030', i.target_2030], ['Baseline (2020)', i.baseline], ['Midterm 2027', i.midterm]].map(([label, value]) => (
