@@ -42,7 +42,7 @@ const ProgressBar = ({ label, value, target, color }: { label: string; value: st
 
 export default function DashboardPage() {
   const { user, permissions } = useAuth();
-  const { stats, loading, refetch } = useDashboardStats();
+  const { stats, loading, refetch } = useDashboardStats(false);
   const { reports } = useReports({ status: 'approved', pageSize: 3 });
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);

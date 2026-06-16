@@ -206,7 +206,42 @@ export async function clearAllReports(): Promise<ApiResponse<null>> {
 }
 
 // ── GET DASHBOARD AGGREGATES ──────────────────────────────────
+let _statsCache: { data: ReturnType<typeof buildStats> | null; ts: number } = { data: null, ts: 0 };
+const STATS_TTL = 30_000; // 30 seconds
+
+function buildStats(reports: any[], indicators: any[], districts: any[], compliance: any[]) {
+  const approved = reports.filter(r => r.status === 'approved' || !r.status);
+  const pending = reports.filter(r => r.status === 'pending');
+  const reportsByTool = {} as Record<string, number>;
+  reports.forEach(r => { reportsByTool[r.tool_id] = (reportsByTool[r.tool_id] || 0) + 1; });
+  const t02 = approved.filter(r => r.tool_id === 'T02');
+  const forestHa = t02.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.forest_ha) || 0), 0);
+  const wetlandHa = t02.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.wetland_ha) || 0), 0);
+  const t04 = approved.filter(r => r.tool_id === 'T04');
+  const hwcIncidents = t04.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.hwc_incidents) || 0), 0);
+  const t05 = approved.filter(r => r.tool_id === 'T05');
+  const financeAllocated = t05.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_allocated) || 0), 0);
+  const financeDisbursed = t05.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_disbursed) || 0), 0);
+  const submittedDistricts = districts.filter(d => d.status === 'submitted').length;
+  const missingDistricts = districts.filter(d => d.status === 'missing').length;
+  const onTrack = indicators.filter(i => i.status === 'on-track').length;
+  const atRisk = indicators.filter(i => i.status === 'at-risk').length;
+  const behind = indicators.filter(i => i.status === 'behind').length;
+  const avgProgress = indicators.length ? Math.round(indicators.reduce((a, i) => a + i.progress, 0) / indicators.length) : 0;
+  return {
+    totalTargets: 22, totalSubmissions: reports.length,
+    activeDistricts: `${submittedDistricts}/${districts.length}`, missingDistricts,
+    complianceIssues: compliance.length, onTrackIndicators: onTrack,
+    atRiskIndicators: atRisk, behindIndicators: behind, avgProgress,
+    forestHa, wetlandHa, hwcIncidents, financeAllocated, financeDisbursed,
+    reportsByTool, pendingVerifications: pending.length,
+  };
+}
+
 export async function getDashboardStats() {
+  if (_statsCache.data && Date.now() - _statsCache.ts < STATS_TTL) {
+    return _statsCache.data;
+  }
   const [reportsRes, indicatorsRes, districtsRes, complianceRes] =
     await Promise.all([
       supabase
@@ -230,80 +265,9 @@ export async function getDashboardStats() {
   const districts = districtsRes.data || [];
   const compliance = complianceRes.data || [];
 
-  const approved = reports.filter(
-    (r) => r.status === 'approved' || !r.status
-  );
-  const pending = reports.filter((r) => r.status === 'pending');
-
-  // Tool counts
-  const reportsByTool = {} as Record<string, number>;
-  reports.forEach((r) => {
-    reportsByTool[r.tool_id] = (reportsByTool[r.tool_id] || 0) + 1;
-  });
-
-  // Forest/wetland from T02
-  const t02 = approved.filter((r) => r.tool_id === 'T02');
-  const forestHa = t02.reduce(
-    (a, r) => a + (Number((r.form_data as Record<string,unknown>)?.forest_ha) || 0),
-    0
-  );
-  const wetlandHa = t02.reduce(
-    (a, r) => a + (Number((r.form_data as Record<string,unknown>)?.wetland_ha) || 0),
-    0
-  );
-
-  // HWC from T04
-  const t04 = approved.filter((r) => r.tool_id === 'T04');
-  const hwcIncidents = t04.reduce(
-    (a, r) => a + (Number((r.form_data as Record<string,unknown>)?.hwc_incidents) || 0),
-    0
-  );
-
-  // Finance from T05
-  const t05 = approved.filter((r) => r.tool_id === 'T05');
-  const financeAllocated = t05.reduce(
-    (a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_allocated) || 0),
-    0
-  );
-  const financeDisbursed = t05.reduce(
-    (a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_disbursed) || 0),
-    0
-  );
-
-  const submittedDistricts = districts.filter(
-    (d) => d.status === 'submitted'
-  ).length;
-  const missingDistricts = districts.filter(
-    (d) => d.status === 'missing'
-  ).length;
-
-  const onTrack = indicators.filter((i) => i.status === 'on-track').length;
-  const atRisk = indicators.filter((i) => i.status === 'at-risk').length;
-  const behind = indicators.filter((i) => i.status === 'behind').length;
-  const avgProgress = indicators.length
-    ? Math.round(
-        indicators.reduce((a, i) => a + i.progress, 0) / indicators.length
-      )
-    : 0;
-
-  return {
-    totalTargets: 22,
-    totalSubmissions: reports.length,
-    activeDistricts: `${submittedDistricts}/${districts.length}`,
-    missingDistricts,
-    complianceIssues: compliance.length,
-    onTrackIndicators: onTrack,
-    atRiskIndicators: atRisk,
-    behindIndicators: behind,
-    avgProgress,
-    forestHa,
-    wetlandHa,
-    hwcIncidents,
-    financeAllocated,
-    financeDisbursed,
-    reportsByTool,
-    pendingVerifications: pending.length,
-  };
+  const result = buildStats(reports, indicators, districts, compliance);
+  _statsCache = { data: result, ts: Date.now() };
+  return result;
 }
 
 // ── EXPORT TO CSV ────────────────────────────────────────────
