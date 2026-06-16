@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Leaf, Lock, Mail, User, Building2 } from 'lucide-react';
 import { signIn, signUp, resetPassword } from './authService';
 import { writeAuditEntry } from './dataService';
+import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 import type { UserRole, LoginCredentials, SignupData } from './index';
 import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from './index';
@@ -215,8 +216,14 @@ const styles = `
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('policy_monitoring');
 
@@ -263,10 +270,10 @@ export default function AuthPage() {
     } else {
       await writeAuditEntry('login', 'User signed in', loginForm.email);
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      // Navigation handled by useEffect when user state updates
     }
     setLoading(false);
-  }, [loginForm, validate, navigate]);
+  }, [loginForm, validate]);
 
   const handleSignup = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
