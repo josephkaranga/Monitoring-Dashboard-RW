@@ -4,6 +4,7 @@ import { useAsync } from './useData';
 import { useAuth } from './AuthContext';
 import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from './index';
 import type { UserRole, UserProfile } from './index';
+import { supabase } from './supabase';
 import toast from 'react-hot-toast';
 
 const ROLE_COLORS: Record<UserRole, string> = {
@@ -165,7 +166,7 @@ export function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const filteredUsers = users.filter((u: UserProfile) => {
+  const filteredUsers = activeUsers.filter((u: UserProfile) => {
     const matchSearch = !search || u.email.toLowerCase().includes(search.toLowerCase()) || u.full_name?.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
@@ -183,10 +184,33 @@ export function UserManagementPage() {
     setUpdating(null);
   }, [currentUser?.id, isAdmin, refetch]);
 
-  const roleCounts = users.reduce((acc: Record<UserRole, number>, u: UserProfile) => {
+  const handleApprove = useCallback(async (userId: string, userName: string) => {
+    setUpdating(userId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: true, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+    if (error) toast.error(error.message);
+    else { toast.success(`${userName} approved — they can now sign in`); refetch(); }
+    setUpdating(null);
+  }, [refetch]);
+
+  const handleReject = useCallback(async (userId: string, userName: string) => {
+    if (!window.confirm(`Reject and delete ${userName}'s account? This cannot be undone.`)) return;
+    setUpdating(userId);
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) toast.error(error.message);
+    else { toast.success(`${userName}'s account rejected and removed`); refetch(); }
+    setUpdating(null);
+  }, [refetch]);
+
+  const roleCounts = activeUsers.reduce((acc: Record<UserRole, number>, u: UserProfile) => {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
   }, {} as Record<UserRole, number>);
+
+  const pendingUsers = users.filter((u: UserProfile) => !u.is_active);
+  const activeUsers = users.filter((u: UserProfile) => u.is_active);
 
   return (
     <div>
@@ -195,6 +219,44 @@ export function UserManagementPage() {
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => refetch()}
         />
+      )}
+
+      {/* Pending Approvals — admin only */}
+      {isAdmin && pendingUsers.length > 0 && (
+        <div style={{ ...card, marginBottom: 24, overflow: 'hidden', borderLeft: '4px solid #f59e0b' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, background: '#fffbeb' }}>
+            <i className="fa-solid fa-clock" style={{ color: '#f59e0b' }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#92400e' }}>Pending Approvals</span>
+            <span style={{ background: '#f59e0b', color: '#fff', fontSize: '0.65rem', padding: '2px 8px', borderRadius: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{pendingUsers.length}</span>
+            <span style={{ fontSize: '0.72rem', color: '#92400e', marginLeft: 4 }}>New users waiting for your approval before they can sign in</span>
+          </div>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {pendingUsers.map((u: UserProfile) => (
+              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
+                <div style={{ width: 36, height: 36, background: '#fef3c7', color: '#92400e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}>
+                  {u.avatar_initials}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-1)' }}>{u.full_name || '—'}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{u.email} · {u.organization || 'No organization'}</div>
+                  <div style={{ fontSize: '0.68rem', color: '#92400e', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>
+                    Requested role: {USER_ROLE_LABELS[u.role]} · Registered {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <button onClick={() => handleApprove(u.id, u.full_name || u.email)} disabled={updating === u.id}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#dcfce7', color: '#166534', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+                    <i className="fa-solid fa-check" /> Approve
+                  </button>
+                  <button onClick={() => handleReject(u.id, u.full_name || u.email)} disabled={updating === u.id}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#fee2e2', color: '#991b1b', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+                    <i className="fa-solid fa-times" /> Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Role distribution cards */}
@@ -227,7 +289,7 @@ export function UserManagementPage() {
           ))}
         </select>
         <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
-          {filteredUsers.length} of {users.length} users
+          {filteredUsers.length} of {activeUsers.length} active users
         </span>
         {/* Create User button — admin only */}
         {isAdmin && (

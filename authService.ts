@@ -33,6 +33,15 @@ export async function signIn(
 
   if (profileRes.error) return { data: null, error: profileRes.error.message };
 
+  // Block inactive (pending approval) users
+  if (!profileRes.data.is_active) {
+    await supabase.auth.signOut();
+    return {
+      data: null,
+      error: 'Your account is pending approval by a REMA Administrator. You will be notified once approved.',
+    };
+  }
+
   // Update last_login timestamp
   await supabase
     .from('profiles')

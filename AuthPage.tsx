@@ -93,7 +93,10 @@ export default function AuthPage() {
     setLoading(true);
     const result = await signUp({ ...signupForm, role: selectedRole });
     if (result.error) toast.error(result.error);
-    else { toast.success('Account created! Check your email to confirm.'); setMode('login'); }
+    else {
+      toast.success('Registration submitted! Awaiting REMA Admin approval.');
+      setMode('login');
+    }
     setLoading(false);
   }, [signupForm, selectedRole, validate]);
 
@@ -160,7 +163,7 @@ export default function AuthPage() {
               {mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
             </h2>
             <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 28 }}>
-              {mode === 'login' ? 'Access the NBSAP monitoring dashboard.' : mode === 'signup' ? 'Register your institutional account.' : 'Enter your email to receive a reset link.'}
+              {mode === 'login' ? 'Access the NBSAP monitoring dashboard.' : mode === 'signup' ? 'Register your institutional account. A REMA Administrator will review and approve your request before you can sign in.' : 'Enter your email to receive a reset link.'}
             </p>
 
             {/* Mode tabs */}
