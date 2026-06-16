@@ -325,19 +325,30 @@ export default function DashboardPage() {
             const onTrack = s?.onTrackIndicators ?? 0;
             const atRisk = s?.atRiskIndicators ?? 0;
             const behind = s?.behindIndicators ?? 0;
-            const headline = s?.headlineIndicators ?? 0;
-            const component = s?.componentIndicators ?? 0;
-            const binary = s?.binaryIndicators ?? 0;
-            const avgPc = progressColor(s?.avgProgress ?? 0);
+            const avg = s?.avgProgress ?? 0;
+            const avgPc = progressColor(avg);
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-                <ProgRow label="On-Track Indicators" value={`${onTrack}`} target={`${total}`} color="#16a34a" />
-                <ProgRow label="At-Risk Indicators" value={`${atRisk}`} target={`${total}`} color="#d97706" />
+              <>
+                <ProgRow label="Average Progress" value={`${avg}%`} target="100%" color={avgPc.color} />
+                <ProgRow label="On-Track" value={`${onTrack}`} target={`${total}`} color="#16a34a" />
+                <ProgRow label="At-Risk" value={`${atRisk}`} target={`${total}`} color="#d97706" />
                 <ProgRow label="Behind Schedule" value={`${behind}`} target={`${total}`} color="#dc2626" />
-                <ProgRow label="Headline Indicators" value={`${headline}`} target={`${total}`} color="#166534" />
-                <ProgRow label="Component Indicators" value={`${component}`} target={`${total}`} color="#1e40af" />
-                <ProgRow label="Binary Indicators" value={`${binary}`} target={`${total}`} color={avgPc.color} />
-              </div>
+                {/* Tier breakdown — informational chips, not progress bars */}
+                <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid var(--surface-3)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Headline', count: s?.headlineIndicators ?? 0, bg: '#dcfce7', color: '#16a34a' },
+                    { label: 'Component', count: s?.componentIndicators ?? 0, bg: '#fef3c7', color: '#d97706' },
+                    { label: 'Binary', count: s?.binaryIndicators ?? 0, bg: '#fee2e2', color: '#dc2626' },
+                  ].map(({ label, count, bg, color }) => (
+                    <span key={label} style={{ background: bg, color, fontSize: '0.68rem', fontWeight: 700, padding: '3px 10px', borderRadius: 10, fontFamily: "'DM Mono', monospace" }}>
+                      {label}: {count}
+                    </span>
+                  ))}
+                  <span style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace", alignSelf: 'center' }}>
+                    {total} total
+                  </span>
+                </div>
+              </>
             );
           })()}
         </div>
