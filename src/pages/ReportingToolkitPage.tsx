@@ -177,7 +177,7 @@ const TOOLKIT_TOOLS = [
   { id: 'T01', name: 'National Institutional Reporting', icon: '🏛️', color: '#1B6CA8', accent: '#4CA3DD', frequency: 'Quarterly', output: 'Institutional Compliance Scorecard',
     fields: [
       { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
-      { key: 'institution', label: 'Reporting Institution', type: 'select', options: ['Ministry of Environment (MoE)','Ministry of Agriculture and Animal Resources (MINAGRI)','Infrastructure Ministry','Rwanda Forestry Authority (RFA)','Wildlife Authority','National Institute of Statistics Rwanda (NISR)','Rwanda Water Resources Board (RWB)'], required: true },
+      { key: 'institution', label: 'Reporting Institution', type: 'select', options: ['Ministry of Environment (MoE)','Ministry of Agriculture and Animal Resources (MINAGRI)','Infrastructure Ministry','Rwanda Forestry Authority (RFA)','Rwanda Development Board (RDB)','National Institute of Statistics Rwanda (NISR)','Rwanda Water Resources Board (RWB)'], required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
       { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
       { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },

@@ -246,6 +246,7 @@ export interface NBSAPTarget {
   title: string;
   description: string;
   baseline: string;
+  timeline_milestones?: string;
   progress: number;
   goal_color: { bg: string; text: string };
   headline_indicator?: string;

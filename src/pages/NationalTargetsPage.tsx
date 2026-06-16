@@ -234,6 +234,31 @@ export default function NationalTargetsPage() {
                       <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.6 }}>{t.baseline || '—'}</p>
                     </div>
                   </div>
+                  {/* Timeline & Milestones */}
+                  {t.timeline_milestones && (
+                    <div style={{ background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1px solid #bbf7d0', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#166534', marginBottom: 8, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <i className="fa-solid fa-calendar-days" style={{ fontSize: '0.7rem' }} /> Timeline &amp; Milestones
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        {t.timeline_milestones.split(';').map((phase, idx) => {
+                          const trimmed = phase.trim();
+                          if (!trimmed) return null;
+                          const colonIdx = trimmed.indexOf(':');
+                          const year  = colonIdx > -1 ? trimmed.slice(0, colonIdx).trim() : '';
+                          const desc  = colonIdx > -1 ? trimmed.slice(colonIdx + 1).trim() : trimmed;
+                          return (
+                            <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                              {year && (
+                                <span style={{ background: '#16a34a', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 7px', borderRadius: 6, fontFamily: "'DM Mono', monospace", flexShrink: 0, marginTop: 2, whiteSpace: 'nowrap' }}>{year}</span>
+                              )}
+                              <span style={{ fontSize: '0.78rem', color: '#166534', lineHeight: 1.5 }}>{desc}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   {/* Progress bar */}
                   <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 12, padding: 16, color: '#fff', marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
