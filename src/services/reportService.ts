@@ -313,6 +313,8 @@ export async function verifyReport(
     .single();
 
   if (error) return { data: null, error: error.message };
+  // Invalidate stats cache — pending count changes when a report is verified
+  _statsCache = { data: null, ts: 0 };
   return { data: data as ToolkitReport, error: null };
 }
 
@@ -342,6 +344,9 @@ export async function deleteReport(
       ? `Tool: ${report.tool_id}, Status: ${report.status}, Period: ${report.period ?? 'N/A'}, Target: ${report.nbsap_target_id ?? 'none'}`
       : reportId
   );
+
+  // Invalidate stats cache so next getDashboardStats() fetches fresh data
+  _statsCache = { data: null, ts: 0 };
 
   // Notify UI so dashboards and charts refresh
   eventBus.emit('dashboard-refresh', {});

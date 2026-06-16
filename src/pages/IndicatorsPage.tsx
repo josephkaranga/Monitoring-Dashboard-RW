@@ -247,10 +247,6 @@ export default function IndicatorsPage() {
                     </div>
                   ))}
                 </div>
-                <button onClick={() => setTierFilter(t => t === key ? 'all' : key)}
-                  style={{ marginTop: 4, padding: '5px 0', border: `1px solid ${cfg.border}`, borderRadius: 7, background: 'transparent', color: cfg.color, fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
-                  Filter to {tierCounts[key] || 0} {cfg.label.toLowerCase()} →
-                </button>
               </div>
             );
           })}
