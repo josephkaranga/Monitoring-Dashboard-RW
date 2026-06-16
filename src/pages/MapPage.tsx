@@ -20,6 +20,7 @@ import { useRiverNetwork } from '../hooks/useRiverNetwork';
 import { useLakes } from '../hooks/useLakes';
 import { useBiodiversityData } from '../hooks/useBiodiversityData';
 import { logAuditEvent } from '../services/dataService';
+import { eventBus } from '../services/eventBus';
 import type { GBIFOccurrence } from '../types/biodiversity';
 import type { ProtectedArea, RiverFeature, LakeFeature } from '../types/overlays';
 
@@ -254,8 +255,15 @@ function useIsMobile() {
 
 export function MapPage() {
   const isMobile = useIsMobile();
-  const { data: rawDistricts } = useDistricts();
+  const { data: rawDistricts, refetch: refetchDistricts } = useDistricts();
   const districts: District[] = (rawDistricts as District[] | null) ?? [];
+
+  // Refresh the district list whenever a T02 report submission updates a district's status
+  useEffect(() => {
+    return eventBus.on('district-status-updated', () => {
+      refetchDistricts();
+    });
+  }, [refetchDistricts]);
   
   // Load NBSAP Progress data
   const { data: nbsapProgressData, loading: nbsapLoading } = useNBSAPProgress();

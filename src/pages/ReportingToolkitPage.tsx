@@ -3,10 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import { useReports } from '../hooks/useData';
 import { submitReport, processReportAutomatic, exportReportsToCSV, exportReportsToJSON, deleteReport, importReportsFromJSON } from '../services/reportService';
 import { organizationConfigService } from '../services/organizationConfigService';
-import { writeAuditEntry, fetchUserResponsibleTargets, fetchIndicators } from '../services/dataService';
+import { writeAuditEntry, fetchUserResponsibleTargets, fetchIndicators, fetchDistricts, updateDistrictStatus } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
+import { eventBus } from '../services/eventBus';
 import toast from 'react-hot-toast';
-import type { ReportType, ReportAttachment, NBSAPTarget, Indicator } from '../types/index';
+import type { ReportType, ReportAttachment, NBSAPTarget, Indicator, District } from '../types/index';
 import { validateYear } from '../utils/validation';
 
 
@@ -189,7 +190,7 @@ const TOOLKIT_TOOLS = [
   { id: 'T02', name: 'District Biodiversity Monitoring', icon: '🌿', color: '#1E7D4B', accent: '#4CBB7F', frequency: 'Quarterly', output: 'District Biodiversity Performance Index',
     fields: [
       { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
-      { key: 'district', label: 'District Name', type: 'text', placeholder: 'e.g. Nyarugenge', required: true },
+      { key: 'district', label: 'District Name', type: 'district_select', required: true },
       { key: 'officer', label: 'Reporting Officer', type: 'text', placeholder: 'Officer name', required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
       { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
@@ -288,6 +289,8 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
   const [availableIndicators, setAvailableIndicators] = useState<Indicator[]>([]);
   const [loadingTargets, setLoadingTargets] = useState(false);
   const [loadingIndicators, setLoadingIndicators] = useState(false);
+  const [allDistricts, setAllDistricts] = useState<District[]>([]);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get available stakeholders for the selected stakeholder
@@ -366,6 +369,22 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
 
     loadTargets();
   }, [user?.organization]);
+
+  // Load all districts for the district dropdown (T02)
+  useEffect(() => {
+    if (!tool.fields.some(f => f.type === 'district_select')) return;
+    const loadDistricts = async () => {
+      setLoadingDistricts(true);
+      try {
+        const districts = await fetchDistricts();
+        setAllDistricts(districts);
+      } catch (error) {
+        console.error('Error loading districts:', error);
+      }
+      setLoadingDistricts(false);
+    };
+    loadDistricts();
+  }, [tool.id]);
 
   // Load indicators when target is selected
   useEffect(() => {
@@ -550,16 +569,29 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
         await processReportAutomatic(result.data, orgConfig);
       }
 
+      // Update district reporting status on the map when a T02 report is submitted
+      if (tool.id === 'T02' && formData.district) {
+        const matchedDistrict = allDistricts.find(d => d.name === formData.district);
+        if (matchedDistrict) {
+          const newDistrictStatus = requireVerification ? 'pending' : 'submitted';
+          await updateDistrictStatus(matchedDistrict.id, newDistrictStatus);
+          eventBus.emit('district-status-updated', {
+            districtId: matchedDistrict.id,
+            districtName: matchedDistrict.name,
+          });
+        }
+      }
+
       // Enhanced success message
       const successMsg = requireVerification ?
         'Submission queued for verification ⏳' + (selectedTarget ? ` Data will update Target ${selectedTarget.id} upon approval.` : '') :
         'Report submitted successfully ✓' + (selectedTarget ? ` Target ${selectedTarget.id} updated automatically.` : '') + (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
-        
+
       toast.success(successMsg);
       onSuccess();
     }
     setSubmitting(false);
-  }, [formData, tool, settings, attachments, onSuccess, responsibleTargets]);
+  }, [formData, tool, settings, attachments, onSuccess, responsibleTargets, allDistricts]);
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -658,6 +690,26 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
                         {indicator.name} ({indicator.status})
                       </option>
                     ))}
+                  </select>
+                ) : f.type === 'district_select' ? (
+                  <select
+                    value={formData[f.key] || ''}
+                    onChange={e => { setFormData(d => ({ ...d, [f.key]: e.target.value })); setErrors(err => ({ ...err, [f.key]: false })); }}
+                    disabled={loadingDistricts}
+                    style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`, borderRadius: 8, fontSize: '0.83rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', background: '#fff', color: '#0f172a' }}
+                  >
+                    <option value="">{loadingDistricts ? 'Loading districts…' : '— Select District —'}</option>
+                    {['Kigali', 'North', 'South', 'East', 'West'].map(province => {
+                      const provDistricts = allDistricts.filter(d => d.province?.name === province);
+                      if (provDistricts.length === 0) return null;
+                      return (
+                        <optgroup key={province} label={`${province} Province`}>
+                          {provDistricts.map(d => (
+                            <option key={d.id} value={d.name}>{d.name}</option>
+                          ))}
+                        </optgroup>
+                      );
+                    })}
                   </select>
                 ) : f.type === 'select' ? (
                   <select

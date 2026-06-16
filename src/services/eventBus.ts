@@ -11,14 +11,24 @@ export interface TargetProgressEventPayload {
 }
 
 /**
+ * Payload broadcast when a district's reporting status changes (e.g. after a
+ * T02 District Biodiversity Monitoring report is submitted).
+ */
+export interface DistrictStatusEventPayload {
+  districtId: number;
+  districtName: string;
+}
+
+/**
  * Events emitted by the Real-Time Update Pipeline so that UI components
- * (NBSAPTargetProgress, DashboardPage, NationalTargetsPage, ...) can refresh
- * in response to automatic progress updates.
+ * (NBSAPTargetProgress, DashboardPage, NationalTargetsPage, MapPage, ...) can
+ * refresh in response to automatic progress and status updates.
  */
 export interface UpdateEventMap {
   'target-progress-updated': TargetProgressEventPayload;
   'dashboard-refresh': TargetProgressEventPayload;
   'national-targets-refresh': TargetProgressEventPayload;
+  'district-status-updated': DistrictStatusEventPayload;
 }
 
 export type UpdateEventName = keyof UpdateEventMap;
