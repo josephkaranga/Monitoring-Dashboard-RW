@@ -1,6 +1,8 @@
 import { supabase } from '../utils/supabase';
 import { triggerExtraction } from './aiExtractionService';
 import { automatedProcessingEngine } from './automatedProcessingEngine';
+import { writeAuditEntry } from './dataService';
+import { eventBus } from './eventBus';
 import { getToolWeight, getToolDescription, ToolId } from '../types/automaticReporting';
 import type { OrganizationConfig, ProcessingResult, ReportSubmission } from '../types/automaticReporting';
 import type {
@@ -318,12 +320,35 @@ export async function verifyReport(
 export async function deleteReport(
   reportId: string
 ): Promise<ApiResponse<null>> {
+  // Fetch the report first so we can log what was deleted
+  const { data: report } = await supabase
+    .from('toolkit_reports')
+    .select('id, tool_id, tool_name, status, nbsap_target_id, submitted_by, period')
+    .eq('id', reportId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from('toolkit_reports')
     .delete()
     .eq('id', reportId);
 
   if (error) return { data: null, error: error.message };
+
+  // Audit log — DB triggers handle the actual data reversal
+  void writeAuditEntry(
+    'delete',
+    `Report deleted: ${report?.tool_name ?? report?.tool_id ?? reportId}`,
+    report
+      ? `Tool: ${report.tool_id}, Status: ${report.status}, Period: ${report.period ?? 'N/A'}, Target: ${report.nbsap_target_id ?? 'none'}`
+      : reportId
+  );
+
+  // Notify UI so dashboards and charts refresh
+  eventBus.emit('dashboard-refresh', {});
+  if (report?.nbsap_target_id) {
+    eventBus.emit('target-progress-updated', { targetId: report.nbsap_target_id, progress: 0 });
+  }
+
   return { data: null, error: null };
 }
 
