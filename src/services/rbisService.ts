@@ -22,29 +22,34 @@ import type {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const RBIS_BASE_URL = 'https://rbis.ur.ac.rw/api';
-const GBIF_BASE_URL = 'https://api.gbif.org/v1';
 const RWANDA_CODE = 'RW';
 
-// Rate limiting: 1 request per second for GBIF API
-const GBIF_RATE_LIMIT_MS = 1000;
-let lastGBIFRequest = 0;
-
-// ── Rate Limiting Helper ──────────────────────────────────────────────────────
+// Use Supabase Edge Function proxy for GBIF API to avoid CORS and network issues
+const USE_GBIF_PROXY = true;
 
 /**
- * Enforces rate limiting for GBIF API calls (1 req/sec)
- * Waits if necessary before allowing the next request
+ * Gets the GBIF API URL (direct or via proxy)
+ * @param endpoint - GBIF API endpoint (e.g., 'occurrence/search')
+ * @param params - Query parameters
+ * @returns Complete URL for GBIF API request
  */
-async function enforceRateLimit(): Promise<void> {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastGBIFRequest;
-  
-  if (timeSinceLastRequest < GBIF_RATE_LIMIT_MS) {
-    const waitTime = GBIF_RATE_LIMIT_MS - timeSinceLastRequest;
-    await new Promise(resolve => setTimeout(resolve, waitTime));
+function getGBIFUrl(endpoint: string, params: Record<string, string>): string {
+  if (USE_GBIF_PROXY) {
+    // Use Supabase Edge Function proxy
+    const { data: { url } } = supabase.functions.getUrl('gbif-proxy');
+    const queryParams = new URLSearchParams({
+      endpoint,
+      ...params,
+    });
+    return `${url}?${queryParams}`;
+  } else {
+    // Direct GBIF API call (may have CORS issues)
+    const queryParams = new URLSearchParams({
+      country: RWANDA_CODE,
+      ...params,
+    });
+    return `https://api.gbif.org/v1/${endpoint}?${queryParams}`;
   }
-  
-  lastGBIFRequest = Date.now();
 }
 
 // ── RBIS Connection Management ────────────────────────────────────────────────
@@ -199,16 +204,13 @@ export async function fetchRBISMetrics(): Promise<RBISMetrics> {
  * @returns Total count of matching occurrences
  */
 async function fetchGBIFCount(params: Record<string, string>): Promise<number> {
-  await enforceRateLimit();
-  
-  const queryParams = new URLSearchParams({
-    country: RWANDA_CODE,
-    limit: '0',
-    ...params,
-  });
-
   try {
-    const response = await fetch(`${GBIF_BASE_URL}/occurrence/search?${queryParams}`, {
+    const url = getGBIFUrl('occurrence/search', {
+      limit: '0',
+      ...params,
+    });
+
+    const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(15000), // 15 second timeout
     });
@@ -244,16 +246,13 @@ function getDateRange(days: number): string {
  * @returns Array of recent occurrence records
  */
 export async function fetchRecentOccurrences(limit = 5): Promise<RBISOccurrence[]> {
-  await enforceRateLimit();
-  
-  const queryParams = new URLSearchParams({
-    country: RWANDA_CODE,
-    limit: limit.toString(),
-    hasCoordinate: 'true',
-  });
-
   try {
-    const response = await fetch(`${GBIF_BASE_URL}/occurrence/search?${queryParams}`, {
+    const url = getGBIFUrl('occurrence/search', {
+      limit: limit.toString(),
+      hasCoordinate: 'true',
+    });
+
+    const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(15000),
     });
