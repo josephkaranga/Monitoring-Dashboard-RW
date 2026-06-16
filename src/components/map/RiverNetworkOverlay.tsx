@@ -70,7 +70,7 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
     return coords.map((point, i) => {
       const [lon, lat] = point;
       const command = i === 0 ? 'M' : 'L';
-      return `${command}${lon},${-lat}`; // Negative lat for SVG coordinate system
+      return `${command}${lon},${lat}`; // Use lat directly (already negative for Rwanda)
     }).join(' ');
   };
 
