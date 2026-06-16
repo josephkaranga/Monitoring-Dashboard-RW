@@ -82,7 +82,86 @@ export async function fetchTargets(): Promise<NBSAPTarget[]> {
     console.error('fetchTargets error:', error);
     return [];
   }
+  
+  // Map the data and handle missing responsible_stakeholders column gracefully
+  return (data || []).map((target: any) => ({
+    ...target,
+    responsible_stakeholders: target.responsible_stakeholders || []
+  })) as NBSAPTarget[];
+}
+
+export async function fetchTargetsWithReportStats(): Promise<NBSAPTarget[]> {
+  const { data, error } = await supabase
+    .from('target_progress_with_reports')
+    .select('*')
+    .order('id', { ascending: true });
+
+  if (error) {
+    console.error('fetchTargetsWithReportStats error:', error);
+    return [];
+  }
   return (data || []) as NBSAPTarget[];
+}
+
+export async function fetchUserResponsibleTargets(userOrganization?: string): Promise<NBSAPTarget[]> {
+  console.log('🔧 fetchUserResponsibleTargets called with userOrg:', userOrganization);
+  
+  try {
+    // Use the database RPC function now that it has correct stakeholder mappings
+    console.log('�️ Using database RPC function with updated stakeholder mappings');
+    
+    const { data: rpcData, error: rpcError } = await supabase
+      .rpc('get_user_responsible_targets', { user_org: userOrganization || '' });
+
+    if (rpcError) {
+      console.error('❌ RPC error:', rpcError);
+      throw rpcError;
+    }
+
+    if (rpcData && rpcData.length > 0) {
+      // Transform the RPC data to match NBSAPTarget interface
+      const transformedTargets: NBSAPTarget[] = rpcData.map((item: any) => ({
+        id: item.target_id,
+        title: item.title,
+        description: item.description,
+        goal: item.goal,
+        progress: item.progress,
+        responsible_stakeholders: item.responsible_stakeholders || [],
+        baseline: '', // Not returned by RPC
+        goal_color: '', // Not returned by RPC  
+        created_at: '', // Not returned by RPC
+        updated_at: '', // Not returned by RPC
+      }));
+
+      console.log('✅ RPC success: returning', transformedTargets.length, 'targets from database function');
+      console.log('🔍 Database targets:', transformedTargets.map(t => ({ 
+        id: t.id, 
+        title: t.title, 
+        stakeholders: t.responsible_stakeholders 
+      })));
+      return transformedTargets;
+    }
+
+    // If RPC returns empty, fall back to all targets
+    console.log('⚠️ RPC returned empty, falling back to all targets');
+    return await fetchTargets();
+    
+  } catch (rpcError) {
+    console.error('❌ RPC failed, using fallback method:', rpcError);
+    
+    // Fallback: get all targets with stakeholder mapping
+    try {
+      const fallbackTargets = await fetchTargets();
+      console.log('� Fallback: loaded', fallbackTargets.length, 'targets from fetchTargets()');
+      
+      // Use the database mappings - these should now match the updated database
+      return fallbackTargets;
+      
+    } catch (fallbackError) {
+      console.error('❌ Fallback fetchTargets failed:', fallbackError);
+      return [];
+    }
+  }
 }
 
 // ============================================================

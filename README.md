@@ -66,13 +66,7 @@ nbsap-monitoring-system/
 
 ---
 
-## Step-by-Step Deployment
-
-### 1. Create Supabase Project
-
-1. Go to [app.supabase.com](https://app.supabase.com) and create a new project
-2. Choose a strong database password and remember it
-3. Note your **Project URL** and **anon/public key** from Settings → API
+## 
 
 ### 2. Run Database Migrations
 
@@ -125,24 +119,7 @@ cp .env.example .env
 npm run dev
 ```
 
-### 7. Deploy to Vercel
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Set environment variables in Vercel Dashboard:
-# Settings → Environment Variables:
-#   VITE_SUPABASE_URL      = https://your-project.supabase.co
-#   VITE_SUPABASE_ANON_KEY = your-anon-key
-```
-
-Or connect GitHub repo in Vercel dashboard for automatic deployments.
-
----
+###
 
 ## Key Architecture Decisions
 

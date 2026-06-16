@@ -253,6 +253,11 @@ export interface NBSAPTarget {
   complementary_indicators?: string[];
   strategic_actions?: string[];
   indicators?: Indicator[];
+  responsible_stakeholders?: string[];
+  total_reports?: number;
+  approved_reports?: number;
+  pending_reports?: number;
+  report_completion_rate?: number;
   created_at: string;
   updated_at: string;
 }
@@ -278,6 +283,7 @@ export interface ToolkitReport {
   attachments: ReportAttachment[];
   district: string | null;
   institution: string | null;
+  nbsap_target_id: number | null;
   submitted_at: string;
   created_at: string;
   updated_at: string;
