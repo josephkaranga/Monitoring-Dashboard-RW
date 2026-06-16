@@ -139,7 +139,7 @@ export function CompliancePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {[
             { icon: 'fa-clipboard-check', color: '#0284c7', title: 'Regulatory Tracking', sub: 'REMA, RDB, Districts' },
-            { icon: 'fa-coins',           color: '#16a34a', title: 'Performance Incentives', sub: 'MINEMA, Finance' },
+            { icon: 'fa-coins',           color: '#16a34a', title: 'Performance Incentives', sub: 'MoE, Finance' },
             { icon: 'fa-comments',        color: '#f59e0b', title: 'Grievance Channels', sub: 'REMA, Ombudsman' },
           ].map(m => (
             <div key={m.title} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14, textAlign: 'center' }}>

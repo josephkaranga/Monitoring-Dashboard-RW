@@ -103,7 +103,7 @@ export default function AdaptiveManagementPage() {
           { icon: 'fa-coins', color: '#f59e0b', border: '#f59e0b', title: 'Financing Shortfall Monitoring', desc: `Tracking biodiversity budget allocations vs disbursements. ${financePct} mobilized.`, sub: 'T05 finance module feeds this' },
           { icon: 'fa-clipboard-check', color: '#6366f1', border: '#6366f1', title: 'Institutional Compliance Levels', desc: 'Evaluating ministry and district reporting compliance. 92% EIA · 88% Protected Areas · 75% ABS · 68% Species Laws', sub: 'T01 & T06 modules feed this' },
           { icon: 'fa-scale-balanced', color: '#0ea5e9', border: '#0ea5e9', title: 'Evidence-Based Policy Adjustment', desc: 'Enabling dynamic response to biodiversity risks. 28 decisions made from M&E data out of 50 target decisions by 2030.', sub: 'Indicator 16 tracks this' },
-          { icon: 'fa-venus-mars', color: '#ec4899', border: '#ec4899', title: 'Gender-Responsive Monitoring', desc: 'Tracking women, youth & IPLC inclusion in biodiversity M&E. Currently 32% women and 18% IPLC participation.', sub: 'T04 community module feeds this' },
+          { icon: 'fa-venus-mars', color: '#ec4899', border: '#ec4899', title: 'Gender-Responsive Monitoring', desc: 'Tracking women, youth & Local Community inclusion in biodiversity M&E. Currently 32% women and 18% Local Community participation.', sub: 'T04 community module feeds this' },
         ].map(c => (
           <div key={c.title} style={{ ...card, padding: 18, borderTop: `3px solid ${c.border}` }}>
             <i className={`fa-solid ${c.icon}`} style={{ fontSize: '1.4rem', color: c.color, display: 'block', marginBottom: 10 }} />

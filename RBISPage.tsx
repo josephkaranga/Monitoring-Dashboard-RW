@@ -6,7 +6,7 @@ const card: React.CSSProperties = {
 };
 
 const integrationSources = [
-  { name: 'MINEMA', date: 'Mar 22, 2026', records: 342, validation: '✓ Passed', valColor: '#16a34a', status: 'Active', statusBg: '#dcfce7', statusColor: '#166534' },
+  { name: 'MoE', date: 'Mar 22, 2026', records: 342, validation: '✓ Passed', valColor: '#16a34a', status: 'Active', statusBg: '#dcfce7', statusColor: '#166534' },
   { name: 'MINAGRI', date: 'Mar 23, 2026', records: 528, validation: '✓ Passed', valColor: '#16a34a', status: 'Active', statusBg: '#dcfce7', statusColor: '#166534' },
   { name: 'NSO', date: 'Mar 20, 2026', records: 1248, validation: '⟳ Processing', valColor: '#f59e0b', status: 'Validating', statusBg: '#dbeafe', statusColor: '#1e40af' },
   { name: 'Research Inst.', date: 'Mar 18, 2026', records: 156, validation: '✓ Passed', valColor: '#16a34a', status: 'Active', statusBg: '#dcfce7', statusColor: '#166534' },
@@ -151,7 +151,7 @@ export default function RBISPage() {
       {/* Data providers grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
         {[
-          { color: '#16a34a', bg: '#dcfce7', icon: 'fa-landmark', title: 'Sector Ministries', sub: 'Primary Data Providers', items: ['Environment (MINEMA)', 'Agriculture (MINAGRI)', 'Forestry (RFA)', 'Fisheries'], status: '✓ Active', statusColor: '#16a34a' },
+          { color: '#16a34a', bg: '#dcfce7', icon: 'fa-landmark', title: 'Sector Ministries', sub: 'Primary Data Providers', items: ['Environment (MoE)', 'Agriculture (MINAGRI)', 'Forestry (RFA)', 'Fisheries'], status: '✓ Active', statusColor: '#16a34a' },
           { color: '#2563eb', bg: '#dbeafe', icon: 'fa-chart-column', title: 'National Statistics', sub: 'Data Integration & Validation', items: ['Data Integration', 'Indicator Validation', 'Baseline Alignment'], status: '✓ Active', statusColor: '#16a34a' },
           { color: '#9333ea', bg: '#f3e8ff', icon: 'fa-microscope', title: 'Research Institutions', sub: 'Scientific Studies', items: ['Biodiversity Studies', 'Species Monitoring', 'Ecosystem Analysis'], status: '✓ Active', statusColor: '#16a34a' },
           { color: '#0891b2', bg: '#e0f2fe', icon: 'fa-building-columns', title: 'Coordination Unit', sub: 'REMA Biodiversity M&E', items: ['Data Consolidation', 'Analysis & QA', 'Report Generation'], status: '✓ Active', statusColor: '#16a34a' },
