@@ -106,10 +106,9 @@ export async function getConnectionStatus(): Promise<RBISConnection> {
       .from('rbis_connection_log')
       .select('status, server_url, error_message, created_at')
       .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       return {
         status: 'disconnected',
         serverUrl: 'rbis.ur.ac.rw',
@@ -118,11 +117,12 @@ export async function getConnectionStatus(): Promise<RBISConnection> {
       };
     }
 
+    const record = data[0];
     return {
-      status: data.status as RBISConnection['status'],
-      serverUrl: data.server_url,
-      lastSync: data.status === 'connected' ? data.created_at : null,
-      error: data.error_message,
+      status: record.status as RBISConnection['status'],
+      serverUrl: record.server_url,
+      lastSync: record.status === 'connected' ? record.created_at : null,
+      error: record.error_message,
     };
   } catch (error) {
     console.error('getConnectionStatus error:', error);
