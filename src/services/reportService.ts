@@ -370,7 +370,7 @@ export async function clearAllReports(): Promise<ApiResponse<null>> {
 let _statsCache: { data: ReturnType<typeof buildStats> | null; ts: number } = { data: null, ts: 0 };
 const STATS_TTL = 60_000; // 60 seconds — increased from 30s
 
-function buildStats(reports: any[], indicators: any[], districts: any[], compliance: any[]) {
+function buildStats(reports: any[], indicators: any[], districts: any[], compliance: any[], targetCount: number) {
   const approved = reports.filter(r => r.status === 'approved' || !r.status);
   const pending = reports.filter(r => r.status === 'pending');
   const reportsByTool = {} as Record<string, number>;
@@ -383,19 +383,33 @@ function buildStats(reports: any[], indicators: any[], districts: any[], complia
   const t05 = approved.filter(r => r.tool_id === 'T05');
   const financeAllocated = t05.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_allocated) || 0), 0);
   const financeDisbursed = t05.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_disbursed) || 0), 0);
+  const totalDistricts = Math.max(districts.length, 30); // Rwanda has 30 districts
   const submittedDistricts = districts.filter(d => d.status === 'submitted').length;
   const missingDistricts = districts.filter(d => d.status === 'missing').length;
   const onTrack = indicators.filter(i => i.status === 'on-track').length;
   const atRisk = indicators.filter(i => i.status === 'at-risk').length;
   const behind = indicators.filter(i => i.status === 'behind').length;
   const avgProgress = indicators.length ? Math.round(indicators.reduce((a, i) => a + i.progress, 0) / indicators.length) : 0;
+  // Per-tier indicator counts for dashboard
+  const headlineCount = indicators.filter(i => i.tier === 'headline').length;
+  const componentCount = indicators.filter(i => i.tier === 'component').length;
+  const binaryCount = indicators.filter(i => i.tier === 'binary').length;
   return {
-    totalTargets: 22, totalSubmissions: reports.length,
-    activeDistricts: `${submittedDistricts}/${districts.length}`, missingDistricts,
-    complianceIssues: compliance.length, onTrackIndicators: onTrack,
-    atRiskIndicators: atRisk, behindIndicators: behind, avgProgress,
+    totalTargets: targetCount || 22,
+    totalSubmissions: reports.length,
+    activeDistricts: `${submittedDistricts}/${totalDistricts}`,
+    missingDistricts,
+    complianceIssues: compliance.length,
+    onTrackIndicators: onTrack,
+    atRiskIndicators: atRisk,
+    behindIndicators: behind,
+    avgProgress,
     forestHa, wetlandHa, hwcIncidents, financeAllocated, financeDisbursed,
     reportsByTool, pendingVerifications: pending.length,
+    headlineIndicators: headlineCount,
+    componentIndicators: componentCount,
+    binaryIndicators: binaryCount,
+    totalIndicators: indicators.length,
   };
 }
 
@@ -403,7 +417,7 @@ export async function getDashboardStats() {
   if (_statsCache.data && Date.now() - _statsCache.ts < STATS_TTL) {
     return _statsCache.data;
   }
-  const [reportsRes, indicatorsRes, districtsRes, complianceRes] =
+  const [reportsRes, indicatorsRes, districtsRes, complianceRes, targetsRes] =
     await Promise.all([
       supabase
         .from('toolkit_reports')
@@ -419,14 +433,18 @@ export async function getDashboardStats() {
         .from('compliance_records')
         .select('id, severity, is_resolved')
         .eq('is_resolved', false),
+      supabase
+        .from('nbsap_targets')
+        .select('id', { count: 'exact', head: true }),
     ]);
 
   const reports = reportsRes.data || [];
   const indicators = indicatorsRes.data || [];
   const districts = districtsRes.data || [];
   const compliance = complianceRes.data || [];
+  const targetCount = targetsRes.count ?? 22;
 
-  const result = buildStats(reports, indicators, districts, compliance);
+  const result = buildStats(reports, indicators, districts, compliance, targetCount);
   _statsCache = { data: result, ts: Date.now() };
   return result;
 }

@@ -405,6 +405,7 @@ export interface DashboardStats {
   totalTargets: number;
   totalSubmissions: number;
   activeDistricts: string;
+  missingDistricts: number;
   complianceIssues: number;
   onTrackIndicators: number;
   atRiskIndicators: number;
@@ -417,6 +418,10 @@ export interface DashboardStats {
   financeDisbursed: number;
   reportsByTool: Record<ReportType, number>;
   pendingVerifications: number;
+  totalIndicators: number;
+  headlineIndicators: number;
+  componentIndicators: number;
+  binaryIndicators: number;
 }
 
 // ── USER SETTINGS ────────────────────────────────────────────

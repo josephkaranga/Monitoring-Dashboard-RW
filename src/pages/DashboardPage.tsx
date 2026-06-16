@@ -6,6 +6,7 @@ import { DashboardSkeleton } from '../components/Skeleton';
 import { NBSAPTargetProgress } from '../components/NBSAPTargetProgress';
 import { fetchDashboardMetrics, type DashboardMetrics, formatMetricValue } from '../services/systemMetricsService';
 import { eventBus } from '../services/eventBus';
+import { progressColor } from '../utils/progressColors';
 import toast from 'react-hot-toast';
 
 // ── Module-level AI cache — persists across navigation ────────
@@ -36,7 +37,12 @@ function MetricCard({ label, value, sub, gradient, icon }: {
 
 // ── Progress Row ──────────────────────────────────────────────
 function ProgRow({ label, value, target, color }: { label: string; value: string; target: string; color: string }) {
-  const pct = Math.min(100, Math.max(0, parseFloat(value) || 0));
+  const numVal = parseFloat(value) || 0;
+  const numTarget = parseFloat(target) || 0;
+  // If value contains '%', treat as absolute percentage; otherwise compute ratio
+  const pct = value.includes('%')
+    ? Math.min(100, Math.max(0, numVal))
+    : numTarget > 0 ? Math.min(100, (numVal / numTarget) * 100) : 0;
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: 5 }}>
@@ -229,7 +235,7 @@ export default function DashboardPage() {
                   { 
                     val: `${systemMetrics.eiaCompliancePercentage.toFixed(1)}%`, 
                     label: 'EIA Compliance', 
-                    color: systemMetrics.eiaCompliancePercentage >= 80 ? '#10b981' : systemMetrics.eiaCompliancePercentage >= 60 ? '#f59e0b' : '#ef4444',
+                    color: progressColor(systemMetrics.eiaCompliancePercentage).color,
                     source: 'T06'
                   },
                 ].map(({ val, label, color, source }) => (
@@ -314,14 +320,26 @@ export default function DashboardPage() {
             <i className="fa-solid fa-chart-line" style={{ color: 'var(--sky-dim)' }} />
             Indicator Progress Trends
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-            <ProgRow label="Forest Cover" value={`${s?.forestHa ? Math.round(s.forestHa / 100) / 10 + 'k ha' : '27%'}`} target="30%" color="linear-gradient(90deg,#059669,#10b981)" />
-            <ProgRow label="Wetland Restoration" value={`${s?.wetlandHa?.toLocaleString() ?? 600} ha`} target="1,200 ha" color="linear-gradient(90deg,#0284c7,#38bdf8)" />
-            <ProgRow label="Indicators On-Track" value={`${s?.onTrackIndicators ?? 0}`} target="22" color="linear-gradient(90deg,#7c3aed,#8b5cf6)" />
-            <ProgRow label="Community Participation" value="60%" target="80%" color="linear-gradient(90deg,#d97706,#f59e0b)" />
-            <ProgRow label="Water Quality" value="80%" target="90%" color="linear-gradient(90deg,#0891b2,#06b6d4)" />
-            <ProgRow label="Policy Integration" value="10" target="15 plans" color="linear-gradient(90deg,#db2777,#ec4899)" />
-          </div>
+          {(() => {
+            const total = s?.totalIndicators ?? 0;
+            const onTrack = s?.onTrackIndicators ?? 0;
+            const atRisk = s?.atRiskIndicators ?? 0;
+            const behind = s?.behindIndicators ?? 0;
+            const headline = s?.headlineIndicators ?? 0;
+            const component = s?.componentIndicators ?? 0;
+            const binary = s?.binaryIndicators ?? 0;
+            const avgPc = progressColor(s?.avgProgress ?? 0);
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
+                <ProgRow label="On-Track Indicators" value={`${onTrack}`} target={`${total}`} color="#16a34a" />
+                <ProgRow label="At-Risk Indicators" value={`${atRisk}`} target={`${total}`} color="#d97706" />
+                <ProgRow label="Behind Schedule" value={`${behind}`} target={`${total}`} color="#dc2626" />
+                <ProgRow label="Headline Indicators" value={`${headline}`} target={`${total}`} color="#166534" />
+                <ProgRow label="Component Indicators" value={`${component}`} target={`${total}`} color="#1e40af" />
+                <ProgRow label="Binary Indicators" value={`${binary}`} target={`${total}`} color={avgPc.color} />
+              </div>
+            );
+          })()}
         </div>
 
         {/* Recent Activity */}

@@ -4,6 +4,7 @@ import { useAsync, useIndicators } from '../hooks/useData';
 import { useLiveTargetProgress } from '../hooks/useLiveTargetProgress';
 import { fetchTargets } from '../services/dataService';
 import { eventBus } from '../services/eventBus';
+import { progressColor, progressHex } from '../utils/progressColors';
 import type { NBSAPTarget, Indicator, IndicatorTier } from '../types/index';
 
 const GOAL_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
@@ -84,8 +85,8 @@ export default function NationalTargetsPage() {
 
   // Indicator summary counts
   const indicatorSummary = useMemo(() => {
-    const c: Record<IndicatorTier, number> = { headline: 0, component: 0, complementary: 0, binary: 0 };
-    indicators.forEach(i => { if (c[i.tier as IndicatorTier] !== undefined) c[i.tier as IndicatorTier]++; });
+    const c: Record<string, number> = { headline: 0, component: 0, binary: 0 };
+    indicators.forEach(i => { if (c[i.tier] !== undefined) c[i.tier]++; });
     return c;
   }, [indicators]);
 
@@ -141,10 +142,9 @@ export default function NationalTargetsPage() {
         <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)', fontSize: '0.85rem', marginRight: 4 }} />
         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-2)', marginRight: 8 }}>Indicator Framework:</span>
         {([
-          { tier: 'headline' as IndicatorTier,      label: 'Headline',      bg: '#dcfce7', color: '#166534' },
-          { tier: 'component' as IndicatorTier,     label: 'Component',     bg: '#dbeafe', color: '#1e40af' },
-          { tier: 'complementary' as IndicatorTier, label: 'Complementary', bg: '#f3e8ff', color: '#6b21a8' },
-          { tier: 'binary' as IndicatorTier,        label: 'Binary',        bg: '#fef9c3', color: '#854d0e' },
+          { tier: 'headline',  label: 'Headline',  bg: '#dcfce7', color: '#166534' },
+          { tier: 'component', label: 'Component', bg: '#dbeafe', color: '#1e40af' },
+          { tier: 'binary',    label: 'Binary',    bg: '#fef9c3', color: '#854d0e' },
         ]).map(({ tier, label, bg, color }) => (
           <span key={tier} style={{ background: bg, color, fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 10, fontFamily: "'DM Mono', monospace" }}>
             {label}: {indicatorSummary[tier]}
@@ -185,7 +185,8 @@ export default function NationalTargetsPage() {
         ) : filtered.map(t => {
           const gc = GOAL_COLORS[t.goal] || GOAL_COLORS.A;
           const open = expandedIds.has(t.id) || allExpanded;
-          const progColor = t.progress >= 60 ? '#10b981' : t.progress >= 35 ? '#f59e0b' : '#f43f5e';
+          const pc = progressColor(t.progress);
+          const progColor = pc.color;
           return (
             <div key={t.id} id={`target-card-${t.id}`} style={{ ...card, overflow: 'hidden' }}>
               {/* Header */}
@@ -210,10 +211,11 @@ export default function NationalTargetsPage() {
                     <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginBottom: 3 }}>Progress</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ width: 80, height: 6, background: 'var(--surface-3)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${t.progress}%`, background: progColor, borderRadius: 3 }} />
+                        <div style={{ height: '100%', width: `${t.progress}%`, background: progColor, borderRadius: 3, transition: 'width 0.8s ease' }} />
                       </div>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: progColor }}>{t.progress}%</span>
                     </div>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: pc.color, background: pc.bg, border: `1px solid ${pc.border}`, padding: '1px 6px', borderRadius: 6, marginTop: 3, display: 'inline-block', fontFamily: "'DM Mono', monospace" }}>{pc.label}</span>
                   </div>
                   <i className={`fa-solid fa-chevron-${open ? 'up' : 'down'}`} style={{ color: 'var(--text-3)', fontSize: '0.75rem' }} />
                 </div>
@@ -236,10 +238,13 @@ export default function NationalTargetsPage() {
                   <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 12, padding: 16, color: '#fff', marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Progress toward 2030</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#38bdf8' }}>{t.progress}%</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: pc.bg, color: pc.color, fontFamily: "'DM Mono', monospace" }}>{pc.label}</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: progColor }}>{t.progress}%</span>
+                      </div>
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 6, height: 10, overflow: 'hidden' }}>
-                      <div style={{ background: '#38bdf8', width: `${t.progress}%`, height: '100%', borderRadius: 6, transition: 'width 1s ease' }} />
+                      <div style={{ background: progColor, width: `${t.progress}%`, height: '100%', borderRadius: 6, transition: 'width 1s ease' }} />
                     </div>
                   </div>
                   {/* Indicator Framework — from DB */}

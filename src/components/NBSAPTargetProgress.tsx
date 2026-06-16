@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchTargetsWithReportStats } from '../services/dataService';
 import { realTimeUpdateService } from '../services/realTimeUpdateService';
+import { progressColor } from '../utils/progressColors';
 import type { NBSAPTarget } from '../types/index';
 
 const RECENTLY_UPDATED_DISPLAY_MS = 3000;
@@ -209,7 +210,7 @@ export function NBSAPTargetProgress() {
         {filteredTargets.map(target => {
           const colors = goalColors[target.goal as keyof typeof goalColors];
           const reportCompletion = target.report_completion_rate || 0;
-          
+          const pc = progressColor(target.progress);
           const isUpdating = recentlyUpdated.has(target.id);
 
           return (
@@ -252,25 +253,27 @@ export function NBSAPTargetProgress() {
                 }}>
                   Target {target.id}: {target.title}
                 </div>
-                
+
                 {/* Progress Bars */}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
                   {/* Overall Progress */}
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                       <span style={{ fontSize: '0.65rem', color: '#64748b' }}>Overall</span>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#0f172a' }}>{target.progress}%</span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: pc.color }}>
+                        {target.progress}% · {pc.label}
+                      </span>
                     </div>
-                    <div style={{ 
-                      height: 4, 
-                      background: '#f1f5f9', 
+                    <div style={{
+                      height: 4,
+                      background: '#f1f5f9',
                       borderRadius: 2,
                       overflow: 'hidden'
                     }}>
                       <div style={{
                         height: '100%',
                         width: `${target.progress}%`,
-                        background: colors.accent,
+                        background: pc.color,
                         borderRadius: 2,
                         transition: 'width 0.8s ease'
                       }} />
@@ -281,18 +284,18 @@ export function NBSAPTargetProgress() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                       <span style={{ fontSize: '0.65rem', color: '#64748b' }}>Reports</span>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#0f172a' }}>{reportCompletion}%</span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: progressColor(reportCompletion).color }}>{reportCompletion}%</span>
                     </div>
-                    <div style={{ 
-                      height: 4, 
-                      background: '#f1f5f9', 
+                    <div style={{
+                      height: 4,
+                      background: '#f1f5f9',
                       borderRadius: 2,
                       overflow: 'hidden'
                     }}>
                       <div style={{
                         height: '100%',
                         width: `${reportCompletion}%`,
-                        background: '#10b981',
+                        background: progressColor(reportCompletion).color,
                         borderRadius: 2,
                         transition: 'width 0.8s ease'
                       }} />
