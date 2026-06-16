@@ -27,6 +27,8 @@ const RBISPage = lazy(() => import('./src/pages/RBISPage'));
 const DataPipelinePage = lazy(() => import('./DataPipelinePage'));
 const SettingsPage = lazy(() => import('./SettingsPage'));
 const UserManagementPage = lazy(() => import('./UserManagementPage'));
+const RoleRequestsPage = lazy(() => import('./RoleRequestsPage'));
+const RoleChangeApprovalPanel = lazy(() => import('./RoleChangeApprovalPanel'));
 
 // ── Loading fallback ──────────────────────────────────────────
 const PageLoader = () => (
@@ -198,6 +200,9 @@ export default function App() {
                   {/* Settings: all */}
                   <Route path="/settings" element={<SettingsPage />} />
 
+                  {/* Role change requests: all authenticated users */}
+                  <Route path="/role-requests" element={<RoleRequestsPage />} />
+
                   {/* User management: admin only */}
                   <Route
                     element={
@@ -208,6 +213,17 @@ export default function App() {
                     }
                   >
                     <Route path="/users" element={<UserManagementPage />} />
+                  </Route>
+
+                  {/* Role change approval: admin only */}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={['dashboard_management']}
+                      />
+                    }
+                  >
+                    <Route path="/role-requests/admin" element={<RoleChangeApprovalPanel />} />
                   </Route>
                 </Route>
               </Route>

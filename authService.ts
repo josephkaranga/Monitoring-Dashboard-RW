@@ -75,48 +75,12 @@ export async function signUp(
   });
 
   if (error) {
-    // Provide user-friendly error messages for duplicate emails
-    if (error.message.includes('already registered') || 
-        error.message.includes('already exists') ||
-        error.message.includes('User already registered')) {
-      return { 
-        data: null, 
-        error: 'This email is already registered. Please sign in or use the "Forgot password" option if you cannot access your account.' 
-      };
-    }
+    // Provide user-friendly error messages
     return { data: null, error: error.message };
   }
   
-  if (!data.user) return { data: null, error: 'Signup failed' };
-
-  // Check if this is a duplicate signup (Supabase sometimes returns success for existing users)
-  // This happens when email confirmation is disabled
-  if (data.user && !data.session) {
-    // User exists but no session created - likely already registered
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('email, is_active, created_at')
-      .eq('email', userData.email.trim().toLowerCase())
-      .maybeSingle();
-
-    if (existingProfile) {
-      // Check if profile was just created (within last 2 seconds) or is old
-      const profileAge = Date.now() - new Date(existingProfile.created_at).getTime();
-      if (profileAge > 2000) {
-        // Profile is old, user already exists
-        if (existingProfile.is_active) {
-          return { 
-            data: null, 
-            error: 'This email is already registered. Please sign in or use the "Forgot password" option.' 
-          };
-        } else {
-          return { 
-            data: null, 
-            error: 'An account with this email is pending approval. Please wait for REMA Administrator approval.' 
-          };
-        }
-      }
-    }
+  if (!data.user) {
+    return { data: null, error: 'Signup failed. Please try again.' };
   }
 
   // Profile is created automatically via DB trigger
@@ -185,6 +149,15 @@ export async function updateProfile(
   userId: string,
   updates: Partial<UserProfile>
 ): Promise<ApiResponse<UserProfile>> {
+  // Prevent role changes through profile update
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (updates.role && userId === sessionData.session?.user?.id) {
+    return { 
+      data: null, 
+      error: 'Role changes must be requested through the approval workflow. Please submit a role change request.' 
+    };
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
@@ -239,5 +212,72 @@ export async function updateUserRole(
     .single();
 
   if (error) return { data: null, error: error.message };
+  return { data: data as UserProfile, error: null };
+}
+
+// ── UPDATE USER ROLE DIRECTLY (admin only) ───────────────────
+export async function updateUserRoleDirectly(
+  userId: string,
+  newRole: import('./index').UserRole,
+  reason?: string
+): Promise<ApiResponse<UserProfile>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session?.user) {
+    return { data: null, error: 'Not authenticated' };
+  }
+
+  // Get current user's role
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', sessionData.session.user.id)
+    .single();
+
+  if (adminProfile?.role !== 'dashboard_management') {
+    return { data: null, error: 'Only REMA Administrators can directly change user roles' };
+  }
+
+  // Get target user's current role
+  const { data: targetProfile } = await supabase
+    .from('profiles')
+    .select('role, full_name')
+    .eq('id', userId)
+    .single();
+
+  if (!targetProfile) {
+    return { data: null, error: 'User not found' };
+  }
+
+  const oldRole = targetProfile.role;
+
+  // Update role
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ role: newRole })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  // Log in audit trail
+  await supabase.from('audit_log').insert({
+    user_id: sessionData.session.user.id,
+    action_type: 'admin_role_change',
+    action: 'Administrator directly changed user role',
+    detail: `Changed ${targetProfile.full_name}'s role from ${oldRole} to ${newRole}. Reason: ${reason || 'Not specified'}`,
+    role: 'dashboard_management'
+  });
+
+  // Notify the user
+  await supabase.from('notifications').insert({
+    user_id: userId,
+    title: 'Role Changed by Administrator',
+    message: `Your role has been changed from ${oldRole} to ${newRole} by a REMA Administrator.`,
+    type: 'info'
+  });
+
   return { data: data as UserProfile, error: null };
 }

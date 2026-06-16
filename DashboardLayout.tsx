@@ -6,6 +6,7 @@ import { useNotifications, usePendingCount } from './useData';
 import { markAllNotificationsRead } from './dataService';
 import { USER_ROLE_LABELS } from './index';
 import toast from 'react-hot-toast';
+import PendingRequestsBadge from './PendingRequestsBadge';
 
 export default function DashboardLayout() {
   const { user, permissions, signOut } = useAuth();
@@ -61,9 +62,14 @@ export default function DashboardLayout() {
   const systemNav = [
     { to: '/rbis',          icon: 'fa-database',       label: 'RBIS Integration' },
     { to: '/data-pipeline', icon: 'fa-diagram-project', label: 'Data Pipeline' },
+    { to: '/role-requests', icon: 'fa-user-clock',     label: 'Role Requests' },
     { to: '/settings',      icon: 'fa-gear',            label: 'Settings' },
     { to: '/users',         icon: 'fa-users-gear',      label: 'User Management' },
   ];
+
+  const adminNav = user?.role === 'dashboard_management' ? [
+    { to: '/role-requests/admin', icon: 'fa-user-check', label: 'Approve Requests' },
+  ] : [];
 
   const isActive = (to: string) => location.pathname === to.split('?')[0];
 
@@ -139,6 +145,7 @@ export default function DashboardLayout() {
         {canSeeReporting && <NavSection title="Reporting Modules" items={reportingNav} />}
         <NavSection title="Governance" items={governanceNav} />
         <NavSection title="System" items={systemNav} />
+        {adminNav.length > 0 && <NavSection title="Administration" items={adminNav} />}
       </nav>
 
       {/* Footer */}
@@ -232,6 +239,9 @@ export default function DashboardLayout() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Pending Requests Badge (Admin only) */}
+            {user?.role === 'dashboard_management' && <PendingRequestsBadge />}
+
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button
@@ -406,6 +416,8 @@ function getPageTitle(pathname: string): string {
     '/map':                 'District Map',
     '/rbis':                'RBIS Integration & Data Governance',
     '/data-pipeline':       '5-Tier Data Pipeline & Implementation Roadmap',
+    '/role-requests':       'Role Change Requests',
+    '/role-requests/admin': 'Approve Role Requests',
     '/settings':            'Settings',
     '/users':               'User Management',
   };
