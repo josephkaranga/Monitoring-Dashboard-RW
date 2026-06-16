@@ -944,6 +944,72 @@ export function MapPage() {
                   );
                 })}
                 
+                {/* District Labels */}
+                {geoData.features.map((feature, idx) => {
+                  const districtData = getDistrictData(feature.properties.shapeName);
+                  if (!districtData) return null;
+                  
+                  // Calculate centroid (simplified - average of all coordinates)
+                  const calculateCentroid = (coords: any, type: string): [number, number] | null => {
+                    let allPoints: [number, number][] = [];
+                    
+                    if (type === 'Polygon') {
+                      allPoints = coords[0]; // Use outer ring
+                    } else if (type === 'MultiPolygon') {
+                      allPoints = coords[0][0]; // Use first polygon's outer ring
+                    }
+                    
+                    if (allPoints.length === 0) return null;
+                    
+                    const sumX = allPoints.reduce((sum, p) => sum + p[0], 0);
+                    const sumY = allPoints.reduce((sum, p) => sum + p[1], 0);
+                    
+                    return [sumX / allPoints.length, sumY / allPoints.length];
+                  };
+                  
+                  const centroid = calculateCentroid(feature.geometry.coordinates, feature.geometry.type);
+                  if (!centroid) return null;
+                  
+                  return (
+                    <g key={`label-${idx}`}>
+                      {/* White outline for better readability */}
+                      <text
+                        x={centroid[0]}
+                        y={centroid[1]}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        style={{
+                          fontSize: isMobile ? '0.04px' : '0.05px',
+                          fontWeight: 700,
+                          fill: 'white',
+                          stroke: 'white',
+                          strokeWidth: '0.008px',
+                          pointerEvents: 'none',
+                          userSelect: 'none'
+                        }}
+                      >
+                        {districtData.name}
+                      </text>
+                      {/* Main text */}
+                      <text
+                        x={centroid[0]}
+                        y={centroid[1]}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        style={{
+                          fontSize: isMobile ? '0.04px' : '0.05px',
+                          fontWeight: 700,
+                          fill: '#1e293b',
+                          pointerEvents: 'none',
+                          userSelect: 'none'
+                        }}
+                      >
+                        {districtData.name}
+                      </text>
+                    </g>
+                  );
+                })}
+                
                 {/* Protected Areas Overlay */}
                 {enabledOverlays.has('protected-areas') && protectedAreas && (
                   <ProtectedAreasOverlay 

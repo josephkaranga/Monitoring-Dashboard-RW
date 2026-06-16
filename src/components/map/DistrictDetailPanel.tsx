@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import type { District } from '../../index';
 import type { GBIFOccurrence } from '../../types/biodiversity';
-import type { ProtectedArea } from '../../types/overlays';
+import type { ProtectedAreasCollection } from '../../types/overlays';
 
 interface DistrictDetailPanelProps {
   district: District | null;
   onClose: () => void;
   occurrences?: GBIFOccurrence[];
-  protectedAreas?: ProtectedArea[];
+  protectedAreas?: ProtectedAreasCollection | null;
   biodiversityData?: Map<number, any>;
   threatData?: Map<number, { threatScore: number; threatLevel: 'high' | 'medium' | 'low'; riskFactors: string[] }>;
   nbsapData?: Map<number, { progress: number; indicatorCount: number }>;
@@ -17,7 +17,7 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   district,
   onClose,
   occurrences = [],
-  protectedAreas = [],
+  protectedAreas = null,
   biodiversityData,
   threatData,
   nbsapData
@@ -41,10 +41,10 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
     const nbsapProgress = nbsap?.progress || 0;
 
     // Find protected areas in this district (simplified - would need proper geospatial query)
-    const districtProtectedAreas = protectedAreas.filter(area => 
+    const districtProtectedAreas = protectedAreas?.features.filter(area => 
       area.properties.name.toLowerCase().includes(district.name.toLowerCase()) ||
       district.name.toLowerCase().includes(area.properties.name.toLowerCase())
-    );
+    ) || [];
 
     // Calculate wetland area (placeholder - would come from database)
     const wetlandArea = Math.floor(Math.random() * 500) + 100; // Placeholder
@@ -73,21 +73,39 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   if (!district || !metrics) return null;
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        width: 320,
-        maxHeight: 'calc(100vh - 40px)',
-        overflowY: 'auto',
-        backgroundColor: 'white',
-        borderRadius: 12,
-        boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-        zIndex: 1000,
-        animation: 'slideInRight 0.3s ease-out'
-      }}
-    >
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          zIndex: 9998,
+          animation: 'fadeIn 0.3s ease-out'
+        }}
+      />
+      
+      {/* Panel */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 80,
+          right: 20,
+          width: 320,
+          maxWidth: 'calc(100vw - 40px)',
+          maxHeight: 'calc(100vh - 100px)',
+          overflowY: 'auto',
+          backgroundColor: 'white',
+          borderRadius: 12,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          zIndex: 9999,
+          animation: 'slideInRight 0.3s ease-out'
+        }}
+      >
       {/* Header */}
       <div
         style={{
@@ -262,8 +280,18 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
             opacity: 1;
           }
         }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 };
 
