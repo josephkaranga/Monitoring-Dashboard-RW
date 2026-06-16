@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { useReports } from '../../hooks/useData';
-import { verifyReport } from '../../services/reportService';
-import { writeAuditEntry } from '../../services/dataService';
-import { useAuth } from '../../context/AuthContext';
+import { useReports } from './useData';
+import { verifyReport } from './reportService';
+import { writeAuditEntry } from './dataService';
+import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
 const TOOL_ICONS: Record<string, string> = {

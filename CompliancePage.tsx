@@ -2,7 +2,7 @@
 // CompliancePage.tsx
 // ============================================================
 import React, { useMemo } from 'react';
-import { useReports } from '../../hooks/useData';
+import { useReports } from './useData';
 
 export function CompliancePage() {
   const { reports } = useReports({ status: 'approved', pageSize: 200 });

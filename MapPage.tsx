@@ -2,8 +2,8 @@
 // MapPage.tsx — District Map with Supabase data
 // ============================================================
 import React, { useEffect, useRef, useState } from 'react';
-import { useDistricts } from '../../hooks/useData';
-import type { District } from '../../types';
+import { useDistricts } from './useData';
+import type { District } from './index';
 
 function getStatusColor(d: District, layer: string) {
   if (layer === 'submission') {

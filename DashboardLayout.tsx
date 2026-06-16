@@ -6,11 +6,11 @@ import {
   FileContract, UserCheck, Database, GitBranch, MapPin, FilePen, Bell,
   Settings, Download, LogOut, Menu, X, ChevronDown,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../hooks/useData';
-import { usePendingCount } from '../../hooks/useData';
-import { markAllNotificationsRead } from '../../services/dataService';
-import { USER_ROLE_LABELS } from '../../types';
+import { useAuth } from './AuthContext';
+import { useNotifications } from './useData';
+import { usePendingCount } from './useData';
+import { markAllNotificationsRead } from './dataService';
+import { USER_ROLE_LABELS } from './index';
 import toast from 'react-hot-toast';
 
 // ── Nav Item Config ───────────────────────────────────────────

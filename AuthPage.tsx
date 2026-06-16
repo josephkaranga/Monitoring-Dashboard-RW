@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Leaf, Lock, Mail, User, Building2 } from 'lucide-react';
-import { signIn, signUp, resetPassword } from '../../services/authService';
-import { writeAuditEntry } from '../../services/dataService';
+import { signIn, signUp, resetPassword } from './authService';
+import { writeAuditEntry } from './dataService';
 import toast from 'react-hot-toast';
-import type { UserRole, LoginCredentials, SignupData } from '../../types';
-import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from '../../types';
+import type { UserRole, LoginCredentials, SignupData } from './index';
+import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from './index';
 
 type AuthMode = 'login' | 'signup' | 'reset';
 

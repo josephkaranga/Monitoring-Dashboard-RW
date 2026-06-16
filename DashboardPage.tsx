@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useDashboardStats, useReports } from '../../hooks/useData';
-import { generateAINarrative } from '../../utils/aiNarrative';
+import { useAuth } from './AuthContext';
+import { useDashboardStats, useReports } from './useData';
+import { generateAINarrative } from './aiNarrative';
 import toast from 'react-hot-toast';
 
 const MetricCard = ({

@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useReports } from '../../hooks/useData';
-import { submitReport, exportReportsToCSV, exportReportsToJSON, deleteReport, importReportsFromJSON } from '../../services/reportService';
-import { writeAuditEntry } from '../../services/dataService';
-import { useAuth } from '../../context/AuthContext';
+import { useReports } from './useData';
+import { submitReport, exportReportsToCSV, exportReportsToJSON, deleteReport, importReportsFromJSON } from './reportService';
+import { writeAuditEntry } from './dataService';
+import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
-import type { ReportType, ReportAttachment } from '../../types';
+import type { ReportType, ReportAttachment } from './index';
 
 // ── Tool Definitions ─────────────────────────────────────────
 const TOOLKIT_TOOLS = [
