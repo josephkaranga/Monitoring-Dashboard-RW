@@ -23,7 +23,7 @@ export default function DataPipelinePage() {
         {/* Tier flow */}
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 24 }}>
           {[
-            { tier: 'Tier 1', label: 'Community', sub: 'Citizen science\nIndigenous data', icon: 'fa-people-group', gradient: 'linear-gradient(135deg,#065f46,#059669)', shadow: 'rgba(5,150,105,.3)' },
+            { tier: 'Tier 1', label: 'Community', sub: 'Citizen science\nLocal data', icon: 'fa-people-group', gradient: 'linear-gradient(135deg,#065f46,#059669)', shadow: 'rgba(5,150,105,.3)' },
             { tier: 'Tier 2', label: 'Sector', sub: 'Validation\nField data', icon: 'fa-wheat-awn', gradient: 'linear-gradient(135deg,#059669,#10b981)', shadow: 'rgba(16,185,129,.3)' },
             { tier: 'Tier 3', label: 'District', sub: 'Aggregation\nDistrict index', icon: 'fa-map-location-dot', gradient: 'linear-gradient(135deg,#0284c7,#38bdf8)', shadow: 'rgba(2,132,199,.3)' },
             { tier: 'Tier 4', label: 'National Agencies', sub: 'Institutional\nverification', icon: 'fa-landmark', gradient: 'linear-gradient(135deg,#7c3aed,#8b5cf6)', shadow: 'rgba(124,58,237,.3)' },

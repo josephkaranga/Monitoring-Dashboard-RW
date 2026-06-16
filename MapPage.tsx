@@ -9,6 +9,7 @@ import { MapLegend } from './src/components/map/MapLegend';
 import { GBIFOccurrencesOverlay } from './src/components/map/GBIFOccurrencesOverlay';
 import { ProtectedAreasOverlay } from './src/components/map/ProtectedAreasOverlay';
 import { RiverNetworkOverlay } from './src/components/map/RiverNetworkOverlay';
+import { LakesOverlay } from './src/components/map/LakesOverlay';
 import { MapLoadingSkeleton } from './src/components/map/MapLoadingSkeleton';
 import { ExportButton } from './src/components/map/ExportButton';
 import { RefreshButton } from './src/components/map/RefreshButton';
@@ -16,10 +17,11 @@ import { DistrictDetailPanel } from './src/components/map/DistrictDetailPanel';
 import { useGBIFOccurrences } from './src/hooks/useGBIFOccurrences';
 import { useProtectedAreas } from './src/hooks/useProtectedAreas';
 import { useRiverNetwork } from './src/hooks/useRiverNetwork';
+import { useLakes } from './src/hooks/useLakes';
 import { useBiodiversityData } from './src/hooks/useBiodiversityData';
 import { logAuditEvent } from './dataService';
 import type { GBIFOccurrence } from './src/types/biodiversity';
-import type { ProtectedArea, RiverFeature } from './src/types/overlays';
+import type { ProtectedArea, RiverFeature, LakeFeature } from './src/types/overlays';
 
 // Rwanda Geographic Bounding Box (WGS84 coordinates)
 // Source: Natural Earth Data and OpenStreetMap
@@ -327,6 +329,19 @@ export function MapPage() {
       if (riversError) console.error('Rivers error:', riversError);
     }
   }, [rivers, riversError, enabledOverlays]);
+  
+  // Load lakes (lazy - only when overlay is enabled)
+  const { lakes, loading: lakesLoading, error: lakesError } = useLakes({
+    enabled: enabledOverlays.has('lakes')
+  });
+  
+  // Log lakes for debugging
+  useEffect(() => {
+    if (enabledOverlays.has('lakes')) {
+      console.log('Lakes loaded:', lakes?.features?.length || 0, 'lakes');
+      if (lakesError) console.error('Lakes error:', lakesError);
+    }
+  }, [lakes, lakesError, enabledOverlays]);
 
   // Debounce timer refs for hover handlers
   const hoverDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -455,6 +470,13 @@ export function MapPage() {
     });
   }, [debouncedHover]);
   
+  const handleLakeHover = useCallback((lake: LakeFeature | null) => {
+    debouncedHover(() => {
+      // Tooltip is handled by the overlay component itself
+      // This is just a placeholder for future enhancements
+    });
+  }, [debouncedHover]);
+  
   // Prepare overlay toggle configs
   const overlayConfigs = useMemo(() => [
     {
@@ -477,8 +499,15 @@ export function MapPage() {
       enabled: enabledOverlays.has('rivers'),
       loading: riversLoading,
       error: riversError
+    },
+    {
+      id: 'lakes' as MapOverlay,
+      label: 'Major Lakes',
+      enabled: enabledOverlays.has('lakes'),
+      loading: lakesLoading,
+      error: lakesError
     }
-  ], [enabledOverlays, gbifLoading, gbifError, areasLoading, areasError, riversLoading, riversError]);
+  ], [enabledOverlays, gbifLoading, gbifError, areasLoading, areasError, riversLoading, riversError, lakesLoading, lakesError]);
 
   // Export error state
   const [exportError, setExportError] = useState<string | null>(null);
@@ -1141,6 +1170,20 @@ export function MapPage() {
                     onHover={handleRiverHover}
                     loading={riversLoading}
                     error={riversError}
+                  />
+                )}
+                
+                {/* Lakes Overlay */}
+                {enabledOverlays.has('lakes') && lakes && (
+                  <LakesOverlay 
+                    lakes={lakes} 
+                    onHover={handleLakeHover}
+                    onClick={(lake) => {
+                      console.log('Lake clicked:', lake.properties.name);
+                      // Future enhancement: show lake detail panel
+                    }}
+                    loading={lakesLoading}
+                    error={lakesError}
                   />
                 )}
                 

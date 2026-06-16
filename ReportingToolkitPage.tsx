@@ -6,6 +6,7 @@ import { writeAuditEntry } from './dataService';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 import type { ReportType, ReportAttachment } from './index';
+import { validateYear } from './src/utils/validation';
 
 // ── Tool Definitions ─────────────────────────────────────────
 const TOOLKIT_TOOLS = [
@@ -52,7 +53,7 @@ const TOOLKIT_TOOLS = [
     fields: [
       { key: 'community', label: 'Community / Village', type: 'text', placeholder: 'Community name', required: true },
       { key: 'reporter', label: 'Reporter / Group Name', type: 'text', placeholder: 'Name or group', required: true },
-      { key: 'reporter_type', label: 'Reporter Type', type: 'select', options: ['Community Conservation Committee','Youth Environmental Club','Women\'s Cooperative','Indigenous Knowledge Holder','Other'], required: true },
+      { key: 'reporter_type', label: 'Reporter Type', type: 'select', options: ['Community Conservation Committee','Youth Environmental Club','Women\'s Cooperative','Local Knowledge Holder','Other'], required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
       { key: 'hwc_incidents', label: 'Human-Wildlife Conflict Incidents', type: 'number', placeholder: '0', required: true },
       { key: 'tree_planting_hh', label: 'Tree Planting Households', type: 'number', placeholder: '0', required: false },
@@ -109,6 +110,18 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
     const newErrors: Record<string, boolean> = {};
     tool.fields.forEach(f => { if (f.required && !formData[f.key]?.trim()) newErrors[f.key] = true; });
     if (Object.keys(newErrors).length) { setErrors(newErrors); toast.error('Please fill in all required fields'); return; }
+
+    // Validate year fields
+    const yearField = tool.fields.find(f => f.key === 'year');
+    if (yearField && formData.year) {
+      const yearValue = parseInt(formData.year, 10);
+      const yearValidation = validateYear(yearValue);
+      if (!yearValidation.valid) {
+        setErrors({ ...newErrors, year: true });
+        toast.error(yearValidation.error || 'Invalid year');
+        return;
+      }
+    }
 
     setSubmitting(true);
     const requireVerification = settings?.require_verification ?? true;

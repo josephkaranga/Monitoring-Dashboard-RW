@@ -49,7 +49,7 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 // ── Account Status Check Result ──────────────────────────────
-interface AccountStatusCheckResult {
+export interface AccountStatusCheckResult {
   allowed: boolean;
   message?: string;
   suspensionCleared?: boolean;
@@ -60,7 +60,7 @@ interface AccountStatusCheckResult {
  * Check account status and handle deactivation, suspension, and auto-reactivation
  * Requirements: 4.4, 4.5, 4.6, 4.11
  */
-async function checkAccountStatus(profile: UserProfile): Promise<AccountStatusCheckResult> {
+export async function checkAccountStatus(profile: UserProfile): Promise<AccountStatusCheckResult> {
   // Check if account is deactivated
   if (!profile.is_active) {
     return {

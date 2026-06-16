@@ -1,8 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDashboardStats, useReports } from './useData';
 import { exportReportsToCSV } from './reportService';
 import { jsPDF } from 'jspdf';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
+import { checkAccountStatus } from './AuthContext';
 
 const card: React.CSSProperties = {
   background: 'var(--surface)', borderRadius: 'var(--radius)',
@@ -10,8 +12,42 @@ const card: React.CSSProperties = {
 };
 
 export function ReportsPage() {
+  const { user } = useAuth();
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [accessMessage, setAccessMessage] = useState('');
+  
   const { stats } = useDashboardStats(false);
   const { reports } = useReports({ pageSize: 200 });
+
+  // Check account status when page loads
+  useEffect(() => {
+    const verifyAccess = async () => {
+      if (!user) {
+        setCheckingAccess(false);
+        return;
+      }
+
+      try {
+        const statusCheck = await checkAccountStatus(user);
+        
+        if (!statusCheck.allowed) {
+          setAccessDenied(true);
+          setAccessMessage(statusCheck.message || 'Access denied');
+        } else {
+          setAccessDenied(false);
+        }
+      } catch (error) {
+        console.error('Error checking account status:', error);
+        setAccessDenied(true);
+        setAccessMessage('Unable to verify account status. Please try again later.');
+      } finally {
+        setCheckingAccess(false);
+      }
+    };
+
+    verifyAccess();
+  }, [user]);
 
   const handlePDF = useCallback(() => {
     try {
@@ -62,6 +98,37 @@ export function ReportsPage() {
     { title: 'Mid-Term Evaluation',     period: '2025–2027',    status: 'Scheduled', sBg: '#f1f5f9', sColor: '#475569', due: 'Q3 2027',      dl: '17+ mo',  dlBg: '#dcfce7', dlColor: '#166534' },
     { title: 'CBD National Report',     period: '2025–2030',    status: 'Scheduled', sBg: '#f1f5f9', sColor: '#475569', due: 'Jun 2030',     dl: '39 mo',   dlBg: '#dcfce7', dlColor: '#166534' },
   ];
+
+  // Show loading state while checking access
+  if (checkingAccess) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', flexDirection: 'column', gap: 16 }}>
+        <div style={{ width: 48, height: 48, border: '4px solid var(--surface-3)', borderTop: '4px solid var(--sky-dim)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ color: 'var(--text-3)', fontSize: '0.9rem' }}>Verifying access...</p>
+      </div>
+    );
+  }
+
+  // Show access denied message if user is deactivated or suspended
+  if (accessDenied) {
+    return (
+      <div style={{ ...card, padding: 32, textAlign: 'center', maxWidth: 600, margin: '40px auto' }}>
+        <div style={{ width: 64, height: 64, background: '#fee2e2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <i className="fa-solid fa-lock" style={{ color: '#dc2626', fontSize: '1.8rem' }} />
+        </div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 12, color: 'var(--text-1)' }}>Access Restricted</h2>
+        <p style={{ fontSize: '0.95rem', color: 'var(--text-2)', marginBottom: 24, lineHeight: 1.6 }}>
+          {accessMessage}
+        </p>
+        <div style={{ padding: 16, background: 'var(--surface-2)', borderRadius: 8, border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-3)', margin: 0 }}>
+            <i className="fa-solid fa-info-circle" style={{ marginRight: 8 }} />
+            If you believe this is an error, please contact your system administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
