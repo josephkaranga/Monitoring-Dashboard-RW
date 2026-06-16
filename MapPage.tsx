@@ -60,9 +60,9 @@ export function MapPage() {
         const metadata = await metaResponse.json();
         const geoJsonUrl = metadata.gjDownloadURL;
         
-        // Use a CORS proxy to fetch the GeoJSON from GitHub
-        const corsProxy = 'https://corsproxy.io/?';
-        const geoResponse = await fetch(corsProxy + encodeURIComponent(geoJsonUrl));
+        // Use allOrigins CORS proxy to fetch the GeoJSON from GitHub
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(geoJsonUrl)}`;
+        const geoResponse = await fetch(proxyUrl);
         if (!geoResponse.ok) throw new Error('Failed to fetch GeoJSON data');
         
         const geoJson = await geoResponse.json();
