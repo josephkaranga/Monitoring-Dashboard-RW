@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Leaf, BarChart3, Layers, Target, RefreshCw, Landmark, Tree, Shield,
-  Users, Coins, Building, FlaskConical, ClipboardCheck, TriangleAlert,
-  FileContract, UserCheck, Database, GitBranch, MapPin, FilePen, Bell,
+  Leaf, BarChart3, Layers, Target, RefreshCw, Landmark, Trees, Shield,
+  Users, Coins, Building, FlaskConical, ClipboardCheck, AlertTriangle,
+  FileText, UserCheck, Database, GitBranch, MapPin, FileEdit, Bell,
   Settings, Download, LogOut, Menu, X, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
@@ -54,12 +54,12 @@ export default function DashboardLayout() {
   const mainNav: NavItem[] = [
     { to: '/dashboard', icon: <BarChart3 size={15} />, label: 'Dashboard' },
     { to: '/indicators', icon: <Layers size={15} />, label: 'Indicator Hierarchy' },
-    { to: '/risk', icon: <TriangleAlert size={15} />, label: 'Risk Register', minRole: ['policy_monitoring', 'sector_reporting', 'dashboard_management', 'programme_alignment'] },
+    { to: '/risk', icon: <AlertTriangle size={15} />, label: 'Risk Register', minRole: ['policy_monitoring', 'sector_reporting', 'dashboard_management', 'programme_alignment'] },
   ];
 
   const reportingNav: NavItem[] = [
     { to: '/reporting-toolkit?tool=T01', icon: <Landmark size={15} />, label: 'T01 · Institutional' },
-    { to: '/reporting-toolkit?tool=T02', icon: <Tree size={15} />, label: 'T02 · District' },
+    { to: '/reporting-toolkit?tool=T02', icon: <Trees size={15} />, label: 'T02 · District' },
     { to: '/reporting-toolkit?tool=T03', icon: <Shield size={15} />, label: 'T03 · Protected Areas' },
     { to: '/reporting-toolkit?tool=T04', icon: <Users size={15} />, label: 'T04 · Community' },
     { to: '/reporting-toolkit?tool=T05', icon: <Coins size={15} />, label: 'T05 · Finance' },
@@ -72,7 +72,7 @@ export default function DashboardLayout() {
       ? [{ to: '/verification-queue', icon: <UserCheck size={15} />, label: 'Verification Queue', badge: pendingCount || undefined }]
       : []),
     { to: '/compliance', icon: <ClipboardCheck size={15} />, label: 'Compliance' },
-    { to: '/reports', icon: <FileContract size={15} />, label: 'Reports' },
+    { to: '/reports', icon: <FileText size={15} />, label: 'Reports' },
   ];
 
   const systemNav: NavItem[] = [
