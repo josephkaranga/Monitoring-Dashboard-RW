@@ -44,6 +44,9 @@ lerna-debug.log*
 .branches/
 .temp/
 
+# Kiro specs (development artifacts)
+.kiro/
+
 # Documentation (keep only main README.md and spec files)
 *_SUMMARY.md
 *_REPORT.md
