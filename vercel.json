@@ -6,6 +6,12 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "devCommand": "npm run dev",
+  "build": {
+    "env": {
+      "VITE_SUPABASE_URL": "https://vivqcyzyvixdammtaidr.supabase.co",
+      "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpdnFjeXp5dml4ZGFtbXRhaWRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MDkyMjgsImV4cCI6MjA5MTQ4NTIyOH0.jutyS2hpx8y_mkv5WzNHONxDFnivINBtY9bGZ7MyhNw"
+    }
+  },
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -28,7 +34,7 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com;"
         }
       ]
     }
