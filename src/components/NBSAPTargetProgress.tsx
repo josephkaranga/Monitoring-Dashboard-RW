@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { fetchTargetsWithReportStats } from '../services/dataService';
+import { realTimeUpdateService } from '../services/realTimeUpdateService';
 import type { NBSAPTarget } from '../types/index';
+
+const RECENTLY_UPDATED_DISPLAY_MS = 3000;
 
 // ── NBSAP Target Progress Widget ──────────────────────────────
 export function NBSAPTargetProgress() {
   const [targets, setTargets] = useState<NBSAPTarget[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGoal, setSelectedGoal] = useState<string>('all');
+  const [recentlyUpdated, setRecentlyUpdated] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const loadTargets = async () => {
@@ -22,6 +26,28 @@ export function NBSAPTargetProgress() {
 
     loadTargets();
   }, []);
+
+  // Subscribe to real-time progress updates for each loaded target
+  useEffect(() => {
+    if (targets.length === 0) return;
+
+    targets.forEach((target) => {
+      realTimeUpdateService.subscribeToTargetProgress(target.id, (progress) => {
+        setTargets((prev) => prev.map((t) => (t.id === target.id ? { ...t, progress } : t)));
+        setRecentlyUpdated((prev) => new Set(prev).add(target.id));
+        setTimeout(() => {
+          setRecentlyUpdated((prev) => {
+            const next = new Set(prev);
+            next.delete(target.id);
+            return next;
+          });
+        }, RECENTLY_UPDATED_DISPLAY_MS);
+      });
+    });
+
+    return () => realTimeUpdateService.cleanup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targets.map((t) => t.id).join(',')]);
 
   const filteredTargets = selectedGoal === 'all' 
     ? targets 
@@ -81,11 +107,23 @@ export function NBSAPTargetProgress() {
           }}>
             🎯 NBSAP Target Progress
           </div>
-          <div style={{ 
-            fontSize: '0.75rem', 
-            color: '#64748b' 
+          <div style={{
+            fontSize: '0.75rem',
+            color: '#64748b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
           }}>
             Progress linked to report submissions • {targets.length} targets tracked
+            <span style={{
+              fontSize: '0.6rem',
+              padding: '2px 6px',
+              borderRadius: 8,
+              fontWeight: 700,
+              fontFamily: "'DM Mono', monospace",
+              background: '#dcfce7',
+              color: '#166534'
+            }}>● Live</span>
           </div>
         </div>
         
@@ -172,8 +210,10 @@ export function NBSAPTargetProgress() {
           const colors = goalColors[target.goal as keyof typeof goalColors];
           const reportCompletion = target.report_completion_rate || 0;
           
+          const isUpdating = recentlyUpdated.has(target.id);
+
           return (
-            <div 
+            <div
               key={target.id}
               style={{
                 padding: '14px 20px',
@@ -181,10 +221,12 @@ export function NBSAPTargetProgress() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                background: isUpdating ? '#f0fdf4' : 'transparent',
+                transition: 'background 0.6s ease'
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              onMouseLeave={(e) => e.currentTarget.style.background = isUpdating ? '#f0fdf4' : 'transparent'}
             >
               {/* Goal Badge */}
               <div style={{
@@ -276,8 +318,24 @@ export function NBSAPTargetProgress() {
                 </div>
               </div>
 
+              {/* Updating Badge */}
+              {isUpdating && (
+                <div style={{
+                  background: '#fef9c3',
+                  color: '#854d0e',
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  padding: '3px 6px',
+                  borderRadius: 4,
+                  fontFamily: "'DM Mono', monospace",
+                  animation: 'nbsap-pulse 1s ease-in-out infinite'
+                }}>
+                  UPDATING
+                </div>
+              )}
+
               {/* Auto-update Badge */}
-              {(target.total_reports || 0) > 0 && (
+              {(target.total_reports || 0) > 0 && !isUpdating && (
                 <div style={{
                   background: '#dcfce7',
                   color: '#166534',
@@ -296,15 +354,17 @@ export function NBSAPTargetProgress() {
       </div>
 
       {filteredTargets.length === 0 && (
-        <div style={{ 
-          padding: 40, 
-          textAlign: 'center', 
+        <div style={{
+          padding: 40,
+          textAlign: 'center',
           color: '#94a3b8',
           fontSize: '0.85rem'
         }}>
           No targets found for the selected goal.
         </div>
       )}
+
+      <style>{`@keyframes nbsap-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
     </div>
   );
 }

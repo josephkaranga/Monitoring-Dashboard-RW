@@ -1,4 +1,7 @@
 import { supabase } from '../utils/supabase';
+import { automatedProcessingEngine } from './automatedProcessingEngine';
+import { getToolWeight, getToolDescription, ToolId } from '../types/automaticReporting';
+import type { OrganizationConfig, ProcessingResult, ReportSubmission } from '../types/automaticReporting';
 import type {
   ToolkitReport,
   ReportType,
@@ -7,6 +10,41 @@ import type {
   PaginatedResponse,
   ReportAttachment,
 } from '../types/index';
+
+export interface ToolWeightInfo {
+  toolId: string;
+  weight: number;
+  description: string;
+}
+
+// ── TOOL WEIGHT LOOKUP ────────────────────────────────────────
+/**
+ * Look up a tool's weight and description from the `tool_weights` table,
+ * falling back to the built-in TOOL_WEIGHTS constants if the table is
+ * unavailable or has no active entry for this tool.
+ */
+export async function fetchToolWeight(toolId: ReportType): Promise<ToolWeightInfo> {
+  const { data, error } = await supabase
+    .from('tool_weights')
+    .select('tool_id, weight, description')
+    .eq('tool_id', toolId)
+    .eq('active', true)
+    .maybeSingle();
+
+  if (error || !data) {
+    return {
+      toolId,
+      weight: getToolWeight(toolId as ToolId),
+      description: getToolDescription(toolId as ToolId),
+    };
+  }
+
+  return {
+    toolId: data.tool_id,
+    weight: Number(data.weight),
+    description: data.description,
+  };
+}
 
 export interface ReportFilters {
   toolId?: ReportType | 'ALL';
@@ -89,6 +127,10 @@ export async function submitReport(
     }
   }
 
+  // Attach tool weight info so the contribution this report makes toward
+  // its target's weighted progress is visible alongside the submission.
+  const toolWeightInfo = await fetchToolWeight(toolId);
+
   const reportData = {
     tool_id: toolId,
     tool_name: toolName,
@@ -97,7 +139,7 @@ export async function submitReport(
     reviewed_by: requireVerification ? null : userId,
     reviewed_at: requireVerification ? null : new Date().toISOString(),
     period: (formData.period as string) || null,
-    form_data: formData,
+    form_data: { ...formData, tool_weight_info: toolWeightInfo },
     attachments: uploadedAttachments,
     district: (formData.district as string) || null,
     institution: (formData.institution as string) || null,
@@ -157,6 +199,34 @@ export async function submitReport(
   });
 
   return { data: data as ToolkitReport, error: null };
+}
+
+// ── AUTOMATIC PROCESSING ──────────────────────────────────────
+/**
+ * Record a freshly-submitted report with the automated processing engine for
+ * audit logging. When the report was submitted as `'approved'`, the
+ * `update_target_progress_from_reports` database trigger has already applied
+ * the tool-weighted progress update as part of the insert, so this only logs
+ * the submission and its outcome.
+ */
+export async function processReportAutomatic(
+  report: ToolkitReport,
+  orgConfig: OrganizationConfig
+): Promise<ProcessingResult> {
+  const submission: ReportSubmission = {
+    id: report.id,
+    toolId: report.tool_id as ToolId,
+    toolName: report.tool_name,
+    submittedBy: report.submitted_by,
+    status: report.status,
+    nbsapTargetId: report.nbsap_target_id,
+    formData: report.form_data || {},
+    submissionTime: new Date(report.submitted_at),
+    contributionValue: 20 * getToolWeight(report.tool_id as ToolId),
+    organizationConfig: orgConfig,
+  };
+
+  return automatedProcessingEngine.recordSubmission(submission, orgConfig);
 }
 
 // ── FETCH REPORTS ────────────────────────────────────────────

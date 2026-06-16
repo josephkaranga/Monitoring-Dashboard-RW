@@ -472,3 +472,7 @@ export interface AuthState {
   loading: boolean;
   permissions: RolePermissions | null;
 }
+
+// ── AUTOMATIC REPORTING ──────────────────────────────────────
+
+export * from './automaticReporting';

@@ -5,6 +5,7 @@ import { generateAINarrative } from '../services/aiNarrative';
 import { DashboardSkeleton } from '../components/Skeleton';
 import { NBSAPTargetProgress } from '../components/NBSAPTargetProgress';
 import { fetchDashboardMetrics, type DashboardMetrics, formatMetricValue } from '../services/systemMetricsService';
+import { eventBus } from '../services/eventBus';
 import toast from 'react-hot-toast';
 
 // ── Module-level AI cache — persists across navigation ────────
@@ -51,30 +52,40 @@ function ProgRow({ label, value, target, color }: { label: string; value: string
 
 export default function DashboardPage() {
   const { permissions } = useAuth();
-  const { stats, loading } = useDashboardStats(false);
-  const { reports } = useReports({ status: 'approved', pageSize: 4 });
+  const { stats, loading, refetch: refetchStats } = useDashboardStats(false);
+  const { reports, refetch: refetchReports } = useReports({ status: 'approved', pageSize: 4 });
   const [aiText, setAiText] = useState(_cachedAiText);
   const [aiLoading, setAiLoading] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState<DashboardMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
 
   // Load automated system metrics
-  useEffect(() => {
-    const loadSystemMetrics = async () => {
-      setMetricsLoading(true);
-      try {
-        const metrics = await fetchDashboardMetrics();
-        setSystemMetrics(metrics);
-        console.log('📊 Automated system metrics loaded:', metrics);
-      } catch (error) {
-        console.error('Failed to load system metrics:', error);
-        toast.error('Failed to load automated metrics');
-      }
-      setMetricsLoading(false);
-    };
-
-    loadSystemMetrics();
+  const loadSystemMetrics = useCallback(async () => {
+    setMetricsLoading(true);
+    try {
+      const metrics = await fetchDashboardMetrics();
+      setSystemMetrics(metrics);
+      console.log('📊 Automated system metrics loaded:', metrics);
+    } catch (error) {
+      console.error('Failed to load system metrics:', error);
+      toast.error('Failed to load automated metrics');
+    }
+    setMetricsLoading(false);
   }, []);
+
+  useEffect(() => {
+    loadSystemMetrics();
+  }, [loadSystemMetrics]);
+
+  // Refresh dashboard stats and automated metrics when a report submission
+  // automatically updates a target's progress.
+  useEffect(() => {
+    return eventBus.on('dashboard-refresh', () => {
+      refetchStats();
+      refetchReports();
+      loadSystemMetrics();
+    });
+  }, [refetchStats, refetchReports, loadSystemMetrics]);
 
   const handleGenerate = useCallback(async () => {
     if (!stats) return;

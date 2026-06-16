@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useReports } from '../hooks/useData';
 import { fetchSystemMetrics, type SystemMetrics } from '../services/systemMetricsService';
+import { useEIAComplianceTracking, getCurrentQuarterLabel } from '../hooks/useEIAComplianceTracking';
 import toast from 'react-hot-toast';
 
 const card: React.CSSProperties = {
@@ -12,6 +13,8 @@ export function CompliancePage() {
   const { reports, loading } = useReports({ status: 'approved', pageSize: 200 });
   const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  const { eiaMetrics } = useEIAComplianceTracking();
+  const eiaLive = eiaMetrics.totalReports > 0;
 
   // Load automated system metrics
   useEffect(() => {
@@ -36,12 +39,14 @@ export function CompliancePage() {
   const t05 = reports.filter(r => r.tool_id === 'T05');
   const t01 = reports.filter(r => r.tool_id === 'T01');
 
-  // Use automated EIA compliance metrics if available, fallback to legacy calculation
-  const eiaScore = systemMetrics 
-    ? systemMetrics.eiaCompliancePercentage
-    : (t06.length
-        ? Math.round(t06.filter(r => r.form_data?.eia_compliance === 'Full compliance').length / t06.length * 100)
-        : 92);
+  // Prefer the real-time EIA Compliance Tracker, then automated system metrics, then legacy calculation
+  const eiaScore = eiaLive
+    ? eiaMetrics.compliancePercentage
+    : systemMetrics
+      ? systemMetrics.eiaCompliancePercentage
+      : (t06.length
+          ? Math.round(t06.filter(r => r.form_data?.eia_compliance === 'Full compliance').length / t06.length * 100)
+          : 92);
 
   const disbPct = useMemo(() => {
     // Use automated metrics if available
@@ -70,11 +75,11 @@ export function CompliancePage() {
   }, [t01]);
 
   const bars = [
-    { 
-      label: systemMetrics ? 'EIA Compliance (automated from T06)' : 'EIA Compliance', 
-      score: eiaScore, 
+    {
+      label: eiaLive ? 'EIA Compliance (real-time from T06)' : systemMetrics ? 'EIA Compliance (automated from T06)' : 'EIA Compliance',
+      score: eiaScore,
       color: eiaScore >= 80 ? '#10b981' : '#f59e0b',
-      isAutomated: !!systemMetrics
+      isAutomated: eiaLive || !!systemMetrics
     },
     { label: 'Protected Area Regulations', score: 88, color: '#10b981' },
     { label: 'ABS Rules Compliance', score: 75, color: '#f59e0b' },
@@ -94,10 +99,10 @@ export function CompliancePage() {
     ...(t01.length ? [{ label: 'Institutional Reporting (live)', score: instPct, color: instPct >= 80 ? '#10b981' : '#f59e0b' }] : []),
   ];
 
-  // Use automated metrics for EIA compliance breakdown
-  const nonCompliant = systemMetrics ? systemMetrics.eiaNonCompliance : t06.filter(r => r.form_data?.eia_compliance === 'Non-compliant').length;
-  const partial = systemMetrics ? systemMetrics.eiaPartialCompliance : t06.filter(r => r.form_data?.eia_compliance === 'Partial compliance').length;
-  const fullCompliant = systemMetrics ? systemMetrics.eiaFullCompliance : t06.filter(r => r.form_data?.eia_compliance === 'Full compliance').length;
+  // Use the real-time EIA Compliance Tracker for the breakdown, falling back to automated/legacy sources
+  const nonCompliant = eiaLive ? eiaMetrics.nonCompliant : systemMetrics ? systemMetrics.eiaNonCompliance : t06.filter(r => r.form_data?.eia_compliance === 'Non-compliant').length;
+  const partial = eiaLive ? eiaMetrics.partialCompliant : systemMetrics ? systemMetrics.eiaPartialCompliance : t06.filter(r => r.form_data?.eia_compliance === 'Partial compliance').length;
+  const fullCompliant = eiaLive ? eiaMetrics.compliantReports : systemMetrics ? systemMetrics.eiaFullCompliance : t06.filter(r => r.form_data?.eia_compliance === 'Full compliance').length;
 
   const issues = [
     nonCompliant > 0
@@ -105,8 +110,8 @@ export function CompliancePage() {
           sev: 'High', 
           sevBg: '#fee2e2', 
           sevColor: '#991b1b', 
-          title: `EIA Non-Compliance — ${nonCompliant} firm(s) flagged`, 
-          sub: systemMetrics ? 'Automated T06 tracking · Requires immediate action' : 'Live T06 data · Requires immediate action', 
+          title: `EIA Non-Compliance — ${nonCompliant} firm(s) flagged`,
+          sub: eiaLive ? 'Real-time T06 tracking · Requires immediate action' : systemMetrics ? 'Automated T06 tracking · Requires immediate action' : 'Live T06 data · Requires immediate action',
           bg: '#fef2f2', 
           border: '#fecaca' 
         }
@@ -117,7 +122,7 @@ export function CompliancePage() {
           sevBg: '#ffedd5',
           sevColor: '#9a3412',
           title: `EIA Partial Compliance — ${partial} firm(s) need improvement`,
-          sub: systemMetrics ? 'Automated T06 tracking · Monitoring required' : 'Live T06 data · Monitoring required',
+          sub: eiaLive ? 'Real-time T06 tracking · Monitoring required' : systemMetrics ? 'Automated T06 tracking · Monitoring required' : 'Live T06 data · Monitoring required',
           bg: '#fff7ed',
           border: '#fed7aa'
         }
@@ -176,9 +181,9 @@ export function CompliancePage() {
               </div>
             </div>
           ))}
-          {systemMetrics ? (
+          {eiaLive || systemMetrics ? (
             <div style={{ marginTop: 8, fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
-              ✓ {fullCompliant} full · ⚠ {partial} partial · ✗ {nonCompliant} non-compliant (automated from T06 reports)
+              ✓ {fullCompliant} full · ⚠ {partial} partial · ✗ {nonCompliant} non-compliant ({eiaLive ? 'real-time' : 'automated'} from T06 reports)
             </div>
           ) : t06.length > 0 ? (
             <div style={{ marginTop: 8, fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
@@ -212,7 +217,7 @@ export function CompliancePage() {
           Compliance Trend Over Time
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-          {['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'].map((q, qi) => {
+          {['Q1 2025','Q2 2025','Q3 2025','Q4 2025', getCurrentQuarterLabel()].map((q, qi) => {
             const vals = [85, 87, 89, 91, eiaScore];
             const v = vals[qi];
             const color = v >= 85 ? '#10b981' : v >= 70 ? '#f59e0b' : '#f43f5e';

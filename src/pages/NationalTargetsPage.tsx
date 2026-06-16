@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAsync, useIndicators } from '../hooks/useData';
+import { useLiveTargetProgress } from '../hooks/useLiveTargetProgress';
 import { fetchTargets } from '../services/dataService';
+import { eventBus } from '../services/eventBus';
 import type { NBSAPTarget, Indicator, IndicatorTier } from '../types/index';
 
 const GOAL_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
@@ -20,13 +22,21 @@ export default function NationalTargetsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: rawTargets } = useAsync(fetchTargets, []);
-  const targets: NBSAPTarget[] = (rawTargets as NBSAPTarget[] | null) ?? [];
-  const { data: rawIndicators } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
+  const baseTargets: NBSAPTarget[] = (rawTargets as NBSAPTarget[] | null) ?? [];
+  const targets = useLiveTargetProgress(baseTargets);
+  const { data: rawIndicators, refetch: refetchIndicators } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
   const indicators: Indicator[] = rawIndicators ?? [];
   const [goalFilter, setGoalFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [allExpanded, setAllExpanded] = useState(false);
+
+  // Refresh linked indicators whenever a target's progress is updated automatically
+  useEffect(() => {
+    return eventBus.on('national-targets-refresh', () => {
+      refetchIndicators();
+    });
+  }, [refetchIndicators]);
 
   // Auto-expand target from URL param ?expand=N
   useEffect(() => {

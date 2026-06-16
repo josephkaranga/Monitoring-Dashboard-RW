@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useReports } from '../hooks/useData';
-import { submitReport, exportReportsToCSV, exportReportsToJSON, deleteReport, importReportsFromJSON } from '../services/reportService';
+import { submitReport, processReportAutomatic, exportReportsToCSV, exportReportsToJSON, deleteReport, importReportsFromJSON } from '../services/reportService';
+import { organizationConfigService } from '../services/organizationConfigService';
 import { writeAuditEntry, fetchUserResponsibleTargets, fetchIndicators } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import toast from 'react-hot-toast';
@@ -476,8 +477,22 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
     }
 
     setSubmitting(true);
-    const requireVerification = settings?.require_verification ?? true;
-    
+
+    // Determine whether this report should bypass manual verification based on
+    // the submitting organization's automatic-update configuration. Falls back
+    // to the existing per-user setting if no organization config is available.
+    let orgConfig = null;
+    if (user?.organization) {
+      try {
+        orgConfig = await organizationConfigService.getOrCreateConfig(user.organization);
+      } catch (err) {
+        console.warn('Failed to load organization config, falling back to user settings:', err);
+      }
+    }
+    const requireVerification = orgConfig
+      ? orgConfig.requireVerification || !orgConfig.automaticUpdatesEnabled
+      : (settings?.require_verification ?? true);
+
     // Include NBSAP target ID, stakeholder, and indicator in the submission
     const nbsapTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
     const indicatorId = formData.indicator ? parseInt(formData.indicator, 10) : null;
@@ -525,13 +540,20 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
       const indicatorInfo = selectedIndicator ? ` → Indicator: ${selectedIndicator.name}` : '';
       const stakeholderInfo = selectedStakeholder ? ` → Stakeholder: ${selectedStakeholder.name}` : '';
       
-      await writeAuditEntry('submit', `${tool.name} submitted${stakeholderInfo}${targetInfo}${indicatorInfo}`, 
+      await writeAuditEntry('submit', `${tool.name} submitted${stakeholderInfo}${targetInfo}${indicatorInfo}`,
         `Tool: ${tool.id} · Status: ${result.data?.status} · Stakeholder: ${stakeholderId || 'None'} · NBSAP Target: ${nbsapTargetId || 'None'} · Indicator: ${indicatorId || 'None'}`);
-      
+
+      // Log the automatic-processing outcome for audit purposes. When the
+      // report was auto-approved, the progress update was already applied by
+      // the database trigger as part of the submission above.
+      if (orgConfig && result.data) {
+        await processReportAutomatic(result.data, orgConfig);
+      }
+
       // Enhanced success message
-      const successMsg = requireVerification ? 
+      const successMsg = requireVerification ?
         'Submission queued for verification ⏳' + (selectedTarget ? ` Data will update Target ${selectedTarget.id} upon approval.` : '') :
-        'Report submitted successfully ✓' + (selectedTarget ? ` Target ${selectedTarget.id} updated.` : '') + (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
+        'Report submitted successfully ✓' + (selectedTarget ? ` Target ${selectedTarget.id} updated automatically.` : '') + (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
         
       toast.success(successMsg);
       onSuccess();
