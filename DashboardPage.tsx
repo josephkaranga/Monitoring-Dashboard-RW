@@ -5,6 +5,9 @@ import { generateAINarrative } from './aiNarrative';
 import { DashboardSkeleton } from './Skeleton';
 import toast from 'react-hot-toast';
 
+// ── Module-level AI cache — persists across navigation ────────
+let _cachedAiText = '';
+
 // ── Shared card styles ────────────────────────────────────────
 const card: React.CSSProperties = {
   background: 'var(--surface)', borderRadius: 'var(--radius)',
@@ -48,7 +51,7 @@ export default function DashboardPage() {
   const { permissions } = useAuth();
   const { stats, loading } = useDashboardStats(false);
   const { reports } = useReports({ status: 'approved', pageSize: 4 });
-  const [aiText, setAiText] = useState('');
+  const [aiText, setAiText] = useState(_cachedAiText);
   const [aiLoading, setAiLoading] = useState(false);
 
   const handleGenerate = useCallback(async () => {
@@ -56,6 +59,7 @@ export default function DashboardPage() {
     setAiLoading(true);
     try {
       const text = await generateAINarrative(stats);
+      _cachedAiText = text;
       setAiText(text);
     } catch {
       toast.error('AI narrative generation failed');
@@ -113,7 +117,7 @@ export default function DashboardPage() {
       )}
 
       {/* ── Metric Cards ── */}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
+      <div className="metric-row" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <MetricCard
           label="Total Targets" icon="fa-bullseye"
           value={s?.totalTargets ?? 22}
@@ -140,30 +144,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Access Layers ── */}
-      <div style={{ ...card, padding: '14px 18px', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
-            <i className="fa-solid fa-shield-halved" style={{ color: 'var(--sky-dim)' }} />
-            Dashboard Access Layers
-          </div>
-          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>
-            Role-Based
-          </span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          {[
-            { bg: '#f0fdf4', border: '#bbf7d0', color: '#166534', label: '🌐 PUBLIC ACCESS', desc: 'Headline indicators · National progress summaries · Maps & trends · Transparency & accountability' },
-            { bg: '#eff6ff', border: '#bfdbfe', color: '#1e40af', label: '🏛️ INSTITUTIONAL REPORTING', desc: 'Ministries · Districts · Protected area authorities · Research institutions · Data entry & progress tracking' },
-            { bg: '#faf5ff', border: '#e9d5ff', color: '#6b21a8', label: '📊 DECISION-MAKER ANALYTICS', desc: 'REMA · Cabinet technical teams · Policy planners · Performance dashboards · Scenario modelling · Exportable reports' },
-          ].map(({ bg, border, color, label, desc }) => (
-            <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 9, padding: '12px 14px' }}>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
-              <div style={{ fontSize: '0.75rem', color, lineHeight: 1.5 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Access Layers removed — moved to Settings page */}
 
       {/* ── Live Toolkit Stats ── */}
       {s && (
@@ -177,7 +158,7 @@ export default function DashboardPage() {
             <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 2 }}>Auto-updates when reports are submitted via the Reporting Toolkit</p>
           </div>
           <div style={{ padding: '16px 18px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, marginBottom: 16 }}>
               {[
                 { val: s.totalSubmissions, label: 'Toolkit Reports', color: '#0ea5e9' },
                 { val: s.forestHa.toLocaleString(), label: 'Forest (ha)', color: '#10b981' },
@@ -197,7 +178,7 @@ export default function DashboardPage() {
       )}
 
       {/* ── Charts + Activity ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
         {/* Progress */}
         <div style={{ ...card, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
@@ -239,27 +220,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── NBSAP Target Progress ── */}
-      <div style={{ ...card, padding: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
-          <i className="fa-solid fa-chart-column" style={{ color: 'var(--sky-dim)' }} />
-          NBSAP Target Progress (2025–2030)
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 32px' }}>
-          <div>
-            <ProgRow label="Forest Cover" value="27%" target="30%" color="linear-gradient(90deg,#059669,#10b981)" />
-            <ProgRow label="Wetland Restoration" value="600 ha" target="1200 ha" color="linear-gradient(90deg,#0284c7,#38bdf8)" />
-          </div>
-          <div>
-            <ProgRow label="Species Protection" value="650" target="800" color="linear-gradient(90deg,#7c3aed,#8b5cf6)" />
-            <ProgRow label="Community Participation" value="60%" target="80%" color="linear-gradient(90deg,#d97706,#f59e0b)" />
-          </div>
-          <div>
-            <ProgRow label="Water Quality" value="80%" target="90%" color="linear-gradient(90deg,#0891b2,#06b6d4)" />
-            <ProgRow label="Policy Integration" value="10" target="15 plans" color="linear-gradient(90deg,#db2777,#ec4899)" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

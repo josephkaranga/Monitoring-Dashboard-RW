@@ -6,7 +6,6 @@ import { useAuditLog } from './useData';
 import type { UserSettings, NotificationPreferences } from './index';
 import { USER_ROLE_LABELS } from './index';
 import toast from 'react-hot-toast';
-
 // ── Toggle ────────────────────────────────────────────────────
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
   <label style={{ position: 'relative', width: 40, height: 22, flexShrink: 0, cursor: 'pointer', display: 'inline-block' }}>
@@ -96,7 +95,19 @@ export default function SettingsPage() {
     setSaving(false);
   }, [pwForm]);
 
-  const handleExportAudit = useCallback(async () => {
+  const handleBackupData = useCallback(async () => {
+    try {
+      // Export audit log as CSV backup
+      const csv = auditEntries?.length ? await exportAuditLogToCSV(auditEntries) : 'No data';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = `nbsap_backup_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      toast.success('Backup downloaded');
+    } catch {
+      toast.error('Backup failed');
+    }
+  }, [auditEntries]);
     if (!auditEntries?.length) return;
     const csv = await exportAuditLogToCSV(auditEntries);
     const a = document.createElement('a');
@@ -184,10 +195,10 @@ export default function SettingsPage() {
 
               <SectionHead>Data Management</SectionHead>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button style={{ padding: '8px 16px', border: '1.5px solid #8b5cf6', borderRadius: 8, color: '#8b5cf6', background: 'transparent', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <i className="fa-solid fa-file-code" /> Backup All Data
+                <button onClick={handleBackupData} style={{ padding: '8px 16px', border: '1.5px solid #8b5cf6', borderRadius: 8, color: '#8b5cf6', background: 'transparent', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <i className="fa-solid fa-file-code" /> Backup Audit Log
                 </button>
-                <button style={{ padding: '8px 16px', border: '1.5px solid #10b981', borderRadius: 8, color: '#10b981', background: 'transparent', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button onClick={() => toast('Restore: import a JSON backup file via the Reporting Toolkit page', { icon: 'ℹ️' })} style={{ padding: '8px 16px', border: '1.5px solid #10b981', borderRadius: 8, color: '#10b981', background: 'transparent', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
                   <i className="fa-solid fa-file-import" /> Restore from Backup
                 </button>
               </div>
@@ -303,7 +314,7 @@ export default function SettingsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>Activity Audit Log</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 2 }}>Tracks data access, exports, submissions, approvals and role changes. Stored in session.</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 2 }}>Tracks data access, exports, submissions, approvals and role changes. Stored in the database.</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <select value={auditFilter} onChange={e => setAuditFilter(e.target.value)}
@@ -353,7 +364,7 @@ export default function SettingsPage() {
                 })}
               </div>
               <div style={{ marginTop: 10, fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
-                {auditEntries?.length ?? 0} events recorded this session
+                {auditEntries?.length ?? 0} events loaded
               </div>
             </div>
           )}

@@ -3,6 +3,9 @@ import { useDashboardStats } from './useData';
 import { generateAINarrative } from './aiNarrative';
 import toast from 'react-hot-toast';
 
+// ── Module-level AI cache — persists across navigation ────────
+let _cachedDecisionBrief = '';
+
 const card: React.CSSProperties = {
   background: 'var(--surface)', borderRadius: 'var(--radius)',
   border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
@@ -10,7 +13,7 @@ const card: React.CSSProperties = {
 
 export default function AdaptiveManagementPage() {
   const { stats } = useDashboardStats(false);
-  const [aiText, setAiText] = useState('');
+  const [aiText, setAiText] = useState(_cachedDecisionBrief);
   const [aiLoading, setAiLoading] = useState(false);
 
   const handleGenerate = useCallback(async () => {
@@ -18,6 +21,7 @@ export default function AdaptiveManagementPage() {
     setAiLoading(true);
     try {
       const text = await generateAINarrative(stats);
+      _cachedDecisionBrief = text;
       setAiText(text);
     } catch {
       toast.error('AI generation failed');

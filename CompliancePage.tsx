@@ -7,7 +7,7 @@ const card: React.CSSProperties = {
 };
 
 export function CompliancePage() {
-  const { reports } = useReports({ status: 'approved', pageSize: 200 });
+  const { reports, loading } = useReports({ status: 'approved', pageSize: 200 });
 
   const t06 = reports.filter(r => r.tool_id === 'T06');
   const t02 = reports.filter(r => r.tool_id === 'T02');
@@ -58,6 +58,14 @@ export function CompliancePage() {
 
   return (
     <div>
+      {/* Loading skeleton */}
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: 16, fontSize: '0.82rem', color: 'var(--text-3)' }}>
+          <div style={{ width: 16, height: 16, border: '2px solid var(--border)', borderTopColor: 'var(--sky-dim)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+          Loading compliance data…
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         {/* Compliance bars */}
         <div style={{ ...card, padding: 18 }}>

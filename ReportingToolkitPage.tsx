@@ -316,8 +316,8 @@ export default function ReportingToolkitPage() {
         </div>
       </div>
 
-      {/* Tool cards grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
+      {/* Tool cards grid — responsive */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, marginBottom: 28 }}>
         {TOOLKIT_TOOLS.map(t => {
           const cnt = toolCounts[t.id] || 0;
           return (

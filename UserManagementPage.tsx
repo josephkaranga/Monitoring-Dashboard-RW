@@ -332,6 +332,79 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   );
 }
 
+// ── Actions Dropdown Menu ─────────────────────────────────────
+function ActionsMenu({ userId, userName, isSelf, disabled, onResetPw, onDelete }: {
+  userId: string; userName: string; isSelf: boolean; disabled: boolean;
+  onResetPw: () => void; onDelete: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        disabled={disabled}
+        style={{
+          width: 30, height: 30, borderRadius: 7, border: '1px solid var(--border)',
+          background: 'var(--surface)', cursor: disabled ? 'wait' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--text-2)', opacity: disabled ? 0.5 : 1,
+        }}
+      >
+        <i className="fa-solid fa-ellipsis-vertical" style={{ fontSize: '0.8rem' }} />
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 34, zIndex: 300,
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 10, boxShadow: 'var(--shadow-lg)', minWidth: 160, overflow: 'hidden',
+        }}>
+          <button
+            onClick={() => { setOpen(false); onResetPw(); }}
+            style={{
+              width: '100%', padding: '9px 14px', border: 'none', background: 'transparent',
+              textAlign: 'left', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif", color: '#92400e',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#fffbeb')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+          >
+            <i className="fa-solid fa-key" style={{ fontSize: '0.72rem', width: 14 }} />
+            Reset Password
+          </button>
+          {!isSelf && (
+            <button
+              onClick={() => { setOpen(false); onDelete(); }}
+              style={{
+                width: '100%', padding: '9px 14px', border: 'none', background: 'transparent',
+                textAlign: 'left', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif", color: '#dc2626',
+                display: 'flex', alignItems: 'center', gap: 8,
+                borderTop: '1px solid var(--surface-3)',
+              }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#fff1f2')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+            >
+              <i className="fa-solid fa-trash-can" style={{ fontSize: '0.72rem', width: 14 }} />
+              Delete User
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────
 export function UserManagementPage() {
   const { user: currentUser, permissions } = useAuth();
@@ -506,8 +579,8 @@ export function UserManagementPage() {
         </div>
       )}
 
-      {/* Role distribution cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
+      {/* Role distribution cards — responsive grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
         {(Object.entries(USER_ROLE_LABELS) as [UserRole, string][]).map(([role, label]) => (
           <div key={role} style={{ ...card, padding: 14, borderLeft: `4px solid ${ROLE_COLORS[role]}`, cursor: 'pointer', transition: '0.2s' }}
             onClick={() => setRoleFilter(r => r === role ? 'all' : role)}
@@ -576,8 +649,7 @@ export function UserManagementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
               <thead>
                 <tr>
-                  {['User', 'Organization', 'Role', 'Status', 'Last Login', ...(isAdmin ? ['Change Role', 'Actions'] : [])].map(h => (
-                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', background: 'var(--surface-2)' }}>{h}</th>
+                  {['User', 'Organization', 'Role', 'Status', 'Last Login', ...(isAdmin ? ['Change Role', 'Actions'] : [])].map(h => (                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', background: 'var(--surface-2)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -633,44 +705,17 @@ export function UserManagementPage() {
                         </select>
                       </td>
                     )}
-                    {/* Delete — admin only, can't delete yourself */}
+                    {/* Actions dropdown — admin only */}
                     {isAdmin && (
                       <td style={{ padding: '11px 14px' }}>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          {/* Reset password */}
-                          <button
-                            onClick={() => setResetTarget(u)}
-                            disabled={updating === u.id}
-                            title={`Reset password for ${u.full_name || u.email}`}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              padding: '5px 10px', borderRadius: 7, border: 'none',
-                              background: '#fef9c3', color: '#92400e',
-                              fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                              fontFamily: "'DM Sans', sans-serif",
-                            }}
-                          >
-                            <i className="fa-solid fa-key" style={{ fontSize: '0.68rem' }} />
-                            Reset PW
-                          </button>
-                          {/* Delete */}
-                          <button
-                            onClick={() => handleDeleteUser(u.id, u.full_name || u.email)}
-                            disabled={updating === u.id || u.id === currentUser?.id}
-                            title={u.id === currentUser?.id ? "You can't delete your own account" : `Delete ${u.full_name || u.email}`}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              padding: '5px 10px', borderRadius: 7, border: 'none',
-                              background: u.id === currentUser?.id ? 'var(--surface-2)' : '#fee2e2',
-                              color: u.id === currentUser?.id ? 'var(--text-3)' : '#991b1b',
-                              fontSize: '0.72rem', fontWeight: 700, cursor: u.id === currentUser?.id ? 'not-allowed' : 'pointer',
-                              fontFamily: "'DM Sans', sans-serif", opacity: updating === u.id ? 0.5 : 1,
-                            }}
-                          >
-                            <i className="fa-solid fa-trash-can" style={{ fontSize: '0.68rem' }} />
-                            Delete
-                          </button>
-                        </div>
+                        <ActionsMenu
+                          userId={u.id}
+                          userName={u.full_name || u.email}
+                          isSelf={u.id === currentUser?.id}
+                          disabled={updating === u.id}
+                          onResetPw={() => setResetTarget(u)}
+                          onDelete={() => handleDeleteUser(u.id, u.full_name || u.email)}
+                        />
                       </td>
                     )}
                   </tr>

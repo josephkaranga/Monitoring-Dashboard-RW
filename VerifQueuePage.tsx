@@ -162,6 +162,25 @@ export default function VerifQueuePage() {
                     <span style={{ fontSize: '0.72rem', fontFamily: "'DM Mono', monospace", color: 'var(--text-3)' }}>
                       #{String(reports.indexOf(report) + 1).padStart(3, '0')}
                     </span>
+                    {/* Delete — admin only, in header for easy access */}
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDeleteSubmission(report.id, report.tool_name)}
+                        disabled={actioning === report.id}
+                        title="Delete submission"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          padding: '3px 10px', borderRadius: 6, border: '1px solid #fecaca',
+                          background: '#fff1f2', color: '#dc2626',
+                          fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer',
+                          fontFamily: "'DM Sans', sans-serif",
+                          opacity: actioning === report.id ? 0.5 : 1,
+                        }}
+                      >
+                        <i className="fa-solid fa-trash-can" style={{ fontSize: '0.65rem' }} />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -230,27 +249,6 @@ export default function VerifQueuePage() {
                 {report.review_note && (
                   <div style={{ marginTop: 8, fontSize: '0.72rem', color: 'var(--text-2)', fontStyle: 'italic' }}>
                     Note: {report.review_note}
-                  </div>
-                )}
-
-                {/* Delete — admin only */}
-                {isAdmin && (
-                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--surface-3)', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      onClick={() => handleDeleteSubmission(report.id, report.tool_name)}
-                      disabled={actioning === report.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '5px 14px', borderRadius: 7, border: '1px solid #fecaca',
-                        background: '#fff1f2', color: '#dc2626',
-                        fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                        fontFamily: "'DM Sans', sans-serif",
-                        opacity: actioning === report.id ? 0.5 : 1,
-                      }}
-                    >
-                      <i className="fa-solid fa-trash-can" style={{ fontSize: '0.7rem' }} />
-                      Delete Submission
-                    </button>
                   </div>
                 )}
               </div>

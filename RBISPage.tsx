@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const card: React.CSSProperties = {
   background: 'var(--surface)', borderRadius: 'var(--radius)',
@@ -14,6 +14,8 @@ const integrationSources = [
 ];
 
 export default function RBISPage() {
+  const [iframeError, setIframeError] = useState(false);
+
   return (
     <div>
       {/* Live RBIS Embed Banner */}
@@ -55,13 +57,38 @@ export default function RBISPage() {
           </a>
         </div>
         <div style={{ position: 'relative', width: '100%', height: 500, background: '#f0f9ff' }}>
-          <iframe
-            src="https://rbis.ur.ac.rw/map"
-            title="RBIS Live Biodiversity Map"
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          />
+          {iframeError ? (
+            /* Fallback when iframe is blocked by X-Frame-Options */
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, padding: 24, textAlign: 'center' }}>
+              <i className="fa-solid fa-map-location-dot" style={{ fontSize: '3rem', color: '#0284c7', opacity: 0.4 }} />
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>RBIS Map cannot be embedded</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 360, lineHeight: 1.6 }}>
+                The RBIS website restricts embedding in external pages. Open it directly to access the full interactive map and biodiversity data.
+              </div>
+              <a href="https://rbis.ur.ac.rw/map" target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 22px', background: '#0284c7', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
+                <i className="fa-solid fa-arrow-up-right-from-square" /> Open RBIS Map
+              </a>
+            </div>
+          ) : (
+            <iframe
+              src="https://rbis.ur.ac.rw/map"
+              title="RBIS Live Biodiversity Map"
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              onError={() => setIframeError(true)}
+              onLoad={e => {
+                // Detect blank/blocked iframe by checking contentDocument
+                try {
+                  const doc = (e.target as HTMLIFrameElement).contentDocument;
+                  if (!doc || doc.body?.innerHTML === '') setIframeError(true);
+                } catch {
+                  setIframeError(true);
+                }
+              }}
+            />
+          )}
         </div>
       </div>
 
