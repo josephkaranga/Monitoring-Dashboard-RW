@@ -421,7 +421,7 @@ export async function fetchExtraction(reportId: string): Promise<AIExtraction | 
     .eq('report_id', reportId)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
   return data as AIExtraction;
