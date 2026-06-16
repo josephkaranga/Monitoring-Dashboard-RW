@@ -241,7 +241,298 @@ Route-level guards in `App.tsx` enforce these roles. Database RLS policies enfor
 
 ---
 
-## 3. Database Structure
+## 3. GIS-Based Biodiversity Visualization
+
+### Overview
+
+The District Map page (`MapPage.tsx`) features an advanced GIS-based biodiversity visualization system with 9 interactive map layers, 3 data overlays, and 5 real-time visualization panels. The system integrates live biodiversity data from GBIF (Global Biodiversity Information Facility) with local district data to provide comprehensive spatial analysis of Rwanda's biodiversity.
+
+---
+
+### A. Map Layers
+
+The map supports 9 different visualization layers, each providing unique insights into biodiversity and conservation status:
+
+| Layer | Description | Color Scale | Data Source |
+|-------|-------------|-------------|-------------|
+| **Biodiversity Index** | Composite biodiversity score (0-100) based on species richness, Shannon diversity, and endemism | Green gradient (0-100) | Calculated from GBIF occurrences |
+| **Species Richness** | Total number of unique species observed in each district | Blue gradient | GBIF API |
+| **GBIF Occurrences** | Total number of species observations recorded | Purple gradient | GBIF API |
+| **Protected Area Coverage** | Percentage of district area under protection | Teal gradient (0-100%) | Local GeoJSON + calculations |
+| **Forest Cover** | Forest coverage percentage per district | Green gradient (0-100%) | District data |
+| **NBSAP Progress** | Average progress on NBSAP indicators per district | Blue gradient (0-100%) | Indicators table |
+| **Threat Level** | Composite threat assessment (Low/Medium/High) | Red-Yellow-Green scale | Risk register + forest cover |
+| **Submission Rate** | Percentage of required reports submitted | Orange gradient (0-100%) | Toolkit reports |
+| **Compliance** | Compliance score per district | Blue gradient (0-100%) | Compliance records |
+
+**Layer Switching:**
+- Use the Layer Switcher dropdown (top-left of map)
+- Transitions complete in <500ms
+- District colors update dynamically based on selected layer
+- Tooltips show layer-specific data on hover
+
+---
+
+### B. Map Overlays
+
+Three toggleable overlays provide additional spatial context:
+
+| Overlay | Visual Style | Data Points | Features |
+|---------|-------------|-------------|----------|
+| **GBIF Occurrences** | Colored circle markers | Live species observations | • Kingdom-based colors (Animalia=red, Plantae=green, Fungi=orange, etc.)<br>• Clustering for >500 points<br>• Hover tooltips with species name, kingdom, year<br>• Auto-refresh every 30 minutes |
+| **Protected Areas** | Semi-transparent polygons | 5 major protected areas | • Volcanoes National Park<br>• Akagera National Park<br>• Nyungwe National Park<br>• Gishwati-Mukura National Park<br>• Rugezi Marsh<br>• Hover tooltips with area name, type, size |
+| **River Network** | Blue lines | 7 major rivers | • Nyabarongo, Kagera, Akanyaru, Ruzizi, Sebeya, Muvumba, Base<br>• Hover tooltips with river name and length |
+
+**Overlay Controls:**
+- Use the Overlay Toggles panel (top-right of map)
+- Multiple overlays can be enabled simultaneously
+- Lazy loading — data fetches only when first enabled
+- Refresh button for manual GBIF data update
+
+---
+
+### C. Visualization Panels
+
+Five interactive panels provide detailed biodiversity analytics:
+
+#### 1. Biodiversity Index Panel
+- **Purpose:** Sortable table of all 30 districts with biodiversity scores
+- **Metrics:** Biodiversity Index (0-100), Species Richness, Total Occurrences
+- **Features:** Click column headers to sort, color-coded index values
+
+#### 2. Species by Kingdom Panel
+- **Purpose:** Taxonomic breakdown of observed species
+- **Visualization:** Pie chart and bar chart
+- **Kingdoms:** Animalia, Plantae, Fungi, Chromista, Bacteria, Archaea, Viruses, Protozoa
+- **Features:** Click kingdom to filter map view (future enhancement)
+
+#### 3. Biodiversity Hotspots Panel
+- **Purpose:** Ranked list of top biodiversity hotspots
+- **Algorithm:** Identifies areas with high species richness + high endemism + protected area overlap
+- **Display:** Top 10 hotspots with scores and district names
+
+#### 4. Protected Areas Panel
+- **Purpose:** List of all protected areas with details
+- **Information:** Name, type (National Park, Wetland), area (km²), district
+- **Features:** Filter by type, sort by area
+
+#### 5. GBIF Live Counter
+- **Purpose:** Real-time count of GBIF observations for Rwanda
+- **Display:** Animated counter with trend indicator (↑/↓)
+- **Update:** Auto-refreshes every 30 minutes
+- **Metadata:** Last updated timestamp, data source attribution
+
+---
+
+### D. Data Sources and Licensing
+
+| Data Type | Source | License | Update Frequency |
+|-----------|--------|---------|------------------|
+| **Species Occurrences** | GBIF API (gbif.org) | CC0 / CC-BY (varies by dataset) | Auto-refresh every 30 minutes |
+| **District Boundaries** | geoBoundaries.org | Open Data Commons Open Database License | Static (local file) |
+| **Protected Areas** | Custom GeoJSON (based on REMA data) | Open Data | Static (local file) |
+| **River Network** | Custom GeoJSON (based on public sources) | Open Data | Static (local file) |
+| **Indicator Data** | Supabase `indicators` table | Internal | Real-time |
+| **Risk Data** | Supabase `risks` table | Internal | Real-time |
+
+**Attribution:**
+- GBIF data: "GBIF.org (Date) GBIF Occurrence Download https://doi.org/..."
+- geoBoundaries: "geoBoundaries.org - Open Boundaries Database"
+- All attributions are displayed in map legend and export metadata
+
+**Data Files Location:**
+- `public/rwanda-districts.geojson` (289 KB) — District boundaries
+- `public/rwanda-protected-areas.geojson` (12 KB) — Protected areas
+- `public/rwanda-rivers.geojson` (8 KB) — River network
+- See `public/README.md` for update instructions
+
+---
+
+### E. Biodiversity Calculations
+
+The system implements several biodiversity metrics:
+
+#### Biodiversity Index (0-100)
+Composite score calculated as:
+```
+Biodiversity Index = (0.4 × Species Richness Score) + 
+                     (0.3 × Shannon Diversity Score) + 
+                     (0.3 × Endemism Score)
+```
+
+Where:
+- **Species Richness Score** = (unique species count / max species count) × 100
+- **Shannon Diversity Score** = Shannon-Wiener Index normalized to 0-100
+- **Endemism Score** = (endemic species / total species) × 100
+
+#### Shannon Diversity Index
+```
+H' = -Σ(pi × ln(pi))
+```
+Where `pi` is the proportion of individuals belonging to species `i`
+
+#### Hotspot Detection Algorithm
+Identifies biodiversity hotspots using:
+1. **Species Richness** — Areas with >75th percentile species count
+2. **Endemism** — Areas with >50% endemic species
+3. **Protected Area Overlap** — Areas within or adjacent to protected areas
+4. **Threat Level** — Areas with Low-Medium threat (excludes High threat areas)
+
+Hotspots are ranked by composite score and displayed in the Hotspots List Panel.
+
+#### Threat Level Calculation
+```
+Threat Level = f(Forest Cover, Risk Count, Risk Severity)
+
+High:   Forest Cover < 30% OR ≥3 High-severity risks
+Medium: Forest Cover 30-60% OR 1-2 Medium-severity risks
+Low:    Forest Cover > 60% AND 0-1 Low-severity risks
+```
+
+---
+
+### F. Performance Optimizations
+
+The map system implements several performance enhancements:
+
+| Optimization | Implementation | Benefit |
+|--------------|----------------|---------|
+| **React.memo** | All overlay and panel components | Prevents unnecessary re-renders |
+| **Debouncing** | Hover event handlers (300ms) | Reduces tooltip flicker |
+| **Viewport Rendering** | Only draw visible elements | Improves performance with >1000 points |
+| **Lazy Loading** | Overlay data loads on first enable | Faster initial page load |
+| **Canvas Fallback** | >500 GBIF points render to Canvas | 10x faster than SVG for large datasets |
+| **Data Caching** | GBIF responses cached for 30 minutes | Reduces API calls |
+| **Code Splitting** | Map components lazy-loaded | Smaller initial bundle |
+
+**Performance Targets:**
+- Initial page load: <3 seconds
+- Layer switch: <500ms
+- Overlay toggle: <200ms
+- Hover tooltip: <50ms
+- Frame rate: >60 FPS (16ms per frame)
+
+---
+
+### G. Mobile Responsive Design
+
+The map interface adapts to mobile devices:
+
+| Screen Size | Layout Changes |
+|-------------|----------------|
+| **Desktop (≥1024px)** | Side-by-side panels, full map controls |
+| **Tablet (768-1023px)** | Stacked panels, collapsible controls |
+| **Mobile (<768px)** | Vertical stack, collapsible dropdowns, simplified tooltips |
+
+**Mobile Features:**
+- Touch gesture support (pan, pinch zoom)
+- Collapsible Layer Switcher and Overlay Toggles
+- Minimum 44×44px tap targets
+- Simplified tooltips (less text, larger font)
+- Vertical panel stacking
+
+---
+
+### H. Data Export
+
+Users can export map visualizations and underlying data:
+
+| Export Type | Format | Contents |
+|-------------|--------|----------|
+| **Map Image** | PNG | Current map view with active layer and overlays |
+| **Biodiversity Data** | CSV | District-level biodiversity metrics |
+| **Species List** | CSV | All GBIF occurrences with metadata |
+| **Protected Areas** | CSV | Protected area details |
+
+**Export Features:**
+- Descriptive filenames with layer name and date
+- Metadata header with export timestamp and data sources
+- Audit log entry for compliance tracking
+- Loading indicator during generation
+
+**Export Button Location:** Top-right of map, next to Refresh button
+
+---
+
+### I. Real-Time GBIF Integration
+
+The system maintains live connection to GBIF API:
+
+**Auto-Refresh:**
+- Interval: 30 minutes
+- Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
+- Non-blocking: Map remains interactive during refresh
+- Preserves: User's layer and overlay selections
+
+**Manual Refresh:**
+- Refresh button in map controls
+- Loading indicator shows progress
+- "Last Updated" timestamp displays in GBIF Live Counter
+
+**GBIF Query Parameters:**
+- Country: Rwanda (RW)
+- Has Coordinate: true (only georeferenced records)
+- Occurrence Status: present
+- Limit: 10,000 records per request
+- Fields: species, kingdom, decimalLatitude, decimalLongitude, year
+
+**Error Handling:**
+- Network errors: Show error message, use cached data
+- API rate limits: Exponential backoff, queue requests
+- Invalid data: Filter out records with missing coordinates
+
+---
+
+### J. Accessibility
+
+The map interface follows WCAG 2.1 Level AA guidelines:
+
+| Feature | Implementation |
+|---------|----------------|
+| **Keyboard Navigation** | Tab, Enter, Space for all controls |
+| **ARIA Labels** | All interactive elements labeled |
+| **Color Contrast** | 4.5:1 minimum for text |
+| **Screen Reader Support** | Descriptive labels for map regions |
+| **Focus Indicators** | Visible focus rings on all controls |
+| **Alternative Text** | Text descriptions for visual data |
+
+**Keyboard Shortcuts:**
+- `Tab` — Navigate between controls
+- `Enter` / `Space` — Activate buttons and toggles
+- `Arrow Keys` — Navigate dropdown options
+- `Esc` — Close dropdowns and tooltips
+
+---
+
+### K. Known Limitations
+
+| Limitation | Detail | Workaround |
+|-----------|--------|------------|
+| **GBIF API Rate Limits** | 300 requests per minute | Auto-refresh limited to 30-minute intervals |
+| **Large Dataset Performance** | >1000 points may slow rendering | Canvas fallback activates automatically |
+| **Mobile Touch Precision** | Small markers hard to tap | Clustering reduces marker density |
+| **Offline Mode** | Requires internet for GBIF data | Cached data used when offline |
+| **Historical Data** | Only current GBIF snapshot | No time-series animation (optional enhancement) |
+| **Custom Area Selection** | No polygon drawing tool | Use district boundaries (optional enhancement) |
+
+---
+
+### L. Future Enhancements (Optional)
+
+The following features are documented in the spec but not yet implemented:
+
+- [ ] Species search/filter functionality
+- [ ] Time-series animation for GBIF data over years
+- [ ] Comparison mode (side-by-side layer comparison)
+- [ ] Custom area selection for detailed analysis
+- [ ] Print-friendly map view
+- [ ] Integration with additional biodiversity data sources
+- [ ] User preferences for default layer and overlays
+- [ ] Map bookmarking/sharing functionality
+
+---
+
+## 4. Database Structure
 
 ### Tables Overview
 

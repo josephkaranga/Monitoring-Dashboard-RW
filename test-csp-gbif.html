@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSP & GBIF API Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .pending { background: #fff3cd; color: #856404; }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #0056b3; }
+    pre {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSP & GBIF API Test</h1>
+  <p>This page tests the Content Security Policy configuration and GBIF API access.</p>
+
+  <div class="test-section">
+    <h2>Test 1: GBIF API Access</h2>
+    <button onclick="testGBIFAPI()">Test GBIF API</button>
+    <div id="gbif-status" class="status pending">Click button to test</div>
+    <pre id="gbif-result"></pre>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 2: GeoJSON File Loading</h2>
+    <button onclick="testGeoJSON()">Test GeoJSON Files</button>
+    <div id="geojson-status" class="status pending">Click button to test</div>
+    <pre id="geojson-result"></pre>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 3: CSP Violations</h2>
+    <div id="csp-status" class="status pending">Monitoring for CSP violations...</div>
+    <pre id="csp-violations">No violations detected yet.</pre>
+  </div>
+
+  <script>
+    // Monitor CSP violations
+    const cspViolations = [];
+    document.addEventListener('securitypolicyviolation', (e) => {
+      const violation = {
+        blockedURI: e.blockedURI,
+        violatedDirective: e.violatedDirective,
+        originalPolicy: e.originalPolicy
+      };
+      cspViolations.push(violation);
+      
+      const statusEl = document.getElementById('csp-status');
+      const resultEl = document.getElementById('csp-violations');
+      
+      statusEl.className = 'status error';
+      statusEl.textContent = `${cspViolations.length} CSP violation(s) detected!`;
+      resultEl.textContent = JSON.stringify(cspViolations, null, 2);
+    });
+
+    // Test GBIF API
+    async function testGBIFAPI() {
+      const statusEl = document.getElementById('gbif-status');
+      const resultEl = document.getElementById('gbif-result');
+      
+      statusEl.className = 'status pending';
+      statusEl.textContent = 'Testing GBIF API...';
+      resultEl.textContent = '';
+
+      try {
+        const url = 'https://api.gbif.org/v1/occurrence/search?country=RW&limit=5&hasCoordinate=true';
+        console.log('[TEST] Fetching from:', url);
+        
+        const response = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        statusEl.className = 'status success';
+        statusEl.textContent = `✓ GBIF API accessible! Fetched ${data.results.length} occurrences (${data.count} total available)`;
+        
+        resultEl.textContent = JSON.stringify({
+          count: data.count,
+          endOfRecords: data.endOfRecords,
+          sampleOccurrences: data.results.slice(0, 2).map(r => ({
+            key: r.key,
+            scientificName: r.scientificName,
+            kingdom: r.kingdom,
+            coordinates: [r.decimalLatitude, r.decimalLongitude]
+          }))
+        }, null, 2);
+
+        console.log('[TEST] GBIF API test successful:', data);
+      } catch (error) {
+        statusEl.className = 'status error';
+        statusEl.textContent = `✗ GBIF API test failed: ${error.message}`;
+        resultEl.textContent = error.stack || error.toString();
+        console.error('[TEST] GBIF API test failed:', error);
+      }
+    }
+
+    // Test GeoJSON files
+    async function testGeoJSON() {
+      const statusEl = document.getElementById('geojson-status');
+      const resultEl = document.getElementById('geojson-result');
+      
+      statusEl.className = 'status pending';
+      statusEl.textContent = 'Testing GeoJSON files...';
+      resultEl.textContent = '';
+
+      const files = [
+        '/rwanda-districts.geojson',
+        '/rwanda-protected-areas.geojson',
+        '/rwanda-rivers.geojson'
+      ];
+
+      const results = [];
+
+      for (const file of files) {
+        try {
+          console.log(`[TEST] Loading ${file}...`);
+          const response = await fetch(file);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          const featureCount = data.features?.length || 0;
+          
+          results.push({
+            file,
+            status: 'success',
+            featureCount,
+            type: data.type
+          });
+
+          console.log(`[TEST] ${file} loaded successfully: ${featureCount} features`);
+        } catch (error) {
+          results.push({
+            file,
+            status: 'error',
+            error: error.message
+          });
+          console.error(`[TEST] ${file} failed:`, error);
+        }
+      }
+
+      const allSuccess = results.every(r => r.status === 'success');
+      
+      if (allSuccess) {
+        statusEl.className = 'status success';
+        statusEl.textContent = '✓ All GeoJSON files loaded successfully!';
+      } else {
+        statusEl.className = 'status error';
+        statusEl.textContent = '✗ Some GeoJSON files failed to load';
+      }
+
+      resultEl.textContent = JSON.stringify(results, null, 2);
+    }
+
+    // Auto-run tests after 1 second
+    setTimeout(() => {
+      console.log('[TEST] Auto-running tests...');
+      testGBIFAPI();
+      setTimeout(testGeoJSON, 1000);
+    }, 1000);
+  </script>
+</body>
+</html>

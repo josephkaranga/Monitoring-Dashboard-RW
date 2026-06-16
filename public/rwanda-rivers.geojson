@@ -1,0 +1,181 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Nyabarongo River",
+        "type": "Major River",
+        "length": 351,
+        "basin": "Nile Basin",
+        "description": "Longest river entirely in Rwanda, flows into Kagera River"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [29.15, -2.55],
+          [29.25, -2.45],
+          [29.35, -2.35],
+          [29.45, -2.25],
+          [29.55, -2.15],
+          [29.65, -2.05],
+          [29.75, -1.95],
+          [29.85, -1.85],
+          [29.95, -1.75],
+          [30.05, -1.65],
+          [30.15, -1.55],
+          [30.25, -1.45],
+          [30.35, -1.35],
+          [30.45, -1.25],
+          [30.55, -1.15],
+          [30.65, -1.05],
+          [30.75, -0.95],
+          [30.85, -0.85],
+          [30.95, -0.75],
+          [30.45, -2.45]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kagera River (Akagera)",
+        "type": "Major River",
+        "length": 597,
+        "basin": "Nile Basin",
+        "description": "Forms part of Rwanda-Tanzania border, upper headwaters of the Nile"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [30.45, -2.45],
+          [30.55, -2.35],
+          [30.65, -2.25],
+          [30.75, -2.15],
+          [30.85, -2.05],
+          [30.85, -1.95],
+          [30.85, -1.85],
+          [30.85, -1.75],
+          [30.85, -1.65],
+          [30.85, -1.55],
+          [30.85, -1.45],
+          [30.85, -1.35],
+          [30.85, -1.25],
+          [30.85, -1.15],
+          [30.85, -1.05]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Akanyaru River",
+        "type": "Major River",
+        "length": 137,
+        "basin": "Nile Basin",
+        "description": "Forms part of Rwanda-Burundi border, tributary of Nyabarongo"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [29.45, -2.65],
+          [29.55, -2.55],
+          [29.65, -2.45],
+          [29.75, -2.35],
+          [29.85, -2.25],
+          [29.95, -2.15],
+          [30.05, -2.05],
+          [30.15, -1.95],
+          [30.25, -1.85],
+          [30.35, -1.75]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ruzizi River",
+        "type": "Major River",
+        "length": 117,
+        "basin": "Congo Basin",
+        "description": "Drains Lake Kivu into Lake Tanganyika"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [28.95, -1.65],
+          [28.95, -1.75],
+          [28.95, -1.85],
+          [28.95, -1.95],
+          [28.95, -2.05],
+          [28.95, -2.15],
+          [28.95, -2.25],
+          [28.95, -2.35],
+          [28.95, -2.45]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sebeya River",
+        "type": "River",
+        "length": 45,
+        "basin": "Congo Basin",
+        "description": "Flows into Lake Kivu"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [29.45, -1.65],
+          [29.35, -1.65],
+          [29.25, -1.65],
+          [29.15, -1.65],
+          [29.05, -1.65]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Muvumba River",
+        "type": "River",
+        "length": 80,
+        "basin": "Nile Basin",
+        "description": "Tributary of Kagera River"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [29.95, -1.35],
+          [30.05, -1.35],
+          [30.15, -1.35],
+          [30.25, -1.35],
+          [30.35, -1.35],
+          [30.45, -1.35],
+          [30.55, -1.35],
+          [30.65, -1.35]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Base River",
+        "type": "River",
+        "length": 38,
+        "basin": "Nile Basin",
+        "description": "Tributary of Nyabarongo River"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [29.65, -1.95],
+          [29.75, -1.95],
+          [29.85, -1.95],
+          [29.95, -1.95]
+        ]
+      }
+    }
+  ]
+}

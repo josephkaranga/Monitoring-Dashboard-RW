@@ -16,6 +16,8 @@ import {
   writeAuditEntry,
   subscribeToReports,
   subscribeToNotifications,
+  getIndicatorsByDistrict,
+  getRisksByDistrict,
 } from './dataService';
 import { useAuth } from './AuthContext';
 import type {
@@ -245,4 +247,19 @@ export function useAuditLogger() {
     },
     [permissions]
   );
+}
+
+// ── NBSAP Progress by District ────────────────────────────────
+
+export function useNBSAPProgress(targetId?: number) {
+  return useAsync(
+    () => getIndicatorsByDistrict(targetId ? { targetId } : undefined),
+    [targetId]
+  );
+}
+
+// ── Threat Level by District ──────────────────────────────────
+
+export function useThreatLevels() {
+  return useAsync(getRisksByDistrict, []);
 }

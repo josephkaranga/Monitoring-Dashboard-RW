@@ -191,6 +191,44 @@ export async function writeAuditEntry(
   });
 }
 
+/**
+ * Log an audit event for data exports and other map actions
+ * @param eventType - Type of event (e.g., 'export', 'layer_switch', 'overlay_toggle')
+ * @param metadata - Additional metadata about the event (e.g., layer name, export format)
+ */
+export async function logAuditEvent(
+  eventType: string,
+  metadata: Record<string, any>
+): Promise<void> {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    // If no session, log anonymously (for public access scenarios)
+    const userId = sessionData.session?.user.id || 'anonymous';
+    
+    let role = null;
+    if (sessionData.session) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', sessionData.session.user.id)
+        .single();
+      role = profile?.role || null;
+    }
+
+    await supabase.from('audit_log').insert({
+      user_id: userId,
+      action_type: 'map_action',
+      action: eventType,
+      detail: JSON.stringify(metadata),
+      role,
+    });
+  } catch (error) {
+    // Don't throw errors for audit logging failures
+    console.error('Failed to log audit event:', error);
+  }
+}
+
 export async function fetchAuditLog(filters?: {
   actionType?: string;
   userId?: string;
@@ -383,4 +421,153 @@ export function subscribeToNotifications(
       (payload) => callback(payload.new as Notification)
     )
     .subscribe();
+}
+
+// ============================================================
+// BIODIVERSITY MAP SERVICES
+// ============================================================
+
+/**
+ * Get indicators aggregated by district
+ * Since indicators are national-level, this returns the overall NBSAP progress
+ * which can be applied to all districts or filtered by target
+ */
+export async function getIndicatorsByDistrict(filters?: {
+  targetId?: number;
+}): Promise<Map<number, { progress: number; indicatorCount: number }>> {
+  // Fetch all indicators (optionally filtered by target)
+  let query = supabase
+    .from('indicators')
+    .select('id, progress, nbsap_target_id');
+
+  if (filters?.targetId) {
+    query = query.eq('nbsap_target_id', filters.targetId);
+  }
+
+  const { data: indicators, error } = await query;
+  
+  if (error) {
+    console.error('getIndicatorsByDistrict error:', error);
+    return new Map();
+  }
+
+  if (!indicators || indicators.length === 0) {
+    return new Map();
+  }
+
+  // Calculate average progress across all indicators
+  const totalProgress = indicators.reduce((sum, ind) => sum + (ind.progress || 0), 0);
+  const avgProgress = Math.round(totalProgress / indicators.length);
+  const indicatorCount = indicators.length;
+
+  // Fetch all districts
+  const { data: districts, error: districtError } = await supabase
+    .from('districts')
+    .select('id');
+
+  if (districtError || !districts) {
+    console.error('getIndicatorsByDistrict districts error:', districtError);
+    return new Map();
+  }
+
+  // Apply the same progress to all districts (national-level indicators)
+  const result = new Map<number, { progress: number; indicatorCount: number }>();
+  districts.forEach(district => {
+    result.set(district.id, { progress: avgProgress, indicatorCount });
+  });
+
+  return result;
+}
+
+/**
+ * Get risks aggregated by district
+ * Calculates threat scores based on forest cover and documented risks
+ */
+export async function getRisksByDistrict(): Promise<Map<number, { 
+  threatScore: number; 
+  threatLevel: 'high' | 'medium' | 'low';
+  riskFactors: string[];
+}>> {
+  // Fetch all districts with forest cover data
+  const { data: districts, error: districtError } = await supabase
+    .from('districts')
+    .select('id, name, forest_cover');
+
+  if (districtError || !districts) {
+    console.error('getRisksByDistrict districts error:', districtError);
+    return new Map();
+  }
+
+  // Fetch all risks
+  const { data: risks, error: risksError } = await supabase
+    .from('risks')
+    .select('id, description, level, category');
+
+  if (risksError) {
+    console.error('getRisksByDistrict risks error:', risksError);
+  }
+
+  const result = new Map<number, { 
+    threatScore: number; 
+    threatLevel: 'high' | 'medium' | 'low';
+    riskFactors: string[];
+  }>();
+
+  // Calculate threat score for each district
+  districts.forEach(district => {
+    let threatScore = 0;
+    const riskFactors: string[] = [];
+
+    // Forest cover assessment (0-40 points)
+    // Lower forest cover = higher threat
+    const forestCover = district.forest_cover || 0;
+    if (forestCover < 15) {
+      threatScore += 40;
+      riskFactors.push('Very low forest cover');
+    } else if (forestCover < 25) {
+      threatScore += 30;
+      riskFactors.push('Low forest cover');
+    } else if (forestCover < 35) {
+      threatScore += 20;
+      riskFactors.push('Moderate forest cover');
+    } else {
+      threatScore += 10;
+      riskFactors.push('Good forest cover');
+    }
+
+    // National-level risks contribute to all districts (0-40 points)
+    // This is a simplified approach - in reality, risks would be district-specific
+    if (risks && risks.length > 0) {
+      const highRisks = risks.filter(r => r.level === 'High').length;
+      const mediumRisks = risks.filter(r => r.level === 'Medium').length;
+      
+      const riskScore = Math.min((highRisks * 5) + (mediumRisks * 2), 40);
+      threatScore += riskScore;
+      
+      if (highRisks > 0) {
+        riskFactors.push(`${highRisks} high-priority national risks`);
+      }
+      if (mediumRisks > 0) {
+        riskFactors.push(`${mediumRisks} medium-priority national risks`);
+      }
+    }
+
+    // Determine threat level based on score
+    let threatLevel: 'high' | 'medium' | 'low';
+    if (threatScore >= 60) {
+      threatLevel = 'high';
+    } else if (threatScore >= 30) {
+      threatLevel = 'medium';
+    } else {
+      threatLevel = 'low';
+    }
+
+    result.set(district.id, {
+      threatScore,
+      threatLevel,
+      riskFactors
+    });
+  });
+
+  return result;
 }

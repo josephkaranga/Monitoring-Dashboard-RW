@@ -1,0 +1,105 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Volcanoes National Park",
+        "type": "National Park",
+        "area": 160,
+        "description": "Home to mountain gorillas and five volcanoes in the Virunga Mountains",
+        "established": 1925
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.35, -1.35],
+          [29.65, -1.35],
+          [29.65, -1.55],
+          [29.35, -1.55],
+          [29.35, -1.35]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Akagera National Park",
+        "type": "National Park",
+        "area": 1122,
+        "description": "Savanna park with diverse wildlife including the Big Five",
+        "established": 1934
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [30.45, -1.55],
+          [30.85, -1.55],
+          [30.85, -2.50],
+          [30.45, -2.50],
+          [30.45, -1.55]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Nyungwe Forest National Park",
+        "type": "National Park",
+        "area": 1019,
+        "description": "Ancient montane rainforest with 13 primate species and over 300 bird species",
+        "established": 2004
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.05, -2.25],
+          [29.45, -2.25],
+          [29.45, -2.65],
+          [29.05, -2.65],
+          [29.05, -2.25]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Gishwati-Mukura National Park",
+        "type": "National Park",
+        "area": 34,
+        "description": "Forest reserve protecting chimpanzees and golden monkeys",
+        "established": 2015
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.45, -1.65],
+          [29.55, -1.65],
+          [29.55, -1.75],
+          [29.45, -1.75],
+          [29.45, -1.65]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rugezi Marsh",
+        "type": "Wetland Reserve",
+        "area": 67,
+        "description": "Important wetland ecosystem and bird habitat",
+        "established": 2006
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [29.75, -1.45],
+          [29.85, -1.45],
+          [29.85, -1.55],
+          [29.75, -1.55],
+          [29.75, -1.45]
+        ]]
+      }
+    }
+  ]
+}
