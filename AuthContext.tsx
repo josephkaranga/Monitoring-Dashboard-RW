@@ -104,19 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserData(session.user.id, session);
-      } else {
-        dispatch({ type: 'CLEAR_SESSION' });
-      }
-    });
-
-    // Auth state change listener
+    // Auth state change listener handles INITIAL_SESSION, SIGNED_IN, SIGNED_OUT, etc.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           await loadUserData(session.user.id, session);
         } else if (event === 'SIGNED_OUT') {
           dispatch({ type: 'CLEAR_SESSION' });
@@ -125,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           dispatch({ type: 'SET_LOADING', loading: false });
         } else if (event === 'USER_UPDATED' && session?.user) {
           await loadUserData(session.user.id, session);
+        } else if (event === 'INITIAL_SESSION' && !session) {
+          dispatch({ type: 'CLEAR_SESSION' });
         }
       }
     );
