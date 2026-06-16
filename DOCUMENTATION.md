@@ -591,7 +591,7 @@ These are documented explicitly so future developers and administrators are not 
 |-----------|--------|
 | **No offline support** | The app requires an internet connection. There is no service worker or offline cache. |
 | **No mobile-optimised forms** | The reporting toolkit forms (T01–T07) are designed for desktop. They are usable on mobile but not optimised. |
-| **District map is SVG-only** | The map on the District Map page is a static SVG. It does not use a real GIS layer. Coordinates are approximate. |
+| **District map uses geoBoundaries API** | The map on the District Map page fetches real GeoJSON boundaries from geoBoundaries.org API. Requires internet access on first load. |
 | **RBIS integration is iframe-only** | The RBIS page embeds `https://rbis.ur.ac.rw` in an iframe. There is no live API data pull from RBIS into the dashboard. |
 | **AI narrative is static** | The AI summary panel on the Dashboard generates text from indicator data using a local template function (`aiNarrative.ts`). It does not call an external AI API. |
 | **No pagination on most tables** | Indicators support pagination (100 per page). Other tables (risks, compliance, audit log) load all records up to a fixed limit. |
