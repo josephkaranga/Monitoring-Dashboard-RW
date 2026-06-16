@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { useGBIFStats } from './useGBIF';
+import { useGBIFStats } from './useData';
 
 // ── Data stream definitions ───────────────────────────────────
 const DATA_STREAMS = [
