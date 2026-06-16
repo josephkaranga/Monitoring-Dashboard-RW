@@ -84,13 +84,10 @@ export default function RBISPage() {
       {/* Connection Bar */}
       <div style={{ marginBottom: 24 }}>
         <ConnectionBar
-          status={connection.status}
-          serverUrl={connection.serverUrl}
+          connection={connection}
+          loading={connectionLoading}
           onConnect={connect}
           onDisconnect={disconnect}
-          lastSync={connection.lastSync || undefined}
-          error={connection.error || undefined}
-          loading={connectionLoading}
         />
       </div>
 
