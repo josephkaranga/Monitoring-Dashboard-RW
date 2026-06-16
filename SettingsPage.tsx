@@ -55,7 +55,8 @@ export default function SettingsPage() {
   const [auditFilter, setAuditFilter] = useState('all');
   const [saving, setSaving] = useState(false);
 
-  const { data: auditEntries } = useAuditLog({ actionType: auditFilter === 'all' ? undefined : auditFilter });
+  const { data: rawAuditEntries } = useAuditLog({ actionType: auditFilter === 'all' ? undefined : auditFilter });
+  const auditEntries = rawAuditEntries ?? [];
 
   useEffect(() => {
     if (!user?.id) return;
@@ -319,7 +320,7 @@ export default function SettingsPage() {
               </div>
 
               <div style={{ maxHeight: 340, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 9, padding: '4px 12px' }}>
-                {!auditEntries?.length ? (
+              {auditEntries.length === 0 ? (
                   <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.82rem' }}>
                     <i className="fa-solid fa-shield-check" style={{ fontSize: '1.5rem', display: 'block', marginBottom: 8, opacity: 0.5 }} />
                     No audit events recorded yet.
