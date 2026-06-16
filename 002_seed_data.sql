@@ -5,7 +5,7 @@
 
 -- ── SEED RISK REGISTER ────────────────────────────────────────
 INSERT INTO public.risks (id, description, category, likelihood, impact, level, mitigation, owner) VALUES
-  ('R01', 'Ministerial data sharing refusal', 'Institutional', 'Medium', 'High', 'High', 'Engage Cabinet-level data sharing MOU; designate REMA as lead coordinator; escalate to Environment Ministry if refusal persists', 'REMA'),
+  ('R01', 'Ministerial data sharing refusal', 'Institutional', 'Medium', 'High', 'High', 'Engage Cabinet-level data sharing MOU; designate REMA as lead coordinator; escalate to Ministry of Environment (MoE) if refusal persists', 'REMA'),
   ('R02', 'RBIS technical integration failure', 'Technical', 'Low', 'High', 'High', 'Maintain parallel offline data collection templates (Excel); run RBIS on staging environment before live; assign dedicated ICT lead', 'ICT Unit'),
   ('R03', 'Sensitive species data exposed publicly', 'Data Governance', 'Medium', 'High', 'High', 'Apply role-based access control; implement species location fuzzing for threatened taxa; define data classification tiers before RBIS integration', 'REMA / RDB'),
   ('R04', 'District capacity gaps in data collection', 'Capacity', 'High', 'Medium', 'Medium', 'Pre-deploy T02 training in lowest-performing districts; embed REMA field officers in 5 priority districts; mobile-friendly forms for offline entry', 'Districts / REMA'),
