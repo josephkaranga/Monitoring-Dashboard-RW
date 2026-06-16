@@ -97,7 +97,6 @@ export default function SettingsPage() {
 
   const handleBackupData = useCallback(async () => {
     try {
-      // Export audit log as CSV backup
       const csv = auditEntries?.length ? await exportAuditLogToCSV(auditEntries) : 'No data';
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
@@ -108,6 +107,8 @@ export default function SettingsPage() {
       toast.error('Backup failed');
     }
   }, [auditEntries]);
+
+  const handleExportAudit = useCallback(async () => {
     if (!auditEntries?.length) return;
     const csv = await exportAuditLogToCSV(auditEntries);
     const a = document.createElement('a');
