@@ -5,14 +5,18 @@ import { useNavigate } from 'react-router-dom';
 export default function PendingRequestsBadge() {
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [seen, setSeen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadCount();
-    // Poll every 30 seconds for updates
     const interval = setInterval(loadCount, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (count > 0) setSeen(false);
+  }, [count]);
 
   const loadCount = async () => {
     const result = await getPendingRequestsCount();
@@ -23,6 +27,7 @@ export default function PendingRequestsBadge() {
   };
 
   const handleClick = () => {
+    setSeen(true);
     navigate('/dashboard/role-requests');
   };
 
@@ -35,7 +40,7 @@ export default function PendingRequestsBadge() {
     );
   }
 
-  if (count === 0) {
+  if (count === 0 || seen) {
     return null;
   }
 
