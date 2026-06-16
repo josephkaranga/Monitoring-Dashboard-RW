@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useIndicators } from './useData';
 import { writeAuditEntry } from './dataService';
+import { TableRowSkeleton } from './Skeleton';
 import type { Indicator, IndicatorTier, IndicatorStatus } from './index';
 
 // ── Goal config ───────────────────────────────────────────────
@@ -331,9 +332,19 @@ export default function IndicatorsPage() {
           </div>
         </div>
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.82rem' }}>
-            <div style={{ width: 20, height: 20, border: '2px solid var(--border)', borderTopColor: 'var(--sky-dim)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
-            Loading indicators…
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  {['#','Indicator Name','Tier','NBSAP Target','Target 2030','Responsible','Progress'].map(h => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', background: 'var(--surface-2)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[1,2,3,4,5,6,7,8].map(i => <TableRowSkeleton key={i} cols={7} />)}
+              </tbody>
+            </table>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-3)' }}>

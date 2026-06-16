@@ -6,12 +6,6 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "devCommand": "npm run dev",
-  "build": {
-    "env": {
-      "VITE_SUPABASE_URL": "https://vivqcyzyvixdammtaidr.supabase.co",
-      "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpdnFjeXp5dml4ZGFtbXRhaWRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MDkyMjgsImV4cCI6MjA5MTQ4NTIyOH0.jutyS2hpx8y_mkv5WzNHONxDFnivINBtY9bGZ7MyhNw"
-    }
-  },
   "headers": [
     {
       "source": "/assets/(.*)",

@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { useDashboardStats, useReports } from './useData';
+import { useDashboardStats, useReports, useIndicators } from './useData';
 import { generateAINarrative } from './aiNarrative';
+import { DashboardSkeleton } from './Skeleton';
 import toast from 'react-hot-toast';
+import type { Indicator } from './index';
 
 // ── Shared card styles ────────────────────────────────────────
 const card: React.CSSProperties = {
@@ -47,8 +49,16 @@ export default function DashboardPage() {
   const { permissions } = useAuth();
   const { stats, loading } = useDashboardStats(false);
   const { reports } = useReports({ status: 'approved', pageSize: 4 });
+  const { data: rawIndicators } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
+  const indicators: Indicator[] = rawIndicators ?? [];
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  // Build live progress rows from DB indicators
+  const getIndicatorProgress = (name: string) => {
+    const ind = indicators.find(i => i.name.toLowerCase().includes(name.toLowerCase()));
+    return ind ? { value: ind.current_value || `${ind.progress}%`, progress: ind.progress } : null;
+  };
 
   const handleGenerate = useCallback(async () => {
     if (!stats) return;
@@ -63,12 +73,7 @@ export default function DashboardPage() {
   }, [stats]);
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-3)', fontSize: '0.82rem', padding: 40 }}>
-        <div style={{ width: 18, height: 18, border: '2px solid var(--border)', borderTopColor: 'var(--sky-dim)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-        Loading dashboard…
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const s = stats;
@@ -209,12 +214,17 @@ export default function DashboardPage() {
             Indicator Progress Trends
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-            <ProgRow label="Forest Cover" value="27%" target="30%" color="linear-gradient(90deg,#059669,#10b981)" />
-            <ProgRow label="Wetland Restoration" value={`${s?.wetlandHa?.toLocaleString() ?? 600} ha`} target="1,200 ha" color="linear-gradient(90deg,#0284c7,#38bdf8)" />
-            <ProgRow label="Species Protection" value="650" target="800" color="linear-gradient(90deg,#7c3aed,#8b5cf6)" />
-            <ProgRow label="Community Participation" value="60%" target="80%" color="linear-gradient(90deg,#d97706,#f59e0b)" />
-            <ProgRow label="Water Quality" value="80%" target="90%" color="linear-gradient(90deg,#0891b2,#06b6d4)" />
-            <ProgRow label="Policy Integration" value="10" target="15 plans" color="linear-gradient(90deg,#db2777,#ec4899)" />
+            {[
+              { label: 'Forest Cover', key: 'forest', target: '30%', color: 'linear-gradient(90deg,#059669,#10b981)' },
+              { label: 'Wetland Restoration', key: 'wetland', target: '1,200 ha', color: 'linear-gradient(90deg,#0284c7,#38bdf8)' },
+              { label: 'Species Protection', key: 'species', target: '800', color: 'linear-gradient(90deg,#7c3aed,#8b5cf6)' },
+              { label: 'Community Participation', key: 'community', target: '80%', color: 'linear-gradient(90deg,#d97706,#f59e0b)' },
+              { label: 'Water Quality', key: 'water', target: '90%', color: 'linear-gradient(90deg,#0891b2,#06b6d4)' },
+              { label: 'Policy Integration', key: 'policy', target: '15 plans', color: 'linear-gradient(90deg,#db2777,#ec4899)' },
+            ].map(({ label, key, target, color }) => {
+              const live = getIndicatorProgress(key === 'forest' ? 'Forest Cover' : key === 'wetland' ? 'Wetland' : key === 'species' ? 'Species' : key === 'community' ? 'Community' : key === 'water' ? 'Water' : 'Policy');
+              return <ProgRow key={label} label={label} value={live?.value ?? '—'} target={target} color={color} />;
+            })}
           </div>
         </div>
 

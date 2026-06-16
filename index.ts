@@ -148,6 +148,10 @@ export interface NBSAPTarget {
   baseline: string;
   progress: number;
   goal_color: { bg: string; text: string };
+  headline_indicator?: string;
+  component_indicators?: string[];
+  complementary_indicators?: string[];
+  strategic_actions?: string[];
   indicators?: Indicator[];
   created_at: string;
   updated_at: string;

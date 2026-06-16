@@ -20,11 +20,18 @@ export async function fetchIndicators(filters?: {
   targetId?: number;
   status?: string;
   search?: string;
+  page?: number;
+  pageSize?: number;
 }): Promise<Indicator[]> {
+  const page = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? 100; // default 100 per page
+  const from = (page - 1) * pageSize;
+
   let query = supabase
     .from('indicators')
     .select('*')
-    .order('id', { ascending: true });
+    .order('id', { ascending: true })
+    .range(from, from + pageSize - 1);
 
   if (filters?.tier && filters.tier !== 'all') {
     query = query.eq('tier', filters.tier);

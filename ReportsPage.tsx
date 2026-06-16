@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useDashboardStats, useReports } from './useData';
 import { exportReportsToCSV } from './reportService';
+import { jsPDF } from 'jspdf';
 import toast from 'react-hot-toast';
 
 const card: React.CSSProperties = {
@@ -14,7 +15,6 @@ export function ReportsPage() {
 
   const handlePDF = useCallback(() => {
     try {
-      const { jsPDF } = (window as any).jspdf;
       const doc = new jsPDF();
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
@@ -34,7 +34,8 @@ export function ReportsPage() {
       doc.text(`Active Districts: ${stats?.activeDistricts ?? '—'}`, 15, y); y += 6;
       doc.save(`nbsap_report_${new Date().toISOString().slice(0,10)}.pdf`);
       toast.success('PDF downloaded');
-    } catch {
+    } catch (err) {
+      console.error('PDF error:', err);
       const csv = exportReportsToCSV(reports);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));

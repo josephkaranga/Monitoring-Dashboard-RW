@@ -149,6 +149,8 @@ export function useIndicators(filters?: {
   targetId?: number;
   status?: string;
   search?: string;
+  page?: number;
+  pageSize?: number;
 }) {
   return useAsync(() => fetchIndicators(filters), [JSON.stringify(filters)]);
 }
@@ -169,10 +171,15 @@ export function useRisks(filters?: { level?: string; category?: string; search?:
 
 export function useAuditLog(filters?: { actionType?: string; limit?: number }) {
   const { permissions } = useAuth();
+  const result = useAsync(
+    () => fetchAuditLog(filters),
+    [JSON.stringify(filters)]
+  );
+  // Return empty if no permission — but always call the hook
   if (!permissions?.canViewAuditLog) {
     return { data: [] as AuditEntry[], loading: false, error: null, refetch: () => {} };
   }
-  return useAsync(() => fetchAuditLog(filters), [JSON.stringify(filters)]);
+  return result;
 }
 
 // ── Notifications ────────────────────────────────────────────
