@@ -1,5 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRisks } from './useData';
+import { fetchSystemMetrics, type SystemMetrics } from './systemMetricsService';
+import toast from 'react-hot-toast';
 import type { Risk } from './index';
 
 const LEVEL_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
@@ -23,6 +25,26 @@ export function RiskPage() {
   const [levelFilter, setLevelFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Load automated system metrics for HWC incidents tracking
+  useEffect(() => {
+    const loadSystemMetrics = async () => {
+      setMetricsLoading(true);
+      try {
+        const metrics = await fetchSystemMetrics();
+        setSystemMetrics(metrics);
+        console.log('📊 Risk page - automated metrics loaded:', metrics);
+      } catch (error) {
+        console.error('Failed to load system metrics:', error);
+        toast.error('Failed to load automated risk metrics');
+      }
+      setMetricsLoading(false);
+    };
+
+    loadSystemMetrics();
+  }, []);
 
   const { data: rawRisks, loading } = useRisks({
     level: levelFilter !== 'all' ? levelFilter : undefined,
@@ -46,6 +68,20 @@ export function RiskPage() {
 
   return (
     <div>
+      {/* Automated Risk Monitoring Status */}
+      {systemMetrics && systemMetrics.totalHwcIncidents > 0 && (
+        <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <i className="fa-solid fa-shield-exclamation" style={{ color: '#f59e0b' }} />
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-1)' }}>
+            HWC Incidents Monitoring: {systemMetrics.totalHwcIncidents} incidents tracked automatically
+          </span>
+          <span style={{ fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#ffedd5', color: '#9a3412' }}>● Auto-tracked</span>
+          <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+            From T03 & T04 reports
+          </div>
+        </div>
+      )}
+
       {/* Filter bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ position: 'relative', maxWidth: 280 }}>
@@ -73,12 +109,19 @@ export function RiskPage() {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 20 }}>
         {[
           { label: 'High Risks',   val: high,         gradient: 'linear-gradient(135deg,#be123c,#f43f5e)', icon: 'fa-circle-exclamation', sub: 'Requires immediate action' },
           { label: 'Medium Risks', val: med,          gradient: 'linear-gradient(135deg,#d97706,#f59e0b)', icon: 'fa-triangle-exclamation', sub: 'Mitigation plans active' },
           { label: 'Low Risks',    val: low,          gradient: 'linear-gradient(135deg,#0284c7,#38bdf8)', icon: 'fa-circle-info', sub: 'Monitored quarterly' },
           { label: 'Total Tracked',val: risks.length, gradient: 'linear-gradient(135deg,#059669,#10b981)', icon: 'fa-shield-check', sub: 'Across 7 categories' },
+          ...(systemMetrics && systemMetrics.totalHwcIncidents > 0 ? [{
+            label: 'HWC Incidents', 
+            val: systemMetrics.totalHwcIncidents, 
+            gradient: 'linear-gradient(135deg,#9333ea,#a855f7)', 
+            icon: 'fa-paw', 
+            sub: 'Auto-tracked from T03/T04'
+          }] : []),
         ].map(c => (
           <div key={c.label} style={{ background: c.gradient, borderRadius: 'var(--radius)', padding: 20, color: '#fff', position: 'relative', overflow: 'hidden' }}>
             <div style={{ fontSize: '0.72rem', opacity: 0.8, marginBottom: 4 }}>{c.label}</div>

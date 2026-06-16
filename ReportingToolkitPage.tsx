@@ -1,22 +1,185 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useReports } from './useData';
 import { submitReport, exportReportsToCSV, exportReportsToJSON, deleteReport, importReportsFromJSON } from './reportService';
-import { writeAuditEntry } from './dataService';
+import { writeAuditEntry, fetchUserResponsibleTargets, fetchIndicators } from './dataService';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
-import type { ReportType, ReportAttachment } from './index';
+import type { ReportType, ReportAttachment, NBSAPTarget, Indicator } from './index';
 import { validateYear } from './src/utils/validation';
+
+
+// ── STAKEHOLDER RESPONSIBILITIES MAPPING ─────────────────────────
+// COMPLETE MAPPING - includes ALL stakeholders from indicators database (31 stakeholders)
+const STAKEHOLDER_RESPONSIBILITIES = {
+  'REMA': {
+    name: 'Rwanda Environment Management Authority',
+    responsibilities: ['Environmental policy enforcement', 'Environmental impact assessments', 'Biodiversity monitoring', 'Waste management oversight'],
+    targets: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+  },
+  'Ministry of Environment': {
+    name: 'Ministry of Environment',
+    responsibilities: ['Environmental policy development', 'Climate change coordination', 'Environmental education'],
+    targets: [1, 8, 14]
+  },
+  'MINAGRI': {
+    name: 'Ministry of Agriculture and Animal Resources',
+    responsibilities: ['Agricultural biodiversity', 'Sustainable farming practices', 'Animal genetic resources'],
+    targets: [1, 5, 6, 7, 8, 9, 10, 11, 18]
+  },
+  'RFA': {
+    name: 'Rwanda Forestry Authority',
+    responsibilities: ['Forest conservation', 'Reforestation programs', 'Forest biodiversity management'],
+    targets: [2, 5, 6, 8, 10, 11, 12]
+  },
+  'RDB': {
+    name: 'Rwanda Development Board',
+    responsibilities: ['Tourism and conservation', 'Protected area management', 'Wildlife conservation'],
+    targets: [1, 3, 4, 6, 9]
+  },
+  'District Authorities': {
+    name: 'District Authorities',
+    responsibilities: ['Local biodiversity monitoring', 'Community engagement', 'Local environmental enforcement'],
+    targets: [2, 3, 8, 9, 10, 14, 22]
+  },
+  'MININFRA': {
+    name: 'Ministry of Infrastructure',
+    responsibilities: ['Infrastructure environmental compliance', 'Sustainable urban development'],
+    targets: [1, 12]
+  },
+  'RAB': {
+    name: 'Rwanda Agriculture and Animal Resources Development Board',
+    responsibilities: ['Agricultural research', 'Crop and livestock improvement', 'Sustainable agriculture'],
+    targets: [5, 9, 10]
+  },
+  'WASAC': {
+    name: 'Water and Sanitation Corporation',
+    responsibilities: ['Water resource management', 'Aquatic ecosystem protection'],
+    targets: [7, 11]
+  },
+  'Private Sector': {
+    name: 'Private Sector Companies',
+    responsibilities: ['Environmental compliance', 'Corporate sustainability', 'Green business practices'],
+    targets: [15, 19]
+  },
+  'NGOs': {
+    name: 'Non-Governmental Organizations',
+    responsibilities: ['Community mobilization', 'Environmental advocacy', 'Capacity building'],
+    targets: [14, 20]
+  },
+  'Conservation NGOs': {
+    name: 'Conservation Organizations',
+    responsibilities: ['Species conservation', 'Habitat protection', 'Conservation education'],
+    targets: [4]
+  },
+  'Research Institutions': {
+    name: 'Universities and Research Centers',
+    responsibilities: ['Biodiversity research', 'Scientific monitoring', 'Evidence generation'],
+    targets: [6, 9, 13, 17, 20, 21]
+  },
+  'MINECOFIN': {
+    name: 'Ministry of Finance and Economic Planning',
+    responsibilities: ['Biodiversity financing', 'Budget allocation', 'Economic instruments'],
+    targets: [18, 19]
+  },
+  'NISR': {
+    name: 'National Institute of Statistics Rwanda',
+    responsibilities: ['Biodiversity data collection', 'Statistical analysis', 'Indicator development'],
+    targets: [16, 21]
+  },
+  'Universities': {
+    name: 'Academic Institutions',
+    responsibilities: ['Research and education', 'Student engagement', 'Scientific publications'],
+    targets: [20]
+  },
+  // NEW STAKEHOLDERS FROM DATABASE (previously missing)
+  'All Sector Ministries': {
+    name: 'All Sector Ministries',
+    responsibilities: ['Cross-sectoral coordination', 'Policy integration', 'Mainstreaming biodiversity'],
+    targets: [14, 18]
+  },
+  'City of Kigali': {
+    name: 'City of Kigali Authority',
+    responsibilities: ['Urban biodiversity planning', 'City-level environmental management', 'Urban green spaces'],
+    targets: [7, 12, 16]
+  },
+  'FDA': {
+    name: 'Food and Drugs Authority',
+    responsibilities: ['Food safety and biodiversity', 'Biosafety regulation'],
+    targets: [17]
+  },
+  'FONERWA': {
+    name: 'Rwanda Green Fund',
+    responsibilities: ['Environmental financing', 'Green fund management', 'Climate finance'],
+    targets: [19]
+  },
+  'Meteo Rwanda': {
+    name: 'Rwanda Meteorology Agency',
+    responsibilities: ['Climate monitoring', 'Weather data for biodiversity', 'Climate change tracking'],
+    targets: [11]
+  },
+  'MIGEPROF': {
+    name: 'Ministry of Gender and Family Promotion',
+    responsibilities: ['Gender mainstreaming in biodiversity', 'Women\'s participation in conservation'],
+    targets: [22]
+  },
+  'MINEMA': {
+    name: 'Ministry of Emergency Management',
+    responsibilities: ['Disaster risk management', 'Environmental emergency response'],
+    targets: [8]
+  },
+  'MINICOM': {
+    name: 'Ministry of Trade and Industry',
+    responsibilities: ['Industrial environmental compliance', 'Trade and biodiversity'],
+    targets: [7, 16]
+  },
+  'Ministry of Education': {
+    name: 'Ministry of Education',
+    responsibilities: ['Environmental education', 'Biodiversity curriculum', 'Student engagement'],
+    targets: [20, 21]
+  },
+  'Ministry of Finance': {
+    name: 'Ministry of Finance',
+    responsibilities: ['Financial disclosure standards', 'Biodiversity economic instruments'],
+    targets: [15]
+  },
+  'Ministry of Health': {
+    name: 'Ministry of Health',
+    responsibilities: ['Health and biodiversity linkages', 'Biosafety health aspects'],
+    targets: [11, 17]
+  },
+  'Ministry of Justice': {
+    name: 'Ministry of Justice',
+    responsibilities: ['Legal framework for biodiversity', 'Access and benefit sharing law'],
+    targets: [13]
+  },
+  'Private Sector Federation': {
+    name: 'Private Sector Federation of Rwanda',
+    responsibilities: ['Business biodiversity standards', 'Private sector coordination'],
+    targets: [15]
+  },
+  'RBS': {
+    name: 'Rwanda Bureau of Standards',
+    responsibilities: ['Environmental standards', 'Biosafety standards'],
+    targets: [17]
+  },
+  'Sector Ministries': {
+    name: 'Line Ministries',
+    responsibilities: ['Sector-specific biodiversity integration', 'Implementation coordination'],
+    targets: [20, 21]
+  }
+};
 
 // ── Tool Definitions ─────────────────────────────────────────
 const TOOLKIT_TOOLS = [
   { id: 'T01', name: 'National Institutional Reporting', icon: '🏛️', color: '#1B6CA8', accent: '#4CA3DD', frequency: 'Quarterly', output: 'Institutional Compliance Scorecard',
     fields: [
-      { key: 'institution', label: 'Reporting Institution', type: 'select', options: ['Ministry of Environment (MoE)','Ministry of Agriculture and Animal Resources (MINAGRI),','Infrastructure Ministry','Rwanda Forestry Authority (RFA)','Wildlife Authority','National Institute of Statistics Rwanda (NISR)','Rwanda Water Resources Board (RWB),'], required: true },
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
+      { key: 'institution', label: 'Reporting Institution', type: 'select', options: ['Ministry of Environment (MoE)','Ministry of Agriculture and Animal Resources (MINAGRI)','Infrastructure Ministry','Rwanda Forestry Authority (RFA)','Wildlife Authority','National Institute of Statistics Rwanda (NISR)','Rwanda Water Resources Board (RWB)'], required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
-      { key: 'nbsap_target', label: 'NBSAP Target Number', type: 'text', placeholder: 'e.g. TARGET-03', required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'current_status', label: 'Current Status / Value', type: 'number', placeholder: '0', required: true },
-      { key: 'milestone', label: 'Target Milestone', type: 'number', placeholder: '0', required: true },
       { key: 'budget_utilized', label: 'Budget Utilized (RWF)', type: 'number', placeholder: '0', required: false },
       { key: 'activities', label: 'Implementation Activities', type: 'textarea', placeholder: 'Describe completed activities...', required: false },
       { key: 'challenges', label: 'Challenges Encountered', type: 'textarea', placeholder: 'Describe constraints...', required: false },
@@ -24,9 +187,12 @@ const TOOLKIT_TOOLS = [
   },
   { id: 'T02', name: 'District Biodiversity Monitoring', icon: '🌿', color: '#1E7D4B', accent: '#4CBB7F', frequency: 'Quarterly', output: 'District Biodiversity Performance Index',
     fields: [
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
       { key: 'district', label: 'District Name', type: 'text', placeholder: 'e.g. Nyarugenge', required: true },
       { key: 'officer', label: 'Reporting Officer', type: 'text', placeholder: 'Officer name', required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'forest_ha', label: 'Forest Restoration (ha)', type: 'number', placeholder: '0', required: true },
       { key: 'wetland_ha', label: 'Wetland Rehabilitation (ha)', type: 'number', placeholder: '0', required: true },
       { key: 'agroforestry_hh', label: 'Agroforestry Households', type: 'number', placeholder: '0', required: false },
@@ -38,9 +204,12 @@ const TOOLKIT_TOOLS = [
   },
   { id: 'T03', name: 'Protected Area Monitoring', icon: '🛡️', color: '#5B3FA6', accent: '#9C78E0', frequency: 'Biannual', output: 'Ecosystem Integrity Report',
     fields: [
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
       { key: 'area_name', label: 'Protected Area Name', type: 'text', placeholder: 'e.g. Nyungwe National Park', required: true },
       { key: 'agency', label: 'Managing Agency', type: 'text', placeholder: 'Agency name', required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['H1 2024','H2 2024','H1 2025','H2 2025','H1 2026','H2 2026','H1 2027','H2 2027','H1 2028','H2 2028','H1 2029','H2 2029','H1 2030','H2 2030'], required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'coverage_change_ha', label: 'Coverage Change (ha)', type: 'number', placeholder: '0', required: true },
       { key: 'species_trend', label: 'Species Population Trend', type: 'select', options: ['Increasing','Stable','Declining','Unknown'], required: true },
       { key: 'habitat_quality', label: 'Habitat Quality (1–10)', type: 'number', placeholder: '1', required: true },
@@ -51,10 +220,13 @@ const TOOLKIT_TOOLS = [
   },
   { id: 'T04', name: 'Community Biodiversity Monitoring', icon: '👥', color: '#B56A00', accent: '#F0A030', frequency: 'Quarterly', output: 'Community Observation Dataset',
     fields: [
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
       { key: 'community', label: 'Community / Village', type: 'text', placeholder: 'Community name', required: true },
       { key: 'reporter', label: 'Reporter / Group Name', type: 'text', placeholder: 'Name or group', required: true },
       { key: 'reporter_type', label: 'Reporter Type', type: 'select', options: ['Community Conservation Committee','Youth Environmental Club','Women\'s Cooperative','Local Knowledge Holder','Other'], required: true },
       { key: 'period', label: 'Reporting Period', type: 'select', options: ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026','Q4 2026','Q1 2027','Q2 2027','Q3 2027','Q4 2027','Q1 2028','Q2 2028','Q3 2028','Q4 2028','Q1 2029','Q2 2029','Q3 2029','Q4 2029','Q1 2030','Q2 2030','Q3 2030','Q4 2030'], required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'hwc_incidents', label: 'Human-Wildlife Conflict Incidents', type: 'number', placeholder: '0', required: true },
       { key: 'tree_planting_hh', label: 'Tree Planting Households', type: 'number', placeholder: '0', required: false },
       { key: 'water_source_status', label: 'Water Source Condition', type: 'select', options: ['Good','Fair','Degraded','Dry / Absent'], required: false },
@@ -63,9 +235,12 @@ const TOOLKIT_TOOLS = [
   },
   { id: 'T05', name: 'Biodiversity Finance Tracking', icon: '💰', color: '#0E6655', accent: '#1ABC9C', frequency: 'Annual', output: 'Finance Gap Analysis',
     fields: [
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
       { key: 'institution', label: 'Institution Name', type: 'text', placeholder: 'Institution or partner', required: true },
       { key: 'institution_type', label: 'Institution Type', type: 'select', options: ['Ministry of Finance','Ministry of Environment (MoE)','Development Partner','NGO','Private Sector','Other'], required: true },
       { key: 'year', label: 'Fiscal Year', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'budget_allocated', label: 'Budget Allocated (RWF)', type: 'number', placeholder: '0', required: true },
       { key: 'budget_disbursed', label: 'Budget Disbursed (RWF)', type: 'number', placeholder: '0', required: true },
       { key: 'implementation_pct', label: 'Implementation Status (%)', type: 'number', placeholder: '0', required: true },
@@ -74,9 +249,12 @@ const TOOLKIT_TOOLS = [
   },
   { id: 'T06', name: 'Private Sector Compliance', icon: '🏗️', color: '#922B21', accent: '#E74C3C', frequency: 'Annual', output: 'Private-Sector Compliance Index',
     fields: [
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
       { key: 'company', label: 'Company Name', type: 'text', placeholder: 'Company name', required: true },
       { key: 'sector', label: 'Sector', type: 'select', options: ['Infrastructure','Agribusiness','Mining','Tourism','Finance / Investment','Other'], required: true },
       { key: 'year', label: 'Reporting Year', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'eia_compliance', label: 'EIA Compliance', type: 'select', options: ['Full compliance','Partial compliance','Non-compliant','Not applicable'], required: true },
       { key: 'restoration_ha', label: 'Restoration Commitments (ha)', type: 'number', placeholder: '0', required: false },
       { key: 'esg_score', label: 'ESG Biodiversity Score (1–100)', type: 'number', placeholder: '0', required: false },
@@ -85,9 +263,12 @@ const TOOLKIT_TOOLS = [
   },
   { id: 'T07', name: 'Research & Academic Contribution', icon: '🔬', color: '#1A5276', accent: '#2E86C1', frequency: 'Annual', output: 'Biodiversity Evidence Repository',
     fields: [
+      { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
       { key: 'institution', label: 'Research Institution', type: 'text', placeholder: 'University or institute', required: true },
       { key: 'study_title', label: 'Study Title', type: 'text', placeholder: 'Full title', required: true },
       { key: 'year', label: 'Year Completed', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
+      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
+      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'ecosystem_assessed', label: 'Ecosystem Assessed', type: 'select', options: ['Forest','Wetland','Savanna','Aquatic','Agricultural','Urban','Multiple'], required: true },
       { key: 'key_findings', label: 'Key Findings Summary', type: 'textarea', placeholder: 'Summarize main findings...', required: true },
       { key: 'policy_relevance', label: 'Policy Relevance & NBSAP Linkage', type: 'textarea', placeholder: 'How does this support NBSAP?', required: false },
@@ -97,12 +278,183 @@ const TOOLKIT_TOOLS = [
 
 // ── Report Form ───────────────────────────────────────────────
 const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]; onBack: () => void; onSuccess: () => void }) => {
-  const { settings } = useAuth();
+  const { settings, user } = useAuth();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [attachments, setAttachments] = useState<ReportAttachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [responsibleTargets, setResponsibleTargets] = useState<NBSAPTarget[]>([]);
+  const [availableIndicators, setAvailableIndicators] = useState<Indicator[]>([]);
+  const [loadingTargets, setLoadingTargets] = useState(false);
+  const [loadingIndicators, setLoadingIndicators] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get available stakeholders for the selected stakeholder
+  const availableStakeholders = useMemo(() => {
+    const stakeholders = Object.entries(STAKEHOLDER_RESPONSIBILITIES).map(([key, info]) => ({
+      id: key,
+      ...info
+    }));
+    console.log('🔍 Available stakeholders for selection:', stakeholders.map(s => ({ id: s.id, name: s.name, targetCount: s.targets.length })));
+    return stakeholders;
+  }, []);
+
+  // Get filtered targets based on selected stakeholder
+  const filteredTargets = useMemo(() => {
+    console.log('🎯 Filtering targets - stakeholder:', formData.stakeholder, 'responsibleTargets count:', responsibleTargets.length);
+    
+    if (!formData.stakeholder) {
+      console.log('📍 No stakeholder selected, returning all responsible targets:', responsibleTargets.length);
+      return responsibleTargets;
+    }
+    
+    const stakeholderInfo = STAKEHOLDER_RESPONSIBILITIES[formData.stakeholder as keyof typeof STAKEHOLDER_RESPONSIBILITIES];
+    if (!stakeholderInfo) {
+      console.log('❌ No stakeholder info found for:', formData.stakeholder);
+      console.log('🔍 Available stakeholders:', Object.keys(STAKEHOLDER_RESPONSIBILITIES));
+      return responsibleTargets;
+    }
+    
+    const filtered = responsibleTargets.filter(target => 
+      stakeholderInfo.targets.includes(target.id)
+    );
+    
+    console.log('📊 FILTERING RESULTS:');
+    console.log('  - Selected stakeholder:', formData.stakeholder, '(' + stakeholderInfo.name + ')');
+    console.log('  - Stakeholder should have targets:', stakeholderInfo.targets);
+    console.log('  - Available responsible targets from database:', responsibleTargets.map(t => ({ 
+      id: t.id, 
+      title: t.title, 
+      stakeholders: t.responsible_stakeholders || [] 
+    })));
+    console.log('  - Targets that match stakeholder:', filtered.map(t => ({ id: t.id, title: t.title })));
+    
+    if (filtered.length === 0) {
+      console.log('⚠️  WARNING: No targets found for stakeholder "' + formData.stakeholder + '"');
+      console.log('🔧 This might mean:');
+      console.log('   1. Database targets dont include this stakeholder in responsible_stakeholders');
+      console.log('   2. The stakeholder name doesnt match exactly');
+      console.log('   3. The target mapping needs updating');
+    }
+    
+    return filtered;
+  }, [responsibleTargets, formData.stakeholder]);
+
+  // Load NBSAP targets based on user's organization
+  useEffect(() => {
+    const loadTargets = async () => {
+      setLoadingTargets(true);
+      try {
+        const userOrg = user?.organization || '';
+        console.log('🏢 Loading targets for user organization:', userOrg);
+        const targets = await fetchUserResponsibleTargets(userOrg);
+        console.log('✅ Loaded targets:', targets.length, 'targets total');
+        console.log('📋 Target details:', targets.map(t => ({ 
+          id: t.id, 
+          title: t.title, 
+          stakeholders: t.responsible_stakeholders || [] 
+        })));
+        console.log('🔍 User org for database query:', userOrg);
+        setResponsibleTargets(targets);
+      } catch (error) {
+        console.error('❌ Error loading NBSAP targets:', error);
+        toast.error('Failed to load NBSAP targets');
+      }
+      setLoadingTargets(false);
+    };
+
+    loadTargets();
+  }, [user?.organization]);
+
+  // Load indicators when target is selected
+  useEffect(() => {
+    const loadIndicators = async () => {
+      if (!formData.nbsap_target) {
+        console.log('📊 No NBSAP target selected, clearing indicators');
+        setAvailableIndicators([]);
+        return;
+      }
+
+      const targetId = parseInt(formData.nbsap_target, 10);
+      console.log('🎯 Loading indicators for target ID:', targetId);
+      
+      setLoadingIndicators(true);
+      try {
+        // Use the existing fetchIndicators function from dataService
+        const allIndicators = await fetchIndicators({
+          targetId: targetId
+        });
+        
+        console.log('📊 Raw indicators loaded for target', targetId, ':', allIndicators.length);
+        
+        let filteredIndicators = allIndicators;
+        
+        // Filter indicators by stakeholder if one is selected
+        if (formData.stakeholder) {
+          // Try both exact match and partial match for stakeholder names
+          filteredIndicators = allIndicators.filter(indicator => {
+            if (!indicator.responsible) return false;
+            
+            // Check exact match first
+            if (indicator.responsible.includes(formData.stakeholder)) {
+              return true;
+            }
+            
+            // Also check for alternative stakeholder names
+            const stakeholderAliases: Record<string, string[]> = {
+              'Districts': ['District Authorities'],
+              'District Authorities': ['Districts'],
+              'NGOs': ['Conservation NGOs'],
+              'Conservation NGOs': ['NGOs'],
+              'Research Institutions': ['Universities'],
+              'Universities': ['Research Institutions']
+            };
+            
+            const aliases = stakeholderAliases[formData.stakeholder] || [];
+            return aliases.some(alias => indicator.responsible?.includes(alias));
+          });
+          
+          console.log('🔍 Filtered indicators by stakeholder "' + formData.stakeholder + '":', filteredIndicators.length, 'of', allIndicators.length);
+          console.log('📋 Available indicators:', filteredIndicators.map(i => ({ 
+            id: i.id, 
+            name: i.name, 
+            responsible: i.responsible 
+          })));
+        } else {
+          console.log('📊 No stakeholder filter - showing all', allIndicators.length, 'indicators for target');
+        }
+        
+        setAvailableIndicators(filteredIndicators);
+      } catch (error) {
+        console.error('❌ Error loading indicators:', error);
+        toast.error('Failed to load indicators');
+      }
+      setLoadingIndicators(false);
+    };
+
+    loadIndicators();
+  }, [formData.nbsap_target, formData.stakeholder]); // Also depend on stakeholder selection
+
+  // Reset dependent fields when stakeholder changes
+  useEffect(() => {
+    if (formData.stakeholder) {
+      setFormData(prev => ({ 
+        ...prev, 
+        nbsap_target: '', 
+        indicator: '' 
+      }));
+    }
+  }, [formData.stakeholder]);
+
+  // Reset indicator when target changes
+  useEffect(() => {
+    if (formData.nbsap_target) {
+      setFormData(prev => ({ 
+        ...prev, 
+        indicator: '' 
+      }));
+    }
+  }, [formData.nbsap_target]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,16 +477,67 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
 
     setSubmitting(true);
     const requireVerification = settings?.require_verification ?? true;
-    const result = await submitReport(tool.id as ReportType, tool.name, formData, requireVerification, attachments);
+    
+    // Include NBSAP target ID, stakeholder, and indicator in the submission
+    const nbsapTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
+    const indicatorId = formData.indicator ? parseInt(formData.indicator, 10) : null;
+    const stakeholderId = formData.stakeholder || null;
+
+    // Enhanced form data with pipeline information
+    const enhancedFormData = {
+      ...formData,
+      stakeholder_info: stakeholderId ? STAKEHOLDER_RESPONSIBILITIES[stakeholderId as keyof typeof STAKEHOLDER_RESPONSIBILITIES] : null,
+      target_info: nbsapTargetId ? filteredTargets.find(t => t.id === nbsapTargetId) : null,
+      indicator_info: indicatorId ? availableIndicators.find(i => i.id === indicatorId) : null,
+      submission_timestamp: new Date().toISOString(),
+      submitted_by: user?.id,
+      submitted_by_organization: user?.organization
+    };
+    
+    // Debug logging for data pipeline
+    console.log('Report submission pipeline data:', {
+      tool: tool.id,
+      stakeholderId,
+      nbsapTargetId,
+      indicatorId,
+      hasStakeholderInfo: !!enhancedFormData.stakeholder_info,
+      hasTargetInfo: !!enhancedFormData.target_info,
+      hasIndicatorInfo: !!enhancedFormData.indicator_info
+    });
+    
+    const result = await submitReport(
+      tool.id as ReportType, 
+      tool.name, 
+      enhancedFormData, 
+      requireVerification, 
+      attachments,
+      nbsapTargetId
+    );
+    
     if (result.error) {
       toast.error(result.error);
     } else {
-      await writeAuditEntry('submit', `${tool.name} submitted`, `Tool: ${tool.id} · Status: ${result.data?.status}`);
-      toast.success(requireVerification ? 'Submission queued for verification ⏳' : 'Report submitted successfully ✓');
+      const selectedTarget = filteredTargets.find(t => t.id === nbsapTargetId);
+      const selectedIndicator = availableIndicators.find(i => i.id === indicatorId);
+      const selectedStakeholder = stakeholderId ? STAKEHOLDER_RESPONSIBILITIES[stakeholderId as keyof typeof STAKEHOLDER_RESPONSIBILITIES] : null;
+      
+      const targetInfo = selectedTarget ? ` → Target ${selectedTarget.id}: ${selectedTarget.title}` : '';
+      const indicatorInfo = selectedIndicator ? ` → Indicator: ${selectedIndicator.name}` : '';
+      const stakeholderInfo = selectedStakeholder ? ` → Stakeholder: ${selectedStakeholder.name}` : '';
+      
+      await writeAuditEntry('submit', `${tool.name} submitted${stakeholderInfo}${targetInfo}${indicatorInfo}`, 
+        `Tool: ${tool.id} · Status: ${result.data?.status} · Stakeholder: ${stakeholderId || 'None'} · NBSAP Target: ${nbsapTargetId || 'None'} · Indicator: ${indicatorId || 'None'}`);
+      
+      // Enhanced success message
+      const successMsg = requireVerification ? 
+        'Submission queued for verification ⏳' + (selectedTarget ? ` Data will update Target ${selectedTarget.id} upon approval.` : '') :
+        'Report submitted successfully ✓' + (selectedTarget ? ` Target ${selectedTarget.id} updated.` : '') + (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
+        
+      toast.success(successMsg);
       onSuccess();
     }
     setSubmitting(false);
-  }, [formData, tool, settings, attachments, onSuccess]);
+  }, [formData, tool, settings, attachments, onSuccess, responsibleTargets]);
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -182,6 +585,58 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
                     rows={3}
                     style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`, borderRadius: 8, fontSize: '0.83rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', resize: 'vertical', boxShadow: errors[f.key] ? '0 0 0 3px rgba(244,63,94,0.1)' : 'none' }}
                   />
+                ) : f.type === 'stakeholder_select' ? (
+                  <select
+                    value={formData[f.key] || ''}
+                    onChange={e => { 
+                      setFormData(d => ({ ...d, [f.key]: e.target.value })); 
+                      setErrors(err => ({ ...err, [f.key]: false })); 
+                    }}
+                    style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`, borderRadius: 8, fontSize: '0.83rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', background: '#fff', color: '#0f172a' }}
+                  >
+                    <option value="">— Select Stakeholder —</option>
+                    {availableStakeholders.map(stakeholder => (
+                      <option key={stakeholder.id} value={stakeholder.id}>
+                        {stakeholder.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : f.type === 'target_select' ? (
+                  <select
+                    value={formData[f.key] || ''}
+                    onChange={e => { setFormData(d => ({ ...d, [f.key]: e.target.value })); setErrors(err => ({ ...err, [f.key]: false })); }}
+                    disabled={loadingTargets || !formData.stakeholder}
+                    style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`, borderRadius: 8, fontSize: '0.83rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', background: '#fff', color: '#0f172a' }}
+                  >
+                    <option value="">
+                      {!formData.stakeholder ? 'Select stakeholder first' : 
+                       loadingTargets ? 'Loading targets...' : 
+                       '— Select NBSAP Target —'}
+                    </option>
+                    {filteredTargets.map(target => (
+                      <option key={target.id} value={target.id}>
+                        Target {target.id}: {target.title} ({target.progress}% complete)
+                      </option>
+                    ))}
+                  </select>
+                ) : f.type === 'indicator_select' ? (
+                  <select
+                    value={formData[f.key] || ''}
+                    onChange={e => { setFormData(d => ({ ...d, [f.key]: e.target.value })); setErrors(err => ({ ...err, [f.key]: false })); }}
+                    disabled={loadingIndicators || !formData.nbsap_target}
+                    style={{ width: '100%', padding: '9px 12px', border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`, borderRadius: 8, fontSize: '0.83rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', background: '#fff', color: '#0f172a' }}
+                  >
+                    <option value="">
+                      {!formData.nbsap_target ? 'Select target first' :
+                       loadingIndicators ? 'Loading indicators...' :
+                       '— Select Indicator —'}
+                    </option>
+                    {availableIndicators.map(indicator => (
+                      <option key={indicator.id} value={indicator.id}>
+                        {indicator.name} ({indicator.status})
+                      </option>
+                    ))}
+                  </select>
                 ) : f.type === 'select' ? (
                   <select
                     value={formData[f.key] || ''}
@@ -204,6 +659,109 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
               </div>
             ))}
           </div>
+
+          {/* Selected Stakeholder Information */}
+          {formData.stakeholder && (
+            <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>👥</span>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Selected Stakeholder</div>
+              </div>
+              {(() => {
+                const stakeholderInfo = STAKEHOLDER_RESPONSIBILITIES[formData.stakeholder as keyof typeof STAKEHOLDER_RESPONSIBILITIES];
+                if (!stakeholderInfo) return null;
+                
+                return (
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a', marginBottom: 4 }}>
+                      {stakeholderInfo.name}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 8 }}>
+                      <strong>Key Responsibilities:</strong>
+                    </div>
+                    <ul style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, paddingLeft: 20 }}>
+                      {stakeholderInfo.responsibilities.map((responsibility, idx) => (
+                        <li key={idx}>{responsibility}</li>
+                      ))}
+                    </ul>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 8 }}>
+                      Responsible for {stakeholderInfo.targets.length} NBSAP targets
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Selected NBSAP Target Information */}
+          {formData.nbsap_target && (
+            <div style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>🎯</span>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0ea5e9' }}>Selected NBSAP Target</div>
+              </div>
+              {(() => {
+                const selectedTarget = filteredTargets.find(t => t.id === parseInt(formData.nbsap_target));
+                if (!selectedTarget) return null;
+                
+                return (
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a', marginBottom: 4 }}>
+                      Target {selectedTarget.id}: {selectedTarget.title}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 8, lineHeight: 1.4 }}>
+                      {selectedTarget.description}
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                        Progress: <span style={{ fontWeight: 700, color: '#10b981' }}>{selectedTarget.progress}%</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                        Goal: <span style={{ fontWeight: 600 }}>{selectedTarget.goal}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Selected Indicator Information */}
+          {formData.indicator && (
+            <div style={{ background: '#f0fdf4', border: '1px solid #16a34a', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>📊</span>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a' }}>Selected Indicator</div>
+              </div>
+              {(() => {
+                const selectedIndicator = availableIndicators.find(i => i.id === parseInt(formData.indicator));
+                if (!selectedIndicator) return null;
+                
+                return (
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a', marginBottom: 4 }}>
+                      {selectedIndicator.name}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 8 }}>
+                      {selectedIndicator.definition}
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                        Status: <span style={{ 
+                          fontWeight: 700,
+                          color: selectedIndicator.status === 'on-track' ? '#16a34a' :
+                                 selectedIndicator.status === 'at-risk' ? '#ea580c' : '#dc2626'
+                        }}>{selectedIndicator.status}</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                        Progress: <span style={{ fontWeight: 700, color: '#16a34a' }}>{selectedIndicator.progress}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
           {/* File drop zone */}
           <div
@@ -320,9 +878,10 @@ export default function ReportingToolkitPage() {
         <span style={{ fontSize: '1.5rem' }}>📝</span>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Integrated Reporting Modules (T01–T07)</div>
-          <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 2 }}>Structured templates linked to the 5-tier data pipeline. Each submission is stored in Supabase and flows through to the national dashboard.</div>
+          <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 2 }}>Structured templates linked to NBSAP targets and the 5-tier data pipeline. Each submission automatically updates target progress and indicators.</div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+          <span style={{ fontSize: '0.65rem', padding: '3px 9px', borderRadius: 10, background: '#dcfce7', color: '#166534', fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>Auto-Update</span>
           {['Quarterly','Biannual','Annual'].map(f => (
             <span key={f} style={{ fontSize: '0.65rem', padding: '3px 9px', borderRadius: 10, background: f === 'Quarterly' ? '#dcfce7' : f === 'Biannual' ? '#dbeafe' : '#fef9c3', color: f === 'Quarterly' ? '#166534' : f === 'Biannual' ? '#1e40af' : '#854d0e', fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{f}</span>
           ))}
@@ -393,7 +952,7 @@ export default function ReportingToolkitPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      {['Tool', 'Date', 'Status', 'Key Fields', 'Submitted By', ''].map(h => (
+                      {['Tool', 'NBSAP Target', 'Date', 'Status', 'Key Fields', 'Submitted By', ''].map(h => (
                         <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8' }}>{h}</th>
                       ))}
                     </tr>
@@ -413,6 +972,19 @@ export default function ReportingToolkitPage() {
                                 <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{tool?.frequency}</div>
                               </div>
                             </div>
+                          </td>
+                          <td style={{ padding: '11px 14px' }}>
+                            {r.nbsap_target_id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: '0.9rem' }}>🎯</span>
+                                <div>
+                                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0f172a' }}>Target {r.nbsap_target_id}</div>
+                                  <div style={{ fontSize: '0.65rem', color: '#10b981' }}>Linked</div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>—</div>
+                            )}
                           </td>
                           <td style={{ padding: '11px 14px', color: '#94a3b8', fontFamily: "'DM Mono', monospace", fontSize: '0.72rem' }}>
                             {new Date(r.submitted_at).toLocaleDateString()}

@@ -89,14 +89,14 @@ export default function RoleChangeHistoryView() {
     <div style={{ padding: 24 }}>
       <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem', color: '#0f172a' }}>Request History</h3>
       
-      {/* Timeline */}
+      {/* History Display */}
       <div style={{ position: 'relative', paddingLeft: 40 }}>
-        {/* Timeline line */}
+        {/* History line */}
         <div style={{ position: 'absolute', left: 16, top: 0, bottom: 0, width: 2, background: '#e2e8f0' }} />
         
         {requests.map((request, index) => (
           <div key={request.id} style={{ position: 'relative', marginBottom: index < requests.length - 1 ? 24 : 0 }}>
-            {/* Timeline dot */}
+            {/* History dot */}
             <div style={{ position: 'absolute', left: -28, top: 4, width: 32, height: 32, borderRadius: '50%', background: '#fff', border: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {getStatusIcon(request.status)}
             </div>
