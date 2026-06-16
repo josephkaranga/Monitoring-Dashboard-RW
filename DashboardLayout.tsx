@@ -33,31 +33,36 @@ export default function DashboardLayout() {
 
   // ── Nav sections ──────────────────────────────────────────
   const analyticsNav = [
-    { to: '/dashboard',  icon: 'fa-chart-line',       label: 'Dashboard' },
-    { to: '/indicators', icon: 'fa-layer-group',       label: 'Indicator Hierarchy' },
-    { to: '/risk',       icon: 'fa-triangle-exclamation', label: 'Risk Register' },
+    { to: '/dashboard',           icon: 'fa-chart-line',          label: 'Dashboard' },
+    { to: '/indicators',          icon: 'fa-layer-group',          label: 'Indicator Hierarchy' },
+    { to: '/targets',             icon: 'fa-bullseye',             label: '22 National Targets', badge: 22 },
+    { to: '/adaptive-management', icon: 'fa-rotate',               label: 'Adaptive Management' },
+    { to: '/risk',                icon: 'fa-triangle-exclamation', label: 'Risk Register' },
   ];
 
   const reportingNav = [
-    { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark',     label: 'T01 · Institutional' },
-    { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree',          label: 'T02 · District' },
-    { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield',        label: 'T03 · Protected Areas' },
-    { to: '/reporting-toolkit?tool=T04', icon: 'fa-people-group',  label: 'T04 · Community' },
-    { to: '/reporting-toolkit?tool=T05', icon: 'fa-coins',         label: 'T05 · Finance' },
-    { to: '/reporting-toolkit?tool=T06', icon: 'fa-building',      label: 'T06 · Private Sector' },
-    { to: '/reporting-toolkit?tool=T07', icon: 'fa-flask',         label: 'T07 · Research' },
+    { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark',    label: 'T01 · Institutional' },
+    { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree',         label: 'T02 · District' },
+    { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield',       label: 'T03 · Protected Areas' },
+    { to: '/reporting-toolkit?tool=T04', icon: 'fa-people-group', label: 'T04 · Community' },
+    { to: '/reporting-toolkit?tool=T05', icon: 'fa-coins',        label: 'T05 · Finance' },
+    { to: '/reporting-toolkit?tool=T06', icon: 'fa-building',     label: 'T06 · Private Sector' },
+    { to: '/reporting-toolkit?tool=T07', icon: 'fa-flask',        label: 'T07 · Research' },
   ];
 
   const governanceNav = [
     ...(canSeeVerifQueue ? [{ to: '/verification-queue', icon: 'fa-file-circle-check', label: 'Verification Queue', badge: pendingCount || 0 }] : []),
-    { to: '/compliance', icon: 'fa-clipboard-check', label: 'Compliance', badge: 0 },
-    { to: '/reports',    icon: 'fa-file-contract',   label: 'Reports' },
-    { to: '/map',        icon: 'fa-map-location-dot', label: 'District Map' },
+    { to: '/compliance',  icon: 'fa-clipboard-check',  label: 'Compliance', badge: 0 },
+    { to: '/reports',     icon: 'fa-file-contract',    label: 'Reports' },
+    { to: '/stakeholders',icon: 'fa-users',             label: 'Stakeholders' },
+    { to: '/map',         icon: 'fa-map-location-dot',  label: 'District Map' },
   ];
 
   const systemNav = [
-    { to: '/settings', icon: 'fa-gear',  label: 'Settings' },
-    { to: '/users',    icon: 'fa-users', label: 'User Management' },
+    { to: '/rbis',          icon: 'fa-database',       label: 'RBIS Integration' },
+    { to: '/data-pipeline', icon: 'fa-diagram-project', label: 'Data Pipeline' },
+    { to: '/settings',      icon: 'fa-gear',            label: 'Settings' },
+    { to: '/users',         icon: 'fa-users-gear',      label: 'User Management' },
   ];
 
   const isActive = (to: string) => location.pathname === to.split('?')[0];
@@ -374,16 +379,21 @@ export default function DashboardLayout() {
 
 function getPageTitle(pathname: string): string {
   const map: Record<string, string> = {
-    '/dashboard':          'Monitoring Dashboard',
-    '/indicators':         '4-Tier Indicator Hierarchy',
-    '/reporting-toolkit':  'Reporting Modules',
-    '/verification-queue': 'Verification Queue',
-    '/compliance':         'Compliance & Accountability',
-    '/risk':               'Risk Register & Mitigation Matrix',
-    '/reports':            'Reports & Documentation',
-    '/map':                'District Map',
-    '/settings':           'Settings',
-    '/users':              'User Management',
+    '/dashboard':           'Monitoring Dashboard',
+    '/indicators':          '4-Tier Indicator Hierarchy',
+    '/targets':             '22 National Targets',
+    '/adaptive-management': 'Adaptive Management & Decision Support',
+    '/reporting-toolkit':   'Reporting Modules',
+    '/verification-queue':  'Verification Queue',
+    '/compliance':          'Compliance & Accountability',
+    '/risk':                'Risk Register & Mitigation Matrix',
+    '/reports':             'Reports & Documentation',
+    '/stakeholders':        'Stakeholder Engagement Matrix',
+    '/map':                 'District Map',
+    '/rbis':                'RBIS Integration & Data Governance',
+    '/data-pipeline':       '5-Tier Data Pipeline & Implementation Roadmap',
+    '/settings':            'Settings',
+    '/users':               'User Management',
   };
   return map[pathname] ?? 'NBSAP Dashboard';
 }

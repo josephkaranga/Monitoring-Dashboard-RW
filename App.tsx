@@ -14,12 +14,17 @@ import AuthPage from './AuthPage';
 const DashboardLayout = lazy(() => import('./DashboardLayout'));
 const DashboardPage = lazy(() => import('./DashboardPage'));
 const IndicatorsPage = lazy(() => import('./IndicatorsPage'));
+const NationalTargetsPage = lazy(() => import('./NationalTargetsPage'));
+const AdaptiveManagementPage = lazy(() => import('./AdaptiveManagementPage'));
 const ReportingToolkitPage = lazy(() => import('./ReportingToolkitPage'));
 const VerifQueuePage = lazy(() => import('./VerifQueuePage'));
 const CompliancePage = lazy(() => import('./CompliancePage'));
 const RiskPage = lazy(() => import('./RiskPage'));
 const MapPage = lazy(() => import('./MapPage'));
 const ReportsPage = lazy(() => import('./ReportsPage'));
+const StakeholdersPage = lazy(() => import('./StakeholdersPage'));
+const RBISPage = lazy(() => import('./RBISPage'));
+const DataPipelinePage = lazy(() => import('./DataPipelinePage'));
 const SettingsPage = lazy(() => import('./SettingsPage'));
 const UserManagementPage = lazy(() => import('./UserManagementPage'));
 
@@ -89,9 +94,14 @@ export default function App() {
                 {/* All authenticated users */}
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/indicators" element={<IndicatorsPage />} />
+                <Route path="/targets" element={<NationalTargetsPage />} />
+                <Route path="/adaptive-management" element={<AdaptiveManagementPage />} />
                 <Route path="/map" element={<MapPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/compliance" element={<CompliancePage />} />
+                <Route path="/stakeholders" element={<StakeholdersPage />} />
+                <Route path="/rbis" element={<RBISPage />} />
+                <Route path="/data-pipeline" element={<DataPipelinePage />} />
 
                 {/* Reporters only */}
                 <Route
