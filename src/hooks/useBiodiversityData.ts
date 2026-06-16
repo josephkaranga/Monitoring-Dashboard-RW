@@ -1,7 +1,7 @@
 // Custom hook for managing biodiversity data and calculations
 
 import { useState, useEffect, useMemo } from 'react';
-import type { District } from '../../index';
+import type { District } from '../types/index';
 import type { BiodiversityData, GBIFOccurrence } from '../types/biodiversity';
 import { calculateBiodiversityMetrics } from '../utils/biodiversityCalculations';
 

@@ -2,18 +2,16 @@
 // This file demonstrates how to integrate all panel components
 
 import React, { useState } from 'react';
-import {
-  BiodiversityIndexPanel,
-  SpeciesByKingdomPanel,
-  HotspotsListPanel,
-  ProtectedAreasListPanel,
-  GBIFLiveCounter
-} from './index';
+import { BiodiversityIndexPanel } from './BiodiversityIndexPanel';
+import { SpeciesByKingdomPanel } from './SpeciesByKingdomPanel';
+import { HotspotsListPanel } from './HotspotsListPanel';
+import { ProtectedAreasListPanel } from './ProtectedAreasListPanel';
+import { GBIFLiveCounter } from './GBIFLiveCounter';
 import { useGBIFOccurrences } from '../../hooks/useGBIFOccurrences';
 import { useBiodiversityData } from '../../hooks/useBiodiversityData';
 import { useProtectedAreas } from '../../hooks/useProtectedAreas';
 import { identifyHotspots } from '../../utils/hotspotDetection';
-import type { District } from '../../../index';
+import type { District } from '../../types/index';
 
 interface PanelsExampleProps {
   districts: District[];

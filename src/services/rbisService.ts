@@ -6,7 +6,7 @@
 // and GBIF API integration with rate limiting.
 // ══════════════════════════════════════════════════════════════════════════════
 
-import { supabase } from '../../supabase';
+import { supabase, supabaseUrl } from '../utils/supabase';
 import type {
   RBISConnection,
   RBISMetrics,
@@ -36,12 +36,12 @@ const USE_GBIF_PROXY = true;
 function getGBIFUrl(endpoint: string, params: Record<string, string>): string {
   if (USE_GBIF_PROXY) {
     // Use Supabase Edge Function proxy
-    const { data: { url } } = supabase.functions.getUrl('gbif-proxy');
+    const functionUrl = `${supabaseUrl}/functions/v1/gbif-proxy`;
     const queryParams = new URLSearchParams({
       endpoint,
       ...params,
     });
-    return `${url}?${queryParams}`;
+    return `${functionUrl}?${queryParams}`;
   } else {
     // Direct GBIF API call (may have CORS issues)
     const queryParams = new URLSearchParams({

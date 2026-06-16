@@ -1,6 +1,6 @@
 // Threat level assessment for biodiversity loss
 
-import type { District } from '../../index';
+import type { District } from '../types/index';
 import type { ThreatAssessment } from '../types/biodiversity';
 
 interface Risk {

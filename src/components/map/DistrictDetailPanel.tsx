@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { District } from '../../index';
+import type { District } from '../../types/index';
 import type { GBIFOccurrence } from '../../types/biodiversity';
 import type { ProtectedAreasCollection } from '../../types/overlays';
 
@@ -221,9 +221,9 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
             <div style={metricValueStyle}>
               {metrics.districtProtectedAreas[0].properties.name}
             </div>
-            {metrics.districtProtectedAreas[0].properties.type && (
+            {metrics.districtProtectedAreas[0].properties.designationType && (
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                {metrics.districtProtectedAreas[0].properties.type}
+                {metrics.districtProtectedAreas[0].properties.designationType}
               </div>
             )}
           </div>

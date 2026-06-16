@@ -1,6 +1,6 @@
 // Map layer types and configurations
 
-import type { District } from '../../index';
+import type { District } from '../types/index';
 
 export type MapLayer = 
   | 'biodiversity'

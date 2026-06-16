@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { MapLayer, LayerConfig } from '../types/mapLayers';
-import type { District } from '../../index';
+import type { District } from '../types/index';
 import {
   biodiversityColorScale,
   threatLevelColorScale,

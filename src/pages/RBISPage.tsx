@@ -98,7 +98,6 @@ export default function RBISPage() {
           recentOccurrences={recentOccurrences}
           loading={metricsLoading}
           error={metricsError}
-          lastUpdate={metrics?.lastDataUpdate}
           onRefetch={refetchMetrics}
         />
       </div>

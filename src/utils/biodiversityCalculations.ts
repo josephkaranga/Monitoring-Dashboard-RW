@@ -1,7 +1,7 @@
 // Biodiversity calculation utilities
 
 import type { GBIFOccurrence, BiodiversityData, SpeciesBreakdown } from '../types/biodiversity';
-import type { District } from '../../index';
+import type { District } from '../types/index';
 
 /**
  * Calculate biodiversity index for a district based on GBIF occurrence data
