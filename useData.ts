@@ -1,0 +1,234 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from './supabase';
+import {
+  fetchReports,
+  getDashboardStats,
+  type ReportFilters,
+} from './reportService';
+import {
+  fetchIndicators,
+  fetchDistricts,
+  fetchRisks,
+  fetchAuditLog,
+  fetchNotifications,
+  fetchNotifPreferences,
+  fetchUserSettings,
+  writeAuditEntry,
+  subscribeToReports,
+  subscribeToNotifications,
+} from './dataService';
+import { useAuth } from './AuthContext';
+import type {
+  ToolkitReport,
+  Indicator,
+  District,
+  Risk,
+  AuditEntry,
+  Notification,
+  DashboardStats,
+  UserSettings,
+} from './index';
+
+// ── Generic data fetcher hook ────────────────────────────────
+
+export function useAsync<T>(
+  asyncFn: () => Promise<T>,
+  deps: unknown[] = []
+): { data: T | null; loading: boolean; error: string | null; refetch: () => void } {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await asyncFn();
+      if (mountedRef.current) setData(result);
+    } catch (err) {
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetch();
+    return () => { mountedRef.current = false; };
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// ── Dashboard Stats ──────────────────────────────────────────
+
+export function useDashboardStats(autoRefresh = true) {
+  const { data, loading, error, refetch } = useAsync(getDashboardStats, []);
+
+  // Auto-refresh every 60 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(refetch, 60_000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, refetch]);
+
+  // Live subscription to report changes
+  useEffect(() => {
+    const channel = subscribeToReports(() => {
+      refetch();
+    });
+    return () => { supabase.removeChannel(channel); };
+  }, [refetch]);
+
+  return { stats: data as DashboardStats | null, loading, error, refetch };
+}
+
+// ── Toolkit Reports ──────────────────────────────────────────
+
+export function useReports(filters: ReportFilters = {}) {
+  const [reports, setReports] = useState<ToolkitReport[]>([]);
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const result = await fetchReports(filters);
+    setReports(result.data);
+    setCount(result.count);
+    setLoading(false);
+  }, [JSON.stringify(filters)]); // eslint-disable-line
+
+  useEffect(() => { load(); }, [load]);
+
+  // Subscribe to realtime changes
+  useEffect(() => {
+    const channel = subscribeToReports(() => load());
+    return () => { supabase.removeChannel(channel); };
+  }, [load]);
+
+  return { reports, count, loading, error, refetch: load };
+}
+
+// ── Pending verification count ────────────────────────────────
+
+export function usePendingCount(): number {
+  const [count, setCount] = useState(0);
+
+  const load = useCallback(async () => {
+    const { count: c } = await supabase
+      .from('toolkit_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    setCount(c || 0);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const channel = subscribeToReports(() => load());
+    return () => { supabase.removeChannel(channel); };
+  }, [load]);
+
+  return count;
+}
+
+// ── Indicators ───────────────────────────────────────────────
+
+export function useIndicators(filters?: {
+  tier?: string;
+  targetId?: number;
+  status?: string;
+  search?: string;
+}) {
+  return useAsync(() => fetchIndicators(filters), [JSON.stringify(filters)]);
+}
+
+// ── Districts ────────────────────────────────────────────────
+
+export function useDistricts() {
+  return useAsync(fetchDistricts, []);
+}
+
+// ── Risk Register ────────────────────────────────────────────
+
+export function useRisks(filters?: { level?: string; category?: string; search?: string }) {
+  return useAsync(() => fetchRisks(filters), [JSON.stringify(filters)]);
+}
+
+// ── Audit Log ────────────────────────────────────────────────
+
+export function useAuditLog(filters?: { actionType?: string; limit?: number }) {
+  const { permissions } = useAuth();
+  if (!permissions?.canViewAuditLog) {
+    return { data: [] as AuditEntry[], loading: false, error: null, refetch: () => {} };
+  }
+  return useAsync(() => fetchAuditLog(filters), [JSON.stringify(filters)]);
+}
+
+// ── Notifications ────────────────────────────────────────────
+
+export function useNotifications() {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    const data = await fetchNotifications(user.id);
+    setNotifications(data);
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = subscribeToNotifications(user.id, (newNotif: Notification) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    });
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  return { notifications, loading, unreadCount, refetch: load };
+}
+
+// ── Notification Preferences ──────────────────────────────────
+
+export function useNotifPreferences() {
+  const { user } = useAuth();
+  return useAsync(
+    () => (user?.id ? fetchNotifPreferences(user.id) : Promise.resolve(null)),
+    [user?.id]
+  );
+}
+
+// ── User Settings ────────────────────────────────────────────
+
+export function useUserSettings() {
+  const { user } = useAuth();
+  return useAsync(
+    () => (user?.id ? fetchUserSettings(user.id) : Promise.resolve(null)),
+    [user?.id]
+  );
+}
+
+// ── Audit Logger (imperative) ─────────────────────────────────
+
+export function useAuditLogger() {
+  const { permissions } = useAuth();
+  return useCallback(
+    (actionType: string, action: string, detail?: string) => {
+      if (!permissions) return;
+      writeAuditEntry(actionType, action, detail).catch(console.error);
+    },
+    [permissions]
+  );
+}
