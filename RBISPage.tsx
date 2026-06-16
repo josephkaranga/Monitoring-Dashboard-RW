@@ -1,14 +1,41 @@
-﻿import React, { useState } from "react";
-import { useGBIFStats } from "./useGBIF";
+﻿import React, { useState } from 'react';
+import { useGBIFStats } from './useGBIF';
+
+// ── Data stream definitions ───────────────────────────────────
+const DATA_STREAMS = [
+  { icon: 'fa-person-hiking',    color: '#059669', bg: '#f0fdf4', label: 'Field Surveys',          desc: 'Structured biodiversity field surveys using Darwin Core-compliant forms via T02–T04 modules', status: 'Active',   statusColor: '#166534', statusBg: '#dcfce7' },
+  { icon: 'fa-satellite',        color: '#0284c7', bg: '#e0f2fe', label: 'Remote Sensing',          desc: 'Land cover change, ecosystem extent, and forest degradation via satellite imagery analysis', status: 'Planned',  statusColor: '#1e40af', statusBg: '#dbeafe' },
+  { icon: 'fa-users',            color: '#d97706', bg: '#fffbeb', label: 'Community Monitoring',    desc: 'Citizen science observations, HWC reporting, and indigenous knowledge via T04 community module', status: 'Active',   statusColor: '#92400e', statusBg: '#fef9c3' },
+  { icon: 'fa-camera',           color: '#7c3aed', bg: '#faf5ff', label: 'Camera Traps',            desc: 'Automated wildlife detection from camera trap networks in protected areas and buffer zones', status: 'Planned',  statusColor: '#6b21a8', statusBg: '#f3e8ff' },
+  { icon: 'fa-wave-square',      color: '#0891b2', bg: '#ecfeff', label: 'Bioacoustics',            desc: 'Passive acoustic monitoring for bird, bat, and amphibian species using automated classifiers', status: 'Planned',  statusColor: '#155e75', statusBg: '#cffafe' },
+  { icon: 'fa-globe',            color: '#16a34a', bg: '#f0fdf4', label: 'GBIF / Global Platforms', desc: 'Automated ingestion from GBIF, iNaturalist, and eBird via Darwin Core Archive (DwC-A) standard', status: 'Live',     statusColor: '#166534', statusBg: '#dcfce7' },
+];
+
+// ── Darwin Core fields ────────────────────────────────────────
+const DWC_FIELDS = [
+  { term: 'occurrenceID',       desc: 'Unique identifier for each observation record' },
+  { term: 'scientificName',     desc: 'Full taxonomic name of the observed organism' },
+  { term: 'decimalLatitude',    desc: 'WGS84 latitude of the observation location' },
+  { term: 'decimalLongitude',   desc: 'WGS84 longitude of the observation location' },
+  { term: 'eventDate',          desc: 'ISO 8601 date/time of the observation event' },
+  { term: 'basisOfRecord',      desc: 'Nature of the record (HumanObservation, MachineObservation, etc.)' },
+  { term: 'recordedBy',         desc: 'Name or identifier of the observer or institution' },
+  { term: 'datasetName',        desc: 'Name of the dataset or monitoring programme' },
+  { term: 'countryCode',        desc: 'ISO 3166-1 alpha-2 country code (RW for Rwanda)' },
+  { term: 'taxonRank',          desc: 'Taxonomic rank of the most specific name (species, genus, etc.)' },
+  { term: 'kingdom',            desc: 'Highest taxonomic rank (Animalia, Plantae, Fungi, etc.)' },
+  { term: 'coordinateUncertaintyInMeters', desc: 'Spatial accuracy of the coordinate in metres' },
+];
 
 const card: React.CSSProperties = {
-  background: "var(--surface)", borderRadius: "var(--radius)",
-  border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)",
+  background: 'var(--surface)', borderRadius: 'var(--radius)',
+  border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
 };
 
 export default function RBISPage() {
   const { stats, loading, error, refetch } = useGBIFStats();
   const [iframeError, setIframeError] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview'|'pipeline'|'standards'|'streams'|'live'>('overview');
   const maxTrend = stats ? Math.max(...stats.yearlyTrend.map((t) => t.count)) : 1;
 
   return (
@@ -63,6 +90,173 @@ export default function RBISPage() {
         </div>
       </div>
 
+      {/* ── Technical Architecture Tabs ── */}
+      <div style={{ ...card, marginBottom: 24, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--border)', padding: '0 16px', background: 'var(--surface-2)' }}>
+          {([
+            { key: 'overview',   label: 'Architecture',    icon: 'fa-diagram-project' },
+            { key: 'streams',    label: 'Data Streams',    icon: 'fa-stream' },
+            { key: 'pipeline',   label: 'Ingestion Pipeline', icon: 'fa-gears' },
+            { key: 'standards',  label: 'Darwin Core',     icon: 'fa-code' },
+          ] as const).map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              style={{ padding: '10px 14px', border: 'none', borderBottom: activeTab === tab.key ? '2px solid var(--sky-dim)' : '2px solid transparent', marginBottom: -1, background: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', color: activeTab === tab.key ? 'var(--sky-dim)' : 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5, fontFamily: "'DM Sans', sans-serif" }}>
+              <i className={`fa-solid ${tab.icon}`} style={{ fontSize: '0.72rem' }} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ padding: 20 }}>
+
+          {/* Architecture overview */}
+          {activeTab === 'overview' && (
+            <div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.75, marginBottom: 18 }}>
+                RBIS is elevated from a simple repository to a <strong>fully operational data infrastructure layer</strong>. The system enforces common data standards (Darwin Core), automates data ingestion pipelines, and ensures interoperability with global platforms like GBIF. A functional NBMS does not depend on periodic uploads — it enables <strong>continuous, near-real-time data flows</strong>.
+              </p>
+              {/* Architecture flow */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 20, padding: '16px', background: 'var(--surface-2)', borderRadius: 12 }}>
+                {[
+                  { label: 'Field / Remote / Community / Camera / Bioacoustics', icon: 'fa-satellite-dish', color: '#059669', bg: '#dcfce7' },
+                  { label: '→', icon: null, color: 'var(--text-3)', bg: 'transparent' },
+                  { label: 'Darwin Core Validation & Standardisation', icon: 'fa-code', color: '#0284c7', bg: '#e0f2fe' },
+                  { label: '→', icon: null, color: 'var(--text-3)', bg: 'transparent' },
+                  { label: 'RBIS Data Infrastructure Layer', icon: 'fa-database', color: '#7c3aed', bg: '#f3e8ff' },
+                  { label: '→', icon: null, color: 'var(--text-3)', bg: 'transparent' },
+                  { label: 'NBSAP Dashboard + GBIF + CBD', icon: 'fa-chart-line', color: '#0f2744', bg: '#dbeafe' },
+                ].map((step, i) => step.icon ? (
+                  <div key={i} style={{ background: step.bg, borderRadius: 9, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 160 }}>
+                    <i className={`fa-solid ${step.icon}`} style={{ color: step.color, fontSize: '1rem', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: step.color, lineHeight: 1.3 }}>{step.label}</span>
+                  </div>
+                ) : (
+                  <span key={i} style={{ color: 'var(--text-3)', fontSize: '1.2rem', flexShrink: 0 }}>→</span>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                {[
+                  { icon: 'fa-bolt',          color: '#f59e0b', label: 'Near-Real-Time Flows',    desc: 'Continuous data ingestion — no periodic upload dependency' },
+                  { icon: 'fa-code',          color: '#0284c7', label: 'Darwin Core Standard',    desc: 'All records validated against DwC schema before ingestion' },
+                  { icon: 'fa-gears',         color: '#059669', label: 'Automated Pipelines',     desc: 'Scheduled ingestion jobs with validation and error reporting' },
+                  { icon: 'fa-globe',         color: '#7c3aed', label: 'GBIF Interoperability',   desc: 'Bidirectional sync with GBIF via Darwin Core Archive (DwC-A)' },
+                  { icon: 'fa-shield-halved', color: '#dc2626', label: 'Data Governance',         desc: 'Role-based access, species fuzzing, audit trail on all flows' },
+                  { icon: 'fa-chart-column',  color: '#0891b2', label: 'Indicator Aggregation',   desc: 'Automated calculation of NBSAP indicators from raw data streams' },
+                ].map(f => (
+                  <div key={f.label} style={{ background: 'var(--surface-2)', borderRadius: 9, padding: '12px 14px', borderLeft: `3px solid ${f.color}` }}>
+                    <i className={`fa-solid ${f.icon}`} style={{ color: f.color, fontSize: '1rem', display: 'block', marginBottom: 6 }} />
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 3 }}>{f.label}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.4 }}>{f.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Data streams */}
+          {activeTab === 'streams' && (
+            <div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 16 }}>
+                The system integrates <strong>multiple data streams</strong> — from traditional field surveys to emerging technologies. Each stream is standardised to Darwin Core before entering the RBIS infrastructure layer.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {DATA_STREAMS.map(s => (
+                  <div key={s.label} style={{ display: 'flex', gap: 14, padding: '14px 16px', background: s.bg, borderRadius: 10, border: `1px solid ${s.color}22`, alignItems: 'flex-start' }}>
+                    <div style={{ width: 40, height: 40, background: `${s.color}22`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <i className={`fa-solid ${s.icon}`} style={{ color: s.color, fontSize: '1rem' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-1)' }}>{s.label}</span>
+                        <span style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: 8, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: s.statusBg, color: s.statusColor }}>{s.status}</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{s.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ingestion pipeline */}
+          {activeTab === 'pipeline' && (
+            <div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 16 }}>
+                Automated ingestion pipelines replace manual uploads. Each pipeline stage validates, transforms, and routes data into the RBIS infrastructure layer with full audit logging.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {[
+                  { step: '1', color: '#059669', bg: '#dcfce7', title: 'Data Collection',       desc: 'Field forms (T02–T04), camera trap uploads, bioacoustic files, remote sensing outputs, GBIF DwC-A archives', icon: 'fa-satellite-dish' },
+                  { step: '2', color: '#0284c7', bg: '#dbeafe', title: 'Format Normalisation',  desc: 'All incoming records converted to Darwin Core standard. Mandatory fields enforced: occurrenceID, scientificName, eventDate, coordinates', icon: 'fa-code' },
+                  { step: '3', color: '#d97706', bg: '#fef9c3', title: 'Validation & QA',       desc: 'Automated checks: coordinate bounds (Rwanda extent), taxonomic name resolution against GBIF backbone, date format validation, duplicate detection', icon: 'fa-circle-check' },
+                  { step: '4', color: '#7c3aed', bg: '#f3e8ff', title: 'RBIS Ingestion',        desc: 'Validated records written to RBIS database. Species location fuzzing applied to threatened taxa. Metadata tagged with data source and pipeline version', icon: 'fa-database' },
+                  { step: '5', color: '#0891b2', bg: '#ecfeff', title: 'Indicator Aggregation', desc: 'Automated calculation of NBSAP indicator values from ingested records. Progress percentages updated in real time. Alerts triggered if thresholds breached', icon: 'fa-chart-line' },
+                  { step: '6', color: '#16a34a', bg: '#dcfce7', title: 'GBIF Sync & Export',    desc: 'Approved records published to GBIF via Darwin Core Archive. CBD-compatible exports generated. Dashboard visualisations updated automatically', icon: 'fa-globe' },
+                ].map((s, i) => (
+                  <div key={s.step} style={{ display: 'flex', gap: 0 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 40, flexShrink: 0 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: s.bg, border: `2px solid ${s.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: s.color, flexShrink: 0 }}>{s.step}</div>
+                      {i < 5 && <div style={{ width: 2, flex: 1, background: 'var(--border)', minHeight: 20 }} />}
+                    </div>
+                    <div style={{ flex: 1, paddingLeft: 14, paddingBottom: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+                        <i className={`fa-solid ${s.icon}`} style={{ color: s.color, fontSize: '0.85rem' }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-1)' }}>{s.title}</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.55, background: s.bg, borderRadius: 8, padding: '10px 12px' }}>{s.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Darwin Core standards */}
+          {activeTab === 'standards' && (
+            <div>
+              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: '14px 16px', marginBottom: 16, fontSize: '0.82rem', color: '#0369a1', lineHeight: 1.6 }}>
+                <i className="fa-solid fa-circle-info" style={{ marginRight: 6 }} />
+                <strong>Darwin Core (DwC)</strong> is the international standard for biodiversity data exchange. All records entering RBIS must conform to DwC before ingestion. This ensures interoperability with GBIF, iNaturalist, eBird, and CBD reporting platforms.
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                  <thead>
+                    <tr>
+                      {['DwC Term', 'Description', 'Required'].map(h => (
+                        <th key={h} style={{ padding: '9px 13px', textAlign: 'left', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DWC_FIELDS.map((f, i) => (
+                      <tr key={f.term} style={{ borderBottom: '1px solid var(--surface-3)', background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}>
+                        <td style={{ padding: '9px 13px', fontFamily: "'DM Mono', monospace", fontSize: '0.75rem', color: '#0284c7', fontWeight: 600 }}>{f.term}</td>
+                        <td style={{ padding: '9px 13px', color: 'var(--text-2)', fontSize: '0.78rem' }}>{f.desc}</td>
+                        <td style={{ padding: '9px 13px' }}>
+                          <span style={{ fontSize: '0.62rem', padding: '2px 7px', borderRadius: 6, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: i < 6 ? '#dcfce7' : '#f1f5f9', color: i < 6 ? '#166534' : '#475569' }}>
+                            {i < 6 ? 'Required' : 'Recommended'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <a href="https://dwc.tdwg.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: '#e0f2fe', color: '#0284c7', borderRadius: 8, textDecoration: 'none', fontSize: '0.78rem', fontWeight: 600 }}>
+                  <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.7rem' }} /> Darwin Core Standard (tdwg.org)
+                </a>
+                <a href="https://www.gbif.org/darwin-core" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: '#f3e8ff', color: '#7c3aed', borderRadius: 8, textDecoration: 'none', fontSize: '0.78rem', fontWeight: 600 }}>
+                  <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.7rem' }} /> GBIF Darwin Core Guide
+                </a>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* ── Live GBIF Stats ── */}
       <div style={{ ...card, padding: 18, marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: "0.9rem", fontWeight: 700 }}>
           <i className="fa-solid fa-chart-column" style={{ color: "var(--sky-dim)" }} />
