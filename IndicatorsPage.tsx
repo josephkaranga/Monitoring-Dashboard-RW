@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useIndicators } from './useData';
 import { writeAuditEntry } from './dataService';
 import type { Indicator, IndicatorTier, IndicatorStatus } from './index';
@@ -42,7 +43,7 @@ const STATUS_CFG: Record<IndicatorStatus, { color: string; bg: string; label: st
 };
 
 // ── Modal ─────────────────────────────────────────────────────
-function IndicatorModal({ indicator: i, onClose }: { indicator: Indicator; onClose: () => void }) {
+function IndicatorModal({ indicator: i, onClose, onViewTarget }: { indicator: Indicator; onClose: () => void; onViewTarget: (targetId: number) => void }) {
   const tier = TIER_CFG[i.tier];
   const status = STATUS_CFG[i.status];
   return (
@@ -96,6 +97,12 @@ function IndicatorModal({ indicator: i, onClose }: { indicator: Indicator; onClo
               ))}
             </div>
           )}
+          <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+            <button onClick={() => { onClose(); onViewTarget(i.nbsap_target_id); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 8, background: 'var(--navy)', color: '#fff', border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+              <i className="fa-solid fa-bullseye" /> View Target {i.nbsap_target_id}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -104,11 +111,27 @@ function IndicatorModal({ indicator: i, onClose }: { indicator: Indicator; onClo
 
 // ── Main ──────────────────────────────────────────────────────
 export default function IndicatorsPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tierFilter, setTierFilter] = useState('all');
   const [goalFilter, setGoalFilter] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Indicator | null>(null);
   const [groupByTarget, setGroupByTarget] = useState(false);
+
+  // Read URL params for cross-page navigation
+  useEffect(() => {
+    const goal = searchParams.get('goal');
+    const target = searchParams.get('target');
+    if (goal) setGoalFilter(goal);
+    if (target) {
+      setGroupByTarget(true);
+      setTimeout(() => {
+        const el = document.getElementById(`group-target-${target}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+  }, [searchParams]);
 
   // Always fetch all indicators so goal breakdown counts are accurate
   const { data: rawIndicators, loading } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
@@ -162,9 +185,13 @@ export default function IndicatorsPage() {
     await writeAuditEntry('view', `Viewed indicator: ${ind.name}`, `ID: ${ind.id}`);
   }, []);
 
+  const jumpToTarget = useCallback((targetId: number) => {
+    navigate(`/targets?expand=${targetId}`);
+  }, [navigate]);
+
   return (
     <div>
-      {selected && <IndicatorModal indicator={selected} onClose={() => setSelected(null)} />}
+      {selected && <IndicatorModal indicator={selected} onClose={() => setSelected(null)} onViewTarget={(id) => { setSelected(null); navigate(`/targets?expand=${id}`); }} />}
 
       {/* Tier stat strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
@@ -317,9 +344,14 @@ export default function IndicatorsPage() {
           <div style={{ padding: 16 }}>
             {grouped.map(([targetKey, inds]) => (
               <div key={targetKey} style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 8, padding: '6px 10px', background: 'var(--surface-2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div id={`group-target-${targetKey.replace('Target ','')}`}
+                  style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 8, padding: '6px 10px', background: 'var(--surface-2)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <i className="fa-solid fa-bullseye" style={{ color: 'var(--sky-dim)' }} /> {targetKey}
                   <span style={{ fontSize: '0.65rem', background: '#dbeafe', color: '#1e40af', padding: '1px 7px', borderRadius: 8, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{inds.length}</span>
+                  <button onClick={() => navigate(`/targets?expand=${targetKey.replace('Target ','')}`)}
+                    style={{ marginLeft: 'auto', fontSize: '0.68rem', padding: '2px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--sky-dim)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <i className="fa-solid fa-arrow-up-right-from-square" /> View Target
+                  </button>
                 </div>
                 {inds.map(ind => <IndicatorRow key={ind.id} indicator={ind} onClick={() => handleOpen(ind)} />)}
               </div>
@@ -355,7 +387,13 @@ export default function IndicatorsPage() {
                           <i className={`fa-solid ${tier.faIcon}`} style={{ fontSize: '0.55rem' }} /> {ind.tier}
                         </span>
                       </td>
-                      <td style={{ padding: '11px 14px', fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>T{ind.nbsap_target_id}</td>
+                      <td style={{ padding: '11px 14px', fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+                        <span onClick={e => { e.stopPropagation(); jumpToTarget(ind.nbsap_target_id); }}
+                          style={{ cursor: 'pointer', color: 'var(--sky-dim)', fontWeight: 700, textDecoration: 'underline' }}
+                          title={`View Target ${ind.nbsap_target_id}`}>
+                          T{ind.nbsap_target_id}
+                        </span>
+                      </td>
                       <td style={{ padding: '11px 14px', color: 'var(--text-2)', fontSize: '0.75rem', maxWidth: 140, lineHeight: 1.4 }}>{ind.target_2030}</td>
                       <td style={{ padding: '11px 14px', maxWidth: 180 }}>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>

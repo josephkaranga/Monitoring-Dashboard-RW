@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAsync, useIndicators } from './useData';
 import { fetchTargets } from './dataService';
 import type { NBSAPTarget, Indicator, IndicatorTier } from './index';
@@ -68,6 +69,8 @@ const card: React.CSSProperties = {
 };
 
 export default function NationalTargetsPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: rawTargets } = useAsync(fetchTargets, []);
   const targets: NBSAPTarget[] = (rawTargets as NBSAPTarget[] | null) ?? [];
   const { data: rawIndicators } = useIndicators() as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
@@ -76,6 +79,22 @@ export default function NationalTargetsPage() {
   const [search, setSearch] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [allExpanded, setAllExpanded] = useState(false);
+
+  // Auto-expand target from URL param ?expand=N
+  useEffect(() => {
+    const expandId = searchParams.get('expand');
+    if (expandId) {
+      const id = parseInt(expandId);
+      if (!isNaN(id)) {
+        setExpandedIds(prev => new Set([...prev, id]));
+        // Scroll to it after render
+        setTimeout(() => {
+          const el = document.getElementById(`target-card-${id}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    }
+  }, [searchParams]);
 
   const filtered = useMemo(() => targets.filter(t => {
     if (goalFilter !== 'all' && t.goal !== goalFilter) return false;
@@ -210,7 +229,7 @@ export default function NationalTargetsPage() {
           const open = expandedIds.has(t.id) || allExpanded;
           const progColor = t.progress >= 60 ? '#10b981' : t.progress >= 35 ? '#f59e0b' : '#f43f5e';
           return (
-            <div key={t.id} style={{ ...card, overflow: 'hidden' }}>
+            <div key={t.id} id={`target-card-${t.id}`} style={{ ...card, overflow: 'hidden' }}>
               {/* Header */}
               <div onClick={() => toggleTarget(t.id)}
                 style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: '0.15s' }}
@@ -324,6 +343,78 @@ export default function NationalTargetsPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Live Linked Indicators from DB */}
+                  {(() => {
+                    const linked = indicators.filter(i => i.nbsap_target_id === t.id);
+                    if (!linked.length) return null;
+                    const byTier: Record<IndicatorTier, Indicator[]> = { headline: [], component: [], complementary: [], binary: [] };
+                    linked.forEach(i => { if (byTier[i.tier as IndicatorTier]) byTier[i.tier as IndicatorTier].push(i); });
+                    const TIER_STYLE: Record<IndicatorTier, { bg: string; color: string; border: string; icon: string }> = {
+                      headline:      { bg: '#dcfce7', color: '#166534', border: '#bbf7d0', icon: 'fa-star' },
+                      component:     { bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe', icon: 'fa-puzzle-piece' },
+                      complementary: { bg: '#f3e8ff', color: '#6b21a8', border: '#e9d5ff', icon: 'fa-circle-info' },
+                      binary:        { bg: '#fef9c3', color: '#854d0e', border: '#fde68a', icon: 'fa-toggle-on' },
+                    };
+                    const STATUS_COLOR: Record<string, string> = { 'on-track': '#10b981', 'at-risk': '#f59e0b', 'behind': '#f43f5e' };
+                    return (
+                      <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 14, marginTop: 12 }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10, fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)' }} />
+                            Live Linked Indicators
+                            <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '1px 7px', borderRadius: 8, fontWeight: 700 }}>{linked.length} total</span>
+                          </span>
+                          <button onClick={() => navigate(`/indicators?goal=${t.goal}&target=${t.id}`)}
+                            style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--sky-dim)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <i className="fa-solid fa-arrow-right" /> View All in Hierarchy
+                          </button>
+                        </div>
+                        {(Object.entries(byTier) as [IndicatorTier, Indicator[]][]).filter(([, arr]) => arr.length > 0).map(([tier, inds]) => {
+                          const ts = TIER_STYLE[tier];
+                          return (
+                            <div key={tier} style={{ marginBottom: 10 }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: ts.bg, color: ts.color, fontSize: '0.62rem', fontWeight: 700, padding: '2px 9px', borderRadius: 8, fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>
+                                <i className={`fa-solid ${ts.icon}`} style={{ fontSize: '0.58rem' }} />
+                                {tier.toUpperCase()} ({inds.length})
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 7 }}>
+                                {inds.map(ind => {
+                                  const sc = STATUS_COLOR[ind.status] || '#94a3b8';
+                                  return (
+                                    <div key={ind.id} onClick={() => navigate(`/indicators?target=${t.id}`)}
+                                      style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', cursor: 'pointer', transition: '0.15s' }}
+                                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)')}
+                                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.boxShadow = 'none')}>
+                                      <div style={{ fontSize: '0.77rem', fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.35, marginBottom: 5 }}>{ind.name}</div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                        <div style={{ flex: 1, height: 5, background: 'var(--surface-3)', borderRadius: 3, overflow: 'hidden' }}>
+                                          <div style={{ height: '100%', width: `${ind.progress}%`, background: sc, borderRadius: 3 }} />
+                                        </div>
+                                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: sc, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>{ind.progress}%</span>
+                                      </div>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.64rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>{ind.periodicity}</span>
+                                        <span style={{ fontSize: '0.62rem', padding: '1px 7px', borderRadius: 8, background: `${sc}22`, color: sc, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{ind.status}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Navigation buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+                    <button onClick={() => navigate(`/indicators?goal=${t.goal}&target=${t.id}`)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 8, background: 'var(--navy)', color: '#fff', border: 'none', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+                      <i className="fa-solid fa-layer-group" /> View in Indicator Hierarchy
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
