@@ -63,32 +63,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
 
   const loadUserData = useCallback(async (userId: string, session: import('@supabase/supabase-js').Session) => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error || !profile) {
+      if (error || !profile) {
+        console.error('Profile fetch error:', error);
+        dispatch({ type: 'CLEAR_SESSION' });
+        return;
+      }
+
+      dispatch({
+        type: 'SET_SESSION',
+        user: profile as UserProfile,
+        session,
+      });
+
+      // Load settings in background
+      fetchUserSettings(userId).then(userSettings => {
+        if (userSettings) setSettings(userSettings);
+      }).catch(console.error);
+
+      // Update last login in background
+      supabase
+        .from('profiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', userId)
+        .then(() => {})
+        .catch(console.error);
+    } catch (err) {
+      console.error('loadUserData error:', err);
       dispatch({ type: 'CLEAR_SESSION' });
-      return;
     }
-
-    dispatch({
-      type: 'SET_SESSION',
-      user: profile as UserProfile,
-      session,
-    });
-
-    // Load settings in background
-    const userSettings = await fetchUserSettings(userId);
-    if (userSettings) setSettings(userSettings);
-
-    // Update last login
-    await supabase
-      .from('profiles')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', userId);
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -104,9 +113,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Safety timeout — if loading is still true after 8s, clear it
+    const timeout = setTimeout(() => {
+      dispatch({ type: 'SET_LOADING', loading: false });
+    }, 8000);
+
     // Auth state change listener handles INITIAL_SESSION, SIGNED_IN, SIGNED_OUT, etc.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        clearTimeout(timeout);
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           await loadUserData(session.user.id, session);
         } else if (event === 'SIGNED_OUT') {
@@ -122,7 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [loadUserData]);
 
   return (
