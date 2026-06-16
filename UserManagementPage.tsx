@@ -382,9 +382,31 @@ export function UserManagementPage() {
   const handleReject = useCallback(async (userId: string, userName: string) => {
     if (!window.confirm(`Reject and delete ${userName}'s account? This cannot be undone.`)) return;
     setUpdating(userId);
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
-    if (error) toast.error(error.message);
-    else { toast.success(`${userName}'s account rejected and removed`); refetch(); }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Not authenticated'); return; }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        toast.error(result.error || 'Failed to reject user');
+      } else {
+        toast.success(`${userName}'s account rejected and removed`);
+        refetch();
+      }
+    } catch {
+      toast.error('Network error — could not reject user');
+    }
     setUpdating(null);
   }, [refetch]);
 
@@ -393,11 +415,36 @@ export function UserManagementPage() {
       toast.error("You can't delete your own account");
       return;
     }
-    if (!window.confirm(`Permanently delete ${userName}'s account?\n\nThis will remove their profile and all associated data. This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently delete ${userName}'s account?\n\nThis removes them from the system completely and cannot be undone.`)) return;
+
     setUpdating(userId);
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
-    if (error) toast.error(error.message);
-    else { toast.success(`${userName}'s account deleted`); refetch(); }
+    try {
+      // Must use the Edge Function — anon key cannot delete from auth.users
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Not authenticated'); return; }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        toast.error(result.error || 'Failed to delete user');
+      } else {
+        toast.success(`${userName}'s account deleted`);
+        refetch();
+      }
+    } catch (err) {
+      toast.error('Network error — could not delete user');
+    }
     setUpdating(null);
   }, [currentUser?.id, refetch]);
 
