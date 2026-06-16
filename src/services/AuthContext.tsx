@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { fetchUserSettings } from '../services/dataService';
 import type { AuthState, UserProfile, UserSettings, RolePermissions } from '../types/index';
@@ -171,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const mountedRef = useRef(true);
+  const navigate = useNavigate();
 
   // These refs prevent race conditions — never use state for these
   const fetchingRef = useRef(false);   // true while loadUserData is running
@@ -336,6 +338,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearSessionCache();
           fetchingRef.current = false;
           await loadUserData(session.user.id, session);
+
+        } else if (event === 'PASSWORD_RECOVERY') {
+          // User clicked a password reset link — redirect to the set-password form
+          // regardless of which URL they landed on (e.g. /#access_token=...)
+          navigate('/auth?mode=set-password', { replace: true });
         }
       }
     );

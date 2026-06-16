@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signIn, signUp, resetPassword, updatePassword } from '../services/authService';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
@@ -46,8 +46,11 @@ const iconStyle: React.CSSProperties = {
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get('mode') === 'set-password' ? 'set-password' : 'login'
+  );
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('policy_monitoring');
@@ -59,16 +62,6 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Detect Supabase PASSWORD_RECOVERY event (user clicked reset link from email)
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setMode('set-password');
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Only auto-redirect to dashboard when fully logged in AND not in set-password flow
   useEffect(() => {

@@ -190,8 +190,9 @@ export async function updateProfile(
 
 // ── RESET PASSWORD ───────────────────────────────────────────
 export async function resetPassword(email: string): Promise<ApiResponse<null>> {
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '') || window.location.origin;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`,
+    redirectTo: `${appUrl}/auth`,
   });
 
   if (error) return { data: null, error: error.message };
