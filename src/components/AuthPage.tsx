@@ -1,13 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn, signUp, resetPassword } from '../services/authService';
+import { signIn, signUp, resetPassword, updatePassword } from '../services/authService';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
+import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
 import type { UserRole, LoginCredentials, SignupData } from '../types/index';
 import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from '../types/index';
 
-type AuthMode = 'login' | 'signup' | 'reset';
+type AuthMode = 'login' | 'signup' | 'reset' | 'set-password';
 
 const ROLE_COLORS: Record<UserRole, string> = {
   policy_monitoring:    '#10b981',
@@ -56,10 +57,23 @@ export default function AuthPage() {
   });
   const [resetEmail, setResetEmail] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Detect Supabase PASSWORD_RECOVERY event (user clicked reset link from email)
   useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true });
-  }, [user, navigate]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('set-password');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Only auto-redirect to dashboard when fully logged in AND not in set-password flow
+  useEffect(() => {
+    if (user && mode !== 'set-password') navigate('/dashboard', { replace: true });
+  }, [user, mode, navigate]);
 
   const validate = useCallback(() => {
     const errs: Record<string, string> = {};
@@ -111,6 +125,25 @@ export default function AuthPage() {
     setLoading(false);
   }, [resetEmail, validate]);
 
+  const handleSetPassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
+    setLoading(true);
+    const result = await updatePassword(newPassword);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success('Password updated successfully! Please sign in.');
+      await supabase.auth.signOut();
+      setNewPassword('');
+      setConfirmPassword('');
+      setMode('login');
+      navigate('/auth', { replace: true });
+    }
+    setLoading(false);
+  }, [newPassword, confirmPassword, navigate]);
+
   return (
     <>
       <style>{`
@@ -161,10 +194,10 @@ export default function AuthPage() {
         <div className="auth-right" style={{ width: 480, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
           <div style={{ width: '100%' }}>
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>
-              {mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
+              {mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : mode === 'set-password' ? 'New Password' : 'Reset Password'}
             </h2>
             <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 28 }}>
-              {mode === 'login' ? 'Access the NBSAP monitoring dashboard.' : mode === 'signup' ? 'Register your institutional account. A REMA Administrator will review and approve your request before you can sign in.' : 'Enter your email to receive a reset link.'}
+              {mode === 'login' ? 'Access the NBSAP monitoring dashboard.' : mode === 'signup' ? 'Register your institutional account. A REMA Administrator will review and approve your request before you can sign in.' : mode === 'set-password' ? 'Your identity has been verified. Choose a new password below.' : 'Enter your email to receive a reset link.'}
             </p>
 
             {/* Mode tabs */}
@@ -375,6 +408,68 @@ export default function AuthPage() {
                     ← Back to Sign In
                   </button>
                 </div>
+              </form>
+            )}
+
+            {/* ── SET NEW PASSWORD (after clicking email reset link) ── */}
+            {mode === 'set-password' && (
+              <form onSubmit={handleSetPassword} noValidate>
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <i className="fa-solid fa-shield-check" style={{ color: '#16a34a', fontSize: '1rem', marginTop: 2, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#166534', marginBottom: 2 }}>Set your new password</div>
+                    <div style={{ fontSize: '0.72rem', color: '#15803d', lineHeight: 1.5 }}>Your reset link is valid. Choose a strong password of at least 8 characters.</div>
+                  </div>
+                </div>
+
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <i className="fa-solid fa-lock" style={iconStyle} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Minimum 8 characters"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      className="auth-input"
+                      style={inputBase}
+                      autoComplete="new-password"
+                      autoFocus
+                    />
+                    <button type="button" onClick={() => setShowPassword(p => !p)}
+                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}>
+                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ fontSize: '0.85rem' }} />
+                    </button>
+                  </div>
+                  {newPassword.length > 0 && newPassword.length < 8 && (
+                    <div style={{ fontSize: '0.72rem', color: '#f43f5e', marginTop: 4 }}>Password must be at least 8 characters</div>
+                  )}
+                </div>
+
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Confirm New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <i className="fa-solid fa-lock" style={iconStyle} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Re-enter new password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      className="auth-input"
+                      style={confirmPassword && confirmPassword !== newPassword ? inputError : inputBase}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  {confirmPassword && confirmPassword !== newPassword && (
+                    <div style={{ fontSize: '0.72rem', color: '#f43f5e', marginTop: 4 }}>Passwords do not match</div>
+                  )}
+                </div>
+
+                <button type="submit" disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
+                  style={{ width: '100%', padding: '11px 0', background: 'linear-gradient(135deg, #0f2744, #1e3a5f)', color: '#fff', border: 'none', borderRadius: 9, fontSize: '0.9rem', fontWeight: 700, cursor: (loading || newPassword.length < 8 || newPassword !== confirmPassword) ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: (loading || newPassword.length < 8 || newPassword !== confirmPassword) ? 0.6 : 1 }}>
+                  {loading && <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite' }} />}
+                  {loading ? 'Updating Password…' : 'Set New Password'}
+                </button>
               </form>
             )}
 

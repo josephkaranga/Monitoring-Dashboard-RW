@@ -258,18 +258,34 @@ export function MapPage() {
   const { data: rawDistricts, refetch: refetchDistricts } = useDistricts();
   const districts: District[] = (rawDistricts as District[] | null) ?? [];
 
-  // Refresh the district list whenever a T02 report submission updates a district's status
+  // Load NBSAP Progress data
+  const { data: nbsapProgressData, loading: nbsapLoading, refetch: refetchNBSAP } = useNBSAPProgress();
+
+  // Load Threat Level data
+  const { data: threatLevelData, loading: threatLoading, refetch: refetchThreat } = useThreatLevels();
+
+  // ── Layer refresh listeners ───────────────────────────────────
+  // T02 district report → refresh submission / compliance / forest layers
   useEffect(() => {
     return eventBus.on('district-status-updated', () => {
       refetchDistricts();
     });
   }, [refetchDistricts]);
-  
-  // Load NBSAP Progress data
-  const { data: nbsapProgressData, loading: nbsapLoading } = useNBSAPProgress();
-  
-  // Load Threat Level data
-  const { data: threatLevelData, loading: threatLoading } = useThreatLevels();
+
+  // Any report approved → refresh district data (submission & compliance layers)
+  useEffect(() => {
+    return eventBus.on('dashboard-refresh', () => {
+      refetchDistricts();
+    });
+  }, [refetchDistricts]);
+
+  // Target progress change → refresh NBSAP progress layer
+  useEffect(() => {
+    return eventBus.on('target-progress-updated', () => {
+      refetchNBSAP();
+      refetchThreat();
+    });
+  }, [refetchNBSAP, refetchThreat]);
   
   // Layer and overlay state
   const [layer, setLayer] = useState<MapLayer>('submission');

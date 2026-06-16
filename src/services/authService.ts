@@ -42,6 +42,25 @@ export async function signIn(
     };
   }
 
+  // Block suspended accounts (unless suspension has expired)
+  if (profileRes.data.suspended_at) {
+    const suspEndDate = profileRes.data.suspension_end_date;
+    const suspExpired = suspEndDate && new Date(suspEndDate) <= new Date();
+    if (!suspExpired) {
+      await supabase.auth.signOut();
+      const endMsg = suspEndDate
+        ? ` Your suspension ends on ${new Date(suspEndDate).toLocaleDateString('en-RW', { day: 'numeric', month: 'long', year: 'numeric' })}.`
+        : '';
+      const reason = profileRes.data.suspension_reason
+        ? ` Reason: ${profileRes.data.suspension_reason}.`
+        : '';
+      return {
+        data: null,
+        error: `Your account has been suspended.${reason}${endMsg} Please contact the REMA Administrator for assistance.`,
+      };
+    }
+  }
+
   // Update last_login timestamp
   await supabase
     .from('profiles')
