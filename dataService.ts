@@ -9,7 +9,7 @@ import type {
   NotificationPreferences,
   UserSettings,
   ApiResponse,
-} from '../types';
+} from './index';
 
 // ============================================================
 // INDICATORS SERVICE
@@ -218,7 +218,7 @@ export async function exportAuditLogToCSV(entries: AuditEntry[]): Promise<string
   const header = fields.join(',');
   const rows = entries.map((e) =>
     fields
-      .map((f) => `"${String((e as Record<string, unknown>)[f] ?? '').replace(/"/g, '""')}"`)
+      .map((f) => `"${String((e as unknown as Record<string, unknown>)[f] ?? '').replace(/"/g, '""')}"`)
       .join(',')
   );
   return [header, ...rows].join('\n');

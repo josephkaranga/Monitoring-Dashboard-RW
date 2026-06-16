@@ -21,12 +21,13 @@ const card: React.CSSProperties = {
 
 export function UserManagementPage() {
   const { user: currentUser } = useAuth();
-  const { data: users = [], loading, refetch } = useAsync(getAllUsers, []);
+  const { data: usersResponse, loading, refetch } = useAsync(getAllUsers, []);
+  const users: UserProfile[] = (usersResponse as any)?.data ?? (Array.isArray(usersResponse) ? usersResponse : []);
   const [updating, setUpdating] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
 
-  const filteredUsers = (users as UserProfile[]).filter(u => {
+  const filteredUsers = users.filter((u: UserProfile) => {
     const matchSearch = !search || u.email.toLowerCase().includes(search.toLowerCase()) || u.full_name?.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
@@ -43,7 +44,7 @@ export function UserManagementPage() {
     setUpdating(null);
   }, [currentUser?.id, refetch]);
 
-  const roleCounts = (users as UserProfile[]).reduce((acc, u) => {
+  const roleCounts = users.reduce((acc: Record<UserRole, number>, u: UserProfile) => {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
   }, {} as Record<UserRole, number>);
@@ -80,7 +81,7 @@ export function UserManagementPage() {
           ))}
         </select>
         <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
-          {filteredUsers.length} of {(users as UserProfile[]).length} users
+          {filteredUsers.length} of {users.length} users
         </span>
       </div>
 

@@ -1,4 +1,4 @@
-import type { DashboardStats } from '../types';
+import type { DashboardStats } from './index';
 
 /**
  * Generates an AI-powered NBSAP progress narrative using the Claude API.
