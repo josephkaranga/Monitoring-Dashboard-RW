@@ -27,7 +27,8 @@ const card: React.CSSProperties = {
 };
 
 export function MapPage() {
-  const { data: districts = [] } = useDistricts();
+  const { data: rawDistricts } = useDistricts();
+  const districts: District[] = (rawDistricts as District[] | null) ?? [];
   const [layer, setLayer] = useState('submission');
   const [tooltip, setTooltip] = useState<{ d: District; x: number; y: number } | null>(null);
 

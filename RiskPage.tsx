@@ -24,11 +24,12 @@ export function RiskPage() {
   const [catFilter, setCatFilter] = useState('all');
   const [search, setSearch] = useState('');
 
-  const { data: risks = [], loading } = useRisks({
+  const { data: rawRisks, loading } = useRisks({
     level: levelFilter !== 'all' ? levelFilter : undefined,
     category: catFilter !== 'all' ? catFilter : undefined,
     search: search || undefined,
-  }) as { data: Risk[]; loading: boolean; error: string | null; refetch: () => void };
+  }) as { data: Risk[] | null; loading: boolean; error: string | null; refetch: () => void };
+  const risks: Risk[] = rawRisks ?? [];
 
   const handleExport = useCallback(() => {
     const fields = ['id','description','category','likelihood','impact','level','mitigation','owner'];

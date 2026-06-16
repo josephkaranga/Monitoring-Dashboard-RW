@@ -84,7 +84,8 @@ export default function IndicatorsPage() {
   const [selected, setSelected] = useState<Indicator | null>(null);
   const [groupByTarget, setGroupByTarget] = useState(false);
 
-  const { data: indicators = [], loading } = useIndicators({ tier: tierFilter !== 'all' ? tierFilter : undefined }) as { data: Indicator[]; loading: boolean; error: string | null; refetch: () => void };
+  const { data: rawIndicators, loading } = useIndicators({ tier: tierFilter !== 'all' ? tierFilter : undefined }) as { data: Indicator[] | null; loading: boolean; error: string | null; refetch: () => void };
+  const indicators: Indicator[] = rawIndicators ?? [];
 
   const filtered = useMemo(() => {
     if (!search.trim()) return indicators;
