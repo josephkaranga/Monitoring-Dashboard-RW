@@ -28,7 +28,36 @@ const TOOL_LABELS: Record<string, string> = {
   T04: 'Community Monitoring', T05: 'Finance Tracking', T06: 'Private Sector', T07: 'Research & Academic',
 };
 const TOOL_COLORS = ['#1B6CA8','#1E7D4B','#5B3FA6','#B56A00','#0E6655','#922B21','#1A5276'];
-const TABS = ['Overview','Targets & Indicators','Financial','Compliance','Evidence & Activities','Trends','AI Insights'];
+const TABS = ['Overview','Targets & Indicators','Financial','Compliance','Evidence & Activities','Trends','Submissions','AI Insights'];
+
+// ── Period-end date helper ─────────────────────────────────────
+function periodEndDate(period: string | null): Date | null {
+  if (!period) return null;
+  const s = period.trim();
+  const qMatch = s.match(/Q([1-4])\s+(\d{4})/i);
+  if (qMatch) {
+    const q = parseInt(qMatch[1]); const y = parseInt(qMatch[2]);
+    return new Date(y, q * 3, 0); // last day of quarter
+  }
+  const hMatch = s.match(/H([12])\s+(\d{4})/i);
+  if (hMatch) {
+    const h = parseInt(hMatch[1]); const y = parseInt(hMatch[2]);
+    return new Date(y, h === 1 ? 5 : 11, h === 1 ? 30 : 31);
+  }
+  const yMatch = s.match(/^(\d{4})$/);
+  if (yMatch) return new Date(parseInt(yMatch[1]), 11, 31);
+  return null;
+}
+
+// ── Institution resolver (tries multiple fields) ──────────────
+function resolveInstitution(r: { institution: string | null; form_data: Record<string, unknown>; submitted_by_profile?: { organization?: string } }): string {
+  if (r.institution) return r.institution;
+  const fd = r.form_data;
+  if (fd?.institution && typeof fd.institution === 'string') return fd.institution;
+  if (fd?.company && typeof fd.company === 'string') return fd.company;
+  if (r.submitted_by_profile?.organization) return r.submitted_by_profile.organization;
+  return 'Unknown';
+}
 
 const card: React.CSSProperties = { background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' };
 
@@ -821,8 +850,13 @@ SUGGESTED ACTIONS:
         </div>
       )}
 
-      {/* ── TAB 6: AI Insights ── */}
+      {/* ── TAB 6: Submissions ── */}
       {activeTab === 6 && (
+        <SubmissionsTab reports={reports} allReports={allReports} targets={targets} />
+      )}
+
+      {/* ── TAB 7: AI Insights ── */}
+      {activeTab === 7 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ background: 'linear-gradient(135deg, #0f2744, #1e3a5f)', borderRadius: 'var(--radius)', padding: 20, color: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
@@ -869,6 +903,327 @@ SUGGESTED ACTIONS:
     </div>
   );
 }
+
+// ── SubmissionsTab ────────────────────────────────────────────
+import type { ToolkitReport } from '../types/index';
+
+interface SubmissionsTabProps {
+  reports: ToolkitReport[];
+  allReports: ToolkitReport[];
+  targets: NBSAPTarget[];
+}
+
+function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
+  const now = new Date();
+
+  // ── Submitter stats ──────────────────────────────────────────
+  const submitterMap = useMemo(() => {
+    const map = new Map<string, {
+      name: string; email: string; org: string; role: string;
+      total: number; approved: number; pending: number; rejected: number;
+      tools: Set<string>; lastSubmitted: string; lateCount: number;
+    }>();
+    for (const r of reports) {
+      const uid = r.submitted_by ?? r.submitted_by_profile?.email ?? 'unknown';
+      const name = r.submitted_by_profile?.full_name || r.submitted_by_profile?.email || 'Unknown';
+      const email = r.submitted_by_profile?.email || '';
+      const org = resolveInstitution(r);
+      const role = r.submitted_by_profile?.role || '';
+      if (!map.has(uid)) {
+        map.set(uid, { name, email, org, role, total: 0, approved: 0, pending: 0, rejected: 0, tools: new Set(), lastSubmitted: r.submitted_at, lateCount: 0 });
+      }
+      const s = map.get(uid)!;
+      s.total++;
+      if (r.status === 'approved') s.approved++;
+      else if (r.status === 'pending') s.pending++;
+      else if (r.status === 'rejected') s.rejected++;
+      s.tools.add(r.tool_id);
+      if (r.submitted_at > s.lastSubmitted) s.lastSubmitted = r.submitted_at;
+      const due = periodEndDate(r.period);
+      if (due && new Date(r.submitted_at) > new Date(due.getTime() + 30 * 86400000)) s.lateCount++;
+    }
+    return [...map.values()].sort((a, b) => b.total - a.total);
+  }, [reports]);
+
+  // ── Late submissions ─────────────────────────────────────────
+  const lateReports = useMemo(() => {
+    return reports.filter(r => {
+      const due = periodEndDate(r.period);
+      if (!due) return false;
+      return new Date(r.submitted_at) > new Date(due.getTime() + 30 * 86400000);
+    }).sort((a, b) => b.submitted_at.localeCompare(a.submitted_at));
+  }, [reports]);
+
+  // ── On-time vs late breakdown ────────────────────────────────
+  const onTimeCount  = reports.filter(r => { const d = periodEndDate(r.period); return d ? new Date(r.submitted_at) <= new Date(d.getTime() + 30 * 86400000) : true; }).length;
+  const lateCount    = lateReports.length;
+
+  // ── Institution stats ────────────────────────────────────────
+  const institutionMap = useMemo(() => {
+    const map = new Map<string, { total: number; approved: number; pending: number; tools: Set<string>; last: string; targets: Set<number> }>();
+    for (const r of reports) {
+      const inst = resolveInstitution(r);
+      if (!map.has(inst)) map.set(inst, { total: 0, approved: 0, pending: 0, tools: new Set(), last: r.submitted_at, targets: new Set() });
+      const s = map.get(inst)!;
+      s.total++;
+      if (r.status === 'approved') s.approved++;
+      if (r.status === 'pending') s.pending++;
+      s.tools.add(r.tool_id);
+      if (r.nbsap_target_id) s.targets.add(r.nbsap_target_id);
+      if (r.submitted_at > s.last) s.last = r.submitted_at;
+    }
+    return [...map.entries()].map(([name, s]) => ({ name, ...s, compliance: s.total > 0 ? Math.round((s.approved / s.total) * 100) : 0 })).sort((a, b) => b.total - a.total);
+  }, [reports]);
+
+  // ── Recent activity feed ─────────────────────────────────────
+  const recentFeed = useMemo(() =>
+    [...reports].sort((a, b) => b.submitted_at.localeCompare(a.submitted_at)).slice(0, 20),
+  [reports]);
+
+  const th: React.CSSProperties = { padding: '8px 12px', textAlign: 'left' as const, fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em', color: 'var(--text-3)', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' };
+  const td: React.CSSProperties = { padding: '9px 12px', fontSize: '0.75rem', borderBottom: '1px solid var(--surface-3)', verticalAlign: 'middle' as const };
+
+  const daysLate = (r: ToolkitReport) => {
+    const d = periodEndDate(r.period);
+    if (!d) return 0;
+    return Math.max(0, Math.floor((new Date(r.submitted_at).getTime() - (d.getTime() + 30 * 86400000)) / 86400000));
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+      {/* ── KPI row ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 12 }}>
+        {[
+          { label: 'Total Submitters', value: submitterMap.length, icon: 'fa-users', bg: '#dbeafe', c: '#1e40af' },
+          { label: 'Institutions', value: institutionMap.length, icon: 'fa-building', bg: '#f3e8ff', c: '#7c3aed' },
+          { label: 'On-Time Reports', value: onTimeCount, icon: 'fa-circle-check', bg: '#dcfce7', c: '#166534' },
+          { label: 'Late Reports', value: lateCount, icon: 'fa-clock', bg: '#fef9c3', c: '#854d0e' },
+          { label: 'Reports This Month', value: reports.filter(r => r.submitted_at.startsWith(format(now, 'yyyy-MM'))).length, icon: 'fa-calendar', bg: '#e0f2fe', c: '#0369a1' },
+        ].map(k => (
+          <div key={k.label} style={{ ...card, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: k.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className={`fa-solid ${k.icon}`} style={{ color: k.c, fontSize: '1rem' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{k.label}</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, fontFamily: "'Playfair Display',serif", color: 'var(--text-1)', lineHeight: 1.2 }}>{k.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Who Submitted ── */}
+      <div>
+        <SectionHead icon="fa-users" title="Who Submitted" sub="All submitters — sorted by total report count" />
+        <div style={{ ...card, overflowX: 'auto' }}>
+          {submitterMap.length === 0
+            ? <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>No submissions yet</div>
+            : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {['Submitter','Institution / Org','Role','Reports','Approved','Pending','Tools Used','Late','Last Submitted'].map(h => <th key={h} style={th}>{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {submitterMap.map((s, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}>
+                      <td style={td}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#1B6CA8,#0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                            {s.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{s.name}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>{s.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ ...td, color: 'var(--text-2)' }}>{s.org}</td>
+                      <td style={{ ...td }}>
+                        <span style={{ fontSize: '0.62rem', padding: '2px 7px', borderRadius: 8, background: '#e0f2fe', color: '#0369a1', fontWeight: 600 }}>{s.role.replace(/_/g, ' ')}</span>
+                      </td>
+                      <td style={{ ...td, fontWeight: 700, textAlign: 'center' as const }}>{s.total}</td>
+                      <td style={{ ...td, color: '#166534', fontWeight: 700, textAlign: 'center' as const }}>{s.approved}</td>
+                      <td style={{ ...td, color: '#854d0e', fontWeight: 700, textAlign: 'center' as const }}>{s.pending}</td>
+                      <td style={td}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                          {[...s.tools].map(t => <span key={t} style={{ fontSize: '0.6rem', padding: '1px 5px', borderRadius: 4, background: 'var(--surface-3)', fontFamily: "'DM Mono',monospace", fontWeight: 600 }}>{t}</span>)}
+                        </div>
+                      </td>
+                      <td style={{ ...td, textAlign: 'center' as const }}>
+                        {s.lateCount > 0
+                          ? <span style={{ fontSize: '0.65rem', padding: '2px 7px', borderRadius: 8, background: '#fef9c3', color: '#854d0e', fontWeight: 700 }}>{s.lateCount}</span>
+                          : <span style={{ color: '#10b981', fontSize: '0.75rem' }}>✓</span>}
+                      </td>
+                      <td style={{ ...td, color: 'var(--text-3)', fontFamily: "'DM Mono',monospace", fontSize: '0.7rem' }}>
+                        {new Date(s.lastSubmitted).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+        </div>
+      </div>
+
+      {/* ── Late Submissions ── */}
+      <div>
+        <SectionHead icon="fa-clock" title="Late Submissions" sub="Reports submitted more than 30 days after the period end date" />
+        {lateReports.length === 0
+          ? (
+            <div style={{ ...card, padding: 20, textAlign: 'center', color: 'var(--text-3)' }}>
+              <i className="fa-solid fa-circle-check" style={{ fontSize: '2rem', color: '#10b981', opacity: 0.5, display: 'block', marginBottom: 8 }} />
+              <div style={{ fontSize: '0.82rem' }}>No late submissions detected — all reports within grace period</div>
+            </div>
+          ) : (
+            <div style={{ ...card, overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>{['Tool','Period','Due Date','Submitted','Days Late','Submitter','Institution','Status'].map(h => <th key={h} style={th}>{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {lateReports.slice(0, 30).map((r, i) => {
+                    const due = periodEndDate(r.period);
+                    const dl = daysLate(r);
+                    return (
+                      <tr key={r.id} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}>
+                        <td style={td}><span style={{ fontWeight: 700 }}>{r.tool_id}</span> <span style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>{TOOL_LABELS[r.tool_id]?.split(' ')[0]}</span></td>
+                        <td style={{ ...td, fontFamily: "'DM Mono',monospace" }}>{r.period ?? '—'}</td>
+                        <td style={{ ...td, fontFamily: "'DM Mono',monospace", color: '#854d0e' }}>{due ? format(due, 'dd MMM yyyy') : '—'}</td>
+                        <td style={{ ...td, fontFamily: "'DM Mono',monospace" }}>{format(parseISO(r.submitted_at), 'dd MMM yyyy')}</td>
+                        <td style={{ ...td, textAlign: 'center' as const }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '3px 9px', borderRadius: 8, background: dl > 90 ? '#fee2e2' : '#fef9c3', color: dl > 90 ? '#991b1b' : '#854d0e' }}>+{dl}d</span>
+                        </td>
+                        <td style={{ ...td, color: 'var(--text-2)' }}>{r.submitted_by_profile?.full_name || r.submitted_by_profile?.email || '—'}</td>
+                        <td style={{ ...td, color: 'var(--text-2)' }}>{resolveInstitution(r)}</td>
+                        <td style={td}>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: r.status === 'approved' ? '#dcfce7' : r.status === 'pending' ? '#fef9c3' : '#fee2e2', color: r.status === 'approved' ? '#166534' : r.status === 'pending' ? '#854d0e' : '#991b1b' }}>
+                            {r.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+      </div>
+
+      {/* ── Institutions ── */}
+      <div>
+        <SectionHead icon="fa-building" title="Institutions & Progress" sub="Report counts, approval rate, and target coverage per institution" />
+        <div style={{ ...card, overflowX: 'auto' }}>
+          {institutionMap.length === 0
+            ? <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>No institutions detected</div>
+            : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>{['Institution','Reports','Approved','Pending','Compliance Rate','Targets Covered','Tools','Last Submission'].map(h => <th key={h} style={th}>{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {institutionMap.map((inst, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}>
+                      <td style={{ ...td, fontWeight: 600 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: inst.compliance >= 70 ? '#10b981' : inst.compliance >= 40 ? '#f59e0b' : '#f43f5e', flexShrink: 0 }} />
+                          {inst.name}
+                        </div>
+                      </td>
+                      <td style={{ ...td, textAlign: 'center' as const, fontWeight: 700 }}>{inst.total}</td>
+                      <td style={{ ...td, textAlign: 'center' as const, color: '#166534', fontWeight: 700 }}>{inst.approved}</td>
+                      <td style={{ ...td, textAlign: 'center' as const, color: '#854d0e', fontWeight: 700 }}>{inst.pending}</td>
+                      <td style={{ ...td }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ flex: 1, height: 6, background: 'var(--surface-3)', borderRadius: 3, minWidth: 60 }}>
+                            <div style={{ width: `${inst.compliance}%`, height: '100%', borderRadius: 3, background: inst.compliance >= 70 ? '#10b981' : inst.compliance >= 40 ? '#f59e0b' : '#f43f5e' }} />
+                          </div>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, fontFamily: "'DM Mono',monospace", width: 34 }}>{inst.compliance}%</span>
+                        </div>
+                      </td>
+                      <td style={{ ...td, textAlign: 'center' as const }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+                          {[...inst.targets].slice(0, 5).map(t => {
+                            const tgt = targets.find(x => x.id === t);
+                            const prog = tgt?.progress ?? 0;
+                            return <span key={t} style={{ fontSize: '0.58rem', padding: '1px 5px', borderRadius: 4, background: prog >= 60 ? '#dcfce7' : prog >= 35 ? '#fef9c3' : '#fee2e2', color: prog >= 60 ? '#166534' : prog >= 35 ? '#854d0e' : '#991b1b', fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>T{t}</span>;
+                          })}
+                          {inst.targets.size > 5 && <span style={{ fontSize: '0.58rem', color: 'var(--text-3)' }}>+{inst.targets.size - 5}</span>}
+                        </div>
+                      </td>
+                      <td style={td}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                          {[...inst.tools].map(t => <span key={t} style={{ fontSize: '0.6rem', padding: '1px 5px', borderRadius: 4, background: 'var(--surface-3)', fontFamily: "'DM Mono',monospace", fontWeight: 600 }}>{t}</span>)}
+                        </div>
+                      </td>
+                      <td style={{ ...td, color: 'var(--text-3)', fontFamily: "'DM Mono',monospace", fontSize: '0.7rem' }}>
+                        {new Date(inst.last).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+        </div>
+      </div>
+
+      {/* ── Recent Submissions Feed ── */}
+      <div>
+        <SectionHead icon="fa-timeline" title="Recent Submission Activity" sub="Latest 20 submissions — most recent first" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0, ...card, overflow: 'hidden' }}>
+          {recentFeed.length === 0
+            ? <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>No submissions yet</div>
+            : recentFeed.map((r, i) => {
+              const due    = periodEndDate(r.period);
+              const isLate = due ? new Date(r.submitted_at) > new Date(due.getTime() + 30 * 86400000) : false;
+              const dl     = daysLate(r);
+              const statusBg = r.status === 'approved' ? '#dcfce7' : r.status === 'pending' ? '#fef9c3' : '#fee2e2';
+              const statusC  = r.status === 'approved' ? '#166534'  : r.status === 'pending' ? '#854d0e'  : '#991b1b';
+              return (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recentFeed.length - 1 ? '1px solid var(--surface-3)' : 'none', background: isLate ? '#fffbeb' : 'transparent' }}>
+                  {/* Tool badge */}
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#1B6CA8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className={`fa-solid fa-${TOOL_ICONS[r.tool_id] ?? 'file'}`} style={{ color: '#fff', fontSize: '0.8rem' }} />
+                  </div>
+                  {/* Main info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-1)' }}>{r.tool_id}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>{TOOL_LABELS[r.tool_id]}</span>
+                      {r.nbsap_target_id && <span style={{ fontSize: '0.62rem', padding: '1px 6px', borderRadius: 6, background: '#dbeafe', color: '#1e40af', fontWeight: 700 }}>T{r.nbsap_target_id}</span>}
+                      {isLate && <span style={{ fontSize: '0.6rem', padding: '1px 6px', borderRadius: 6, background: '#fef9c3', color: '#854d0e', fontWeight: 700 }}>⏰ +{dl}d late</span>}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: 2 }}>
+                      {r.submitted_by_profile?.full_name || r.submitted_by_profile?.email || 'Unknown'} · {resolveInstitution(r)} · {r.period ?? 'No period'}
+                    </div>
+                  </div>
+                  {/* Date */}
+                  <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
+                    <div style={{ fontSize: '0.68rem', fontFamily: "'DM Mono',monospace", color: 'var(--text-3)' }}>
+                      {format(parseISO(r.submitted_at), 'dd MMM yyyy')}
+                    </div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', marginTop: 1 }}>
+                      {format(parseISO(r.submitted_at), 'HH:mm')}
+                    </div>
+                  </div>
+                  {/* Status */}
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '3px 9px', borderRadius: 8, background: statusBg, color: statusC, flexShrink: 0 }}>
+                    {r.status}
+                  </span>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const TOOL_ICONS: Record<string, string> = {
+  T01: 'landmark', T02: 'tree', T03: 'shield', T04: 'users', T05: 'coins', T06: 'industry', T07: 'flask',
+};
 
 function NoData() {
   return (
