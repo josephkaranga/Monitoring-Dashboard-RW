@@ -48,30 +48,74 @@ const AuthContext = createContext<AuthContextValue>({
   refreshProfile: async () => {},
 });
 
-// Cache profile in memory to avoid re-fetching on every render
+// ── In-memory profile cache (5 min TTL) ──────────────────────
 let profileCache: { userId: string; profile: UserProfile; ts: number } | null = null;
-const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const PROFILE_CACHE_TTL = 5 * 60 * 1000;
+
+// ── sessionStorage helpers (survives page refresh) ───────────
+const SESSION_KEY = 'nbsap_profile_cache';
+
+function readSessionCache(userId: string): UserProfile | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { userId: string; profile: UserProfile; ts: number };
+    if (parsed.userId !== userId) return null;
+    if (Date.now() - parsed.ts > PROFILE_CACHE_TTL) return null;
+    return parsed.profile;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionCache(userId: string, profile: UserProfile) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ userId, profile, ts: Date.now() }));
+  } catch {
+    // sessionStorage unavailable — ignore
+  }
+}
+
+function clearSessionCache() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch { /* ignore */ }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const mountedRef = useRef(true);
-  const loadingRef = useRef(false); // prevent duplicate loads
+  const loadingRef = useRef(false);
+  // Use a ref to track loading state for the safety timeout (avoids stale closure)
+  const isLoadingRef = useRef(true);
 
   const loadUserData = useCallback(async (
     userId: string,
     session: import('@supabase/supabase-js').Session
   ) => {
-    // Prevent duplicate concurrent loads
     if (loadingRef.current) return;
     loadingRef.current = true;
 
     try {
-      // Use cache if fresh
       let profile: UserProfile | null = null;
+
+      // 1. Check in-memory cache
       if (profileCache && profileCache.userId === userId && Date.now() - profileCache.ts < PROFILE_CACHE_TTL) {
         profile = profileCache.profile;
-      } else {
+      }
+
+      // 2. Check sessionStorage cache (survives page refresh)
+      if (!profile) {
+        profile = readSessionCache(userId);
+        if (profile) {
+          // Warm the in-memory cache too
+          profileCache = { userId, profile, ts: Date.now() };
+        }
+      }
+
+      // 3. Fetch from DB if no cache hit
+      if (!profile) {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -85,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         profile = data as UserProfile;
         profileCache = { userId, profile, ts: Date.now() };
+        writeSessionCache(userId, profile);
       }
 
       if (!mountedRef.current) return;
@@ -93,10 +138,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!profile.is_active) {
         await supabase.auth.signOut();
         profileCache = null;
+        clearSessionCache();
         dispatch({ type: 'CLEAR_SESSION' });
         return;
       }
 
+      isLoadingRef.current = false;
       dispatch({ type: 'SET_SESSION', user: profile, session });
 
       // Background tasks — don't block UI
@@ -118,7 +165,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    profileCache = null; // clear cache on manual refresh
+    profileCache = null;
+    clearSessionCache();
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session?.user) return;
     await loadUserData(sessionData.session.user.id, sessionData.session);
@@ -126,20 +174,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = useCallback(async () => {
     profileCache = null;
+    clearSessionCache();
     await supabase.auth.signOut();
+    isLoadingRef.current = false;
     dispatch({ type: 'CLEAR_SESSION' });
     setSettings(null);
   }, []);
 
   useEffect(() => {
     mountedRef.current = true;
+    isLoadingRef.current = true;
 
-    // Hard safety timeout — 6s max
+    // Safety timeout — uses ref so it always sees the real loading state
     const safetyTimeout = setTimeout(() => {
-      if (mountedRef.current && state.loading) {
+      if (mountedRef.current && isLoadingRef.current) {
+        console.warn('Auth safety timeout fired — forcing loading=false');
+        isLoadingRef.current = false;
         dispatch({ type: 'SET_LOADING', loading: false });
       }
-    }, 6000);
+    }, 5000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -150,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session?.user) {
             await loadUserData(session.user.id, session);
           } else {
+            isLoadingRef.current = false;
             dispatch({ type: 'CLEAR_SESSION' });
           }
         } else if (event === 'SIGNED_IN' && session?.user) {
@@ -158,13 +212,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (event === 'SIGNED_OUT') {
           clearTimeout(safetyTimeout);
           profileCache = null;
+          clearSessionCache();
+          isLoadingRef.current = false;
           dispatch({ type: 'CLEAR_SESSION' });
           setSettings(null);
         } else if (event === 'TOKEN_REFRESHED') {
-          // Token refreshed silently — just clear loading, don't re-fetch profile
+          // Silent token refresh — don't re-fetch profile, just unblock loading
+          isLoadingRef.current = false;
           dispatch({ type: 'SET_LOADING', loading: false });
         } else if (event === 'USER_UPDATED' && session?.user) {
           profileCache = null;
+          clearSessionCache();
           await loadUserData(session.user.id, session);
         }
       }
