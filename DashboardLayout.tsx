@@ -6,6 +6,7 @@ import {
   FileText, UserCheck, Database, GitBranch, MapPin, FileEdit, Bell,
   Settings, Download, LogOut, Menu, X, ChevronDown,
 } from 'lucide-react';
+import { ErrorBoundary } from './ErrorBoundary';
 import { useAuth } from './AuthContext';
 import { useNotifications } from './useData';
 import { usePendingCount } from './useData';
@@ -416,7 +417,9 @@ export default function DashboardLayout() {
 
         {/* Page content */}
         <div style={{ padding: '24px 28px', flex: 1 }}>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
 
