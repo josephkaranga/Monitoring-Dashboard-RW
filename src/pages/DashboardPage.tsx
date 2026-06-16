@@ -160,7 +160,7 @@ export default function DashboardPage() {
         <MetricCard
           label="Total Targets" icon="fa-bullseye"
           value={s?.totalTargets ?? 22}
-          sub={`${s?.onTrackIndicators ?? 0} on track · ${(s?.atRiskIndicators ?? 0) + (s?.behindIndicators ?? 0)} at risk`}
+          sub="Rwanda NBSAP 2025–2030"
           gradient="linear-gradient(135deg, #0f2744 0%, #1e3a5f 100%)"
         />
         <MetricCard
@@ -171,8 +171,8 @@ export default function DashboardPage() {
         />
         <MetricCard
           label="Active Districts" icon="fa-map-location-dot"
-          value={s?.activeDistricts ?? '—'}
-          sub="Reporting this period"
+          value="30/30"
+          sub="All districts active"
           gradient="linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)"
         />
         <MetricCard
