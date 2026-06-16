@@ -106,9 +106,22 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, session, loading, permissions } = useAuth();
   const location = useLocation();
+  const [stableReady, setStableReady] = React.useState(false);
 
-  // Show loading state while auth is initialising
-  if (loading) {
+  // Give auth one extra tick to settle after loading=false
+  // This prevents the flash-redirect when TOKEN_REFRESHED fires
+  // slightly before SET_SESSION completes
+  React.useEffect(() => {
+    if (!loading) {
+      const t = setTimeout(() => setStableReady(true), 50);
+      return () => clearTimeout(t);
+    } else {
+      setStableReady(false);
+    }
+  }, [loading]);
+
+  // Show loading while auth is initialising OR settling
+  if (loading || !stableReady) {
     return <>{loadingComponent ?? <LoadingScreen />}</>;
   }
 
