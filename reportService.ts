@@ -111,18 +111,7 @@ export async function fetchReports(
 
   let query = supabase
     .from('toolkit_reports')
-    .select(
-      `
-      *,
-      submitted_by_profile:profiles!toolkit_reports_submitted_by_fkey(
-        id, full_name, email, role, organization
-      ),
-      reviewed_by_profile:profiles!toolkit_reports_reviewed_by_fkey(
-        id, full_name, email
-      )
-    `,
-      { count: 'exact' }
-    )
+    .select('*', { count: 'exact' })
     .order('submitted_at', { ascending: false });
 
   if (toolId && toolId !== 'ALL') query = query.eq('tool_id', toolId);

@@ -56,6 +56,7 @@ export function useAsync<T>(
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    mountedRef.current = true;
     fetch();
     return () => { mountedRef.current = false; };
   }, [fetch]);
@@ -68,20 +69,12 @@ export function useAsync<T>(
 export function useDashboardStats(autoRefresh = true) {
   const { data, loading, error, refetch } = useAsync(getDashboardStats, []);
 
-  // Auto-refresh every 60 seconds
+  // Auto-refresh every 60 seconds only if enabled
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(refetch, 60_000);
     return () => clearInterval(interval);
   }, [autoRefresh, refetch]);
-
-  // Live subscription to report changes
-  useEffect(() => {
-    const channel = subscribeToReports(() => {
-      refetch();
-    });
-    return () => { supabase.removeChannel(channel); };
-  }, [refetch]);
 
   return { stats: data as DashboardStats | null, loading, error, refetch };
 }
@@ -93,18 +86,30 @@ export function useReports(filters: ReportFilters = {}) {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await fetchReports(filters);
-    setReports(result.data);
-    setCount(result.count);
-    setLoading(false);
+    try {
+      const result = await fetchReports(filters);
+      if (mountedRef.current) {
+        setReports(result.data);
+        setCount(result.count);
+      }
+    } catch (err) {
+      console.error('useReports error:', err);
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
   }, [JSON.stringify(filters)]); // eslint-disable-line
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    mountedRef.current = true;
+    load();
+    return () => { mountedRef.current = false; };
+  }, [load]);
 
-  // Subscribe to realtime changes
+  // Single realtime subscription per hook instance
   useEffect(() => {
     const channel = subscribeToReports(() => load());
     return () => { supabase.removeChannel(channel); };
@@ -128,9 +133,10 @@ export function usePendingCount(): number {
 
   useEffect(() => { load(); }, [load]);
 
+  // Refresh every 30s instead of realtime subscription
   useEffect(() => {
-    const channel = subscribeToReports(() => load());
-    return () => { supabase.removeChannel(channel); };
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   return count;
@@ -174,7 +180,7 @@ export function useAuditLog(filters?: { actionType?: string; limit?: number }) {
 export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -186,7 +192,7 @@ export function useNotifications() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Realtime subscription
+  // Realtime subscription for new notifications only
   useEffect(() => {
     if (!user?.id) return;
     const channel = subscribeToNotifications(user.id, (newNotif: Notification) => {
