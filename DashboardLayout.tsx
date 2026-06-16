@@ -225,7 +225,8 @@ export default function DashboardLayout() {
                 {getPageTitle(location.pathname)}
               </h2>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-                National Biodiversity Strategy &amp; Action Plan 2025–2030
+                {getGreeting()}, <strong style={{ color: 'var(--sky-dim)' }}>{user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}</strong>
+                &nbsp;·&nbsp; National Biodiversity Strategy &amp; Action Plan 2025–2030
               </p>
             </div>
           </div>
@@ -343,13 +344,19 @@ export default function DashboardLayout() {
               onClick={handleSignOut}
               title="Sign Out"
               style={{
-                width: 36, height: 36, borderRadius: 9,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'var(--text-2)',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px', borderRadius: 9,
+                border: '1px solid #fecaca', background: '#fff1f2',
+                cursor: 'pointer', color: '#dc2626',
+                fontSize: '0.78rem', fontWeight: 600,
+                fontFamily: "'DM Sans', sans-serif",
+                transition: '0.2s',
               }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fee2e2'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fff1f2'; }}
             >
-              <i className="fa-solid fa-right-from-bracket" style={{ fontSize: '0.85rem' }} />
+              <i className="fa-solid fa-right-from-bracket" style={{ fontSize: '0.82rem' }} />
+              Sign Out
             </button>
           </div>
         </header>
@@ -375,6 +382,13 @@ export default function DashboardLayout() {
       `}</style>
     </div>
   );
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 function getPageTitle(pathname: string): string {
