@@ -61,6 +61,27 @@ export async function signIn(
 export async function signUp(
   userData: SignupData
 ): Promise<ApiResponse<UserProfile>> {
+  // Check if user already exists
+  const { data: existingUser } = await supabase
+    .from('profiles')
+    .select('email, is_active')
+    .eq('email', userData.email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (existingUser) {
+    if (existingUser.is_active) {
+      return { 
+        data: null, 
+        error: 'This email is already registered. Please sign in or use the "Forgot password" option if you cannot access your account.' 
+      };
+    } else {
+      return { 
+        data: null, 
+        error: 'An account with this email is pending approval. Please wait for REMA Administrator approval or contact support.' 
+      };
+    }
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email: userData.email.trim().toLowerCase(),
     password: userData.password,
@@ -74,7 +95,17 @@ export async function signUp(
     },
   });
 
-  if (error) return { data: null, error: error.message };
+  if (error) {
+    // Provide user-friendly error messages
+    if (error.message.includes('already registered') || error.message.includes('already exists')) {
+      return { 
+        data: null, 
+        error: 'This email is already registered. Please sign in or use the "Forgot password" option.' 
+      };
+    }
+    return { data: null, error: error.message };
+  }
+  
   if (!data.user) return { data: null, error: 'Signup failed' };
 
   // Profile is created automatically via DB trigger
