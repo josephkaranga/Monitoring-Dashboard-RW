@@ -3,29 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAsync, useIndicators } from './useData';
 import { fetchTargets } from './dataService';
 import type { NBSAPTarget, Indicator, IndicatorTier } from './index';
-  1:  { headline: '% of land and water bodies covered by biodiversity-inclusive spatial plans', component: ['% of spatial plans utilising KBA information', 'Number of KBAs included in spatial planning'], complementary: [] },
-  2:  { headline: 'Area (ha) of degraded land and inland water under restoration', component: ['Areas of degraded wetland ecosystems restored', 'Areas of degraded natural forest restored'], complementary: [] },
-  3:  { headline: 'Area (ha) of land/inland water conserved; Coverage of PAs and OECMs', component: ['Area (ha) of Key Biodiversity Areas effectively conserved', 'Area (ha) of Ramsar wetlands managed'], complementary: [] },
-  4:  { headline: 'Number of invasive alien species eradicated or controlled', component: ['Number of IAS management plans implemented', 'Area (ha) treated for IAS removal'], complementary: ['Trade volume of potentially invasive species'] },
-  5:  { headline: '% of wild species harvested sustainably', component: ['Number of species with sustainable harvest plans', 'Volume of legally harvested wild species'], complementary: ['Market value of sustainably sourced wild products'] },
-  6:  { headline: 'Area (ha) of aquatic ecosystems managed sustainably', component: ['% of fish stocks within sustainable limits', 'Number of freshwater species with recovery plans'], complementary: [] },
-  7:  { headline: 'Area (ha) under sustainable agriculture, aquaculture and forestry', component: ['% of agricultural land with biodiversity-friendly practices', 'Number of farms with agri-environment schemes'], complementary: ['Pesticide use per hectare of agricultural land'] },
-  8:  { headline: 'Ecological connectivity index across landscapes', component: ['Length (km) of wildlife corridors established', 'Number of transboundary conservation agreements'], complementary: ['Fragmentation index of natural habitats'] },
-  9:  { headline: '% of wild species benefiting people with secure status', component: ['Number of species used in traditional medicine with stable populations', 'Number of community-based NRM agreements'], complementary: ['Household income from wild species use'] },
-  10: { headline: 'Area (ha) of urban green and blue spaces', component: ['% of urban population within 300m of green space', 'Number of urban biodiversity action plans'], complementary: ['Urban heat island intensity'] },
-  11: { headline: 'Benefits from genetic resources shared equitably', component: ['Number of ABS agreements concluded', 'Number of communities benefiting from genetic resource use'], complementary: [] },
-  12: { headline: 'Area (ha) of green and blue infrastructure in urban/peri-urban areas', component: ['Investment (USD) in nature-based solutions', 'Number of ecosystem service valuations completed'], complementary: ['% of infrastructure projects with biodiversity impact assessment'] },
-  13: { headline: 'Biodiversity mainstreamed across all sectors (policy integration index)', component: ['Number of sectoral policies with biodiversity provisions', 'Number of NBSAPs integrated into national development plans'], complementary: ['% of government budget with biodiversity co-benefits'] },
-  14: { headline: 'Total biodiversity finance mobilised (USD)', component: ['Public biodiversity expenditure (USD)', 'Private sector biodiversity investment (USD)', 'International biodiversity finance received (USD)'], complementary: ['Biodiversity-harmful subsidies reformed (USD)'] },
-  15: { headline: 'Businesses reporting on biodiversity dependencies and impacts (%)', component: ['Number of companies with biodiversity commitments', 'Number of financial institutions with biodiversity policies'], complementary: ['Value of biodiversity-related financial products'] },
-  16: { headline: 'Countries with functional national biodiversity monitoring systems (%)', component: ['Number of biodiversity indicators with regular data', 'Frequency of national biodiversity assessments'], complementary: ['Open data availability for biodiversity indicators'] },
-  17: { headline: 'Countries with updated NBSAPs aligned to GBF (%)', component: ['Number of national targets aligned to GBF targets', 'Number of NBSAP implementation reviews completed'], complementary: [] },
-  18: { headline: 'Biodiversity-harmful incentives identified and reformed (USD)', component: ['Number of harmful subsidies identified', 'Number of subsidy reform policies enacted'], complementary: ['Economic value of reformed incentives'] },
-  19: { headline: 'Capacity and technology transfer for biodiversity (index)', component: ['Number of technology transfer agreements', 'Number of capacity-building programmes delivered'], complementary: ['Number of trained biodiversity professionals'] },
-  20: { headline: 'Indigenous and local community participation in governance (%)', component: ['Number of ILC representatives in biodiversity decision-making bodies', 'Area (ha) under ILC-led conservation'], complementary: ['Number of ILC land rights formalised'] },
-  21: { headline: 'Countries with gender-responsive biodiversity policies (%)', component: ['% of women in biodiversity governance roles', 'Number of gender-responsive biodiversity programmes'], complementary: [] },
-  22: { headline: 'Countries with youth engagement in biodiversity governance (%)', component: ['Number of youth biodiversity platforms', 'Number of youth-led biodiversity initiatives funded'], complementary: [] },
-};
 
 const GOAL_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
   A: { bg: '#dcfce7', text: '#166534', border: '#bbf7d0', label: 'Goal A' },
