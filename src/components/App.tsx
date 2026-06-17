@@ -23,7 +23,7 @@ const RiskPage = lazy(() => import('../pages/RiskPage'));
 const MapPage = lazy(() => import('../pages/MapPage'));
 const ReportsPage = lazy(() => import('../pages/ReportsPage'));
 const StakeholdersPage = lazy(() => import('../pages/StakeholdersPage'));
-const RBISPage = lazy(() => import('../pages/RBISPage'));
+const RBISPage = lazy(() => import('../pages/BiodiversityDataPage'));
 const DataPipelinePage = lazy(() => import('../pages/DataPipelinePage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 const UserManagementPage = lazy(() => import('../pages/UserManagementPage'));
