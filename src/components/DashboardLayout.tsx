@@ -96,7 +96,7 @@ export default function DashboardLayout() {
   const systemNav = [
     // RBIS Integration - visible to all roles EXCEPT public_viewer and local_reporting
     // Controlled by canViewAnalytics permission
-    { to: '/rbis',          icon: 'fa-database',       label: 'RBIS Integration', visible: canSeeAnalytics },
+    { to: '/rbis',          icon: 'fa-database',       label: 'Biodiversity Data', visible: canSeeAnalytics },
     // Data Pipeline - visible to all roles EXCEPT public_viewer and local_reporting
     // Controlled by canViewAnalytics permission
     { to: '/data-pipeline', icon: 'fa-diagram-project', label: 'Data Pipeline', visible: canSeeAnalytics },
@@ -458,7 +458,7 @@ function getPageTitle(pathname: string): string {
     '/reports':             'Reports & Documentation',
     '/stakeholders':        'Stakeholder Engagement Matrix',
     '/map':                 'District Map',
-    '/rbis':                'RBIS Integration & Data Governance',
+    '/rbis':                'Biodiversity Data',
     '/data-pipeline':       '5-Tier Data Pipeline & Implementation Roadmap',
     '/role-requests':       'Role Change Requests',
     '/role-requests/admin': 'Approve Role Requests',
