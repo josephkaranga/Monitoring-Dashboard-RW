@@ -28,7 +28,7 @@ const TOOL_LABELS: Record<string, string> = {
   T04: 'Community Monitoring', T05: 'Finance Tracking', T06: 'Private Sector', T07: 'Research & Academic',
 };
 const TOOL_COLORS = ['#1B6CA8','#1E7D4B','#5B3FA6','#B56A00','#0E6655','#922B21','#1A5276'];
-const TABS = ['Overview','Targets & Indicators','Financial','Compliance','Evidence & Activities','Trends','Submissions','AI Insights'];
+const TABS = ['Overview','Targets & Indicators','Financial','Compliance','Evidence & Activities','Trends','Submissions'];
 
 // ── Period-end date helper ─────────────────────────────────────
 function periodEndDate(period: string | null): Date | null {
@@ -111,8 +111,6 @@ export function ReportsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [targets, setTargets] = useState<NBSAPTarget[]>([]);
   const [indicators, setIndicators] = useState<Indicator[]>([]);
-  const [aiText, setAiText] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ status: 'all', toolId: 'all', district: 'all', year: 'all' });
   const printRef = useRef<HTMLDivElement>(null);
@@ -374,70 +372,6 @@ export function ReportsPage() {
 
   const handlePrint = useCallback(() => window.print(), []);
 
-  // ── AI Analytics ───────────────────────────────────────────
-  const handleAI = useCallback(async () => {
-    setAiLoading(true);
-    try {
-      const summary = {
-        totalReports: reports.length,
-        approved: approved.length,
-        pending: pending.length,
-        overallProgress: kpis.overallProgress,
-        targets: targets.length,
-        indicators: indicators.length,
-        onTrackTargets: targets.filter(t => t.progress >= 60).length,
-        atRiskTargets: targets.filter(t => t.progress >= 35 && t.progress < 60).length,
-        behindTargets: targets.filter(t => t.progress < 35).length,
-        evidenceFiles: kpis.evidenceCount,
-        topChallenges: Object.entries((() => {
-          const f: Record<string, number> = {};
-          reports.forEach(r => String(r.form_data?.challenges ?? '').split(/\s+/).forEach((w: string) => { if (w.length > 5) f[w] = (f[w] || 0) + 1; }));
-          return f;
-        })()).sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]),
-      };
-      const prompt = `You are a senior NBSAP policy analyst for Rwanda REMA reviewing biodiversity monitoring data.
-
-ANALYTICS SNAPSHOT:
-- Total reports submitted: ${summary.totalReports} (${summary.approved} approved, ${summary.pending} pending)
-- Overall national NBSAP progress: ${summary.overallProgress}%
-- Targets: ${summary.targets} total | On-track: ${summary.onTrackTargets} | At-risk: ${summary.atRiskTargets} | Behind: ${summary.behindTargets}
-- Indicators monitored: ${summary.indicators}
-- Evidence files: ${summary.evidenceFiles}
-- Top challenge keywords: ${summary.topChallenges.join(', ')}
-
-Generate a comprehensive analytics insight report with 4 sections:
-1. TREND ANALYSIS (2-3 sentences): What the submission and approval data reveals about implementation momentum.
-2. EMERGING RISKS (2-3 sentences): Based on the at-risk/behind targets and challenge keywords, what risks are emerging.
-3. PERFORMANCE INSIGHTS (2-3 sentences): Key performance findings from the data.
-4. SUGGESTED ACTIONS (3 bullet points): Specific, actionable recommendations for the next quarter.
-
-Write in professional policy language. Be data-specific. Reference Rwanda and KM-GBF targets where relevant.`;
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
-      });
-      if (!response.ok) throw new Error('API error');
-      const data = await response.json();
-      setAiText(data.content?.[0]?.text || 'No response received.');
-    } catch {
-      setAiText(`Based on the available data (${reports.length} reports, ${kpis.overallProgress}% overall progress, ${approved.length} approved):
-
-TREND ANALYSIS: Report submission activity indicates active engagement across all 7 toolkit tools. The ${Math.round((approved.length / Math.max(reports.length, 1)) * 100)}% approval rate suggests the verification pipeline is ${approved.length > pending.length ? 'flowing well' : 'experiencing a backlog that needs attention'}.
-
-EMERGING RISKS: With ${targets.filter(t => t.progress < 35).length} targets behind schedule, there is a risk of missing the 2030 KM-GBF commitments for those target areas. The concentration of reports in certain tools may indicate data gaps in underreported sectors.
-
-PERFORMANCE INSIGHTS: The ${kpis.overallProgress}% national progress reflects ${kpis.overallProgress >= 50 ? 'reasonable momentum' : 'slower-than-expected progress'} toward 2030 targets. Evidence files uploaded (${kpis.evidenceCount}) demonstrate active documentation of field activities.
-
-SUGGESTED ACTIONS:
-• Prioritise approval of ${pending.length} pending reports to ensure data completeness for the quarterly review.
-• Convene a coordination meeting for the ${targets.filter(t => t.progress < 35).length} behind-schedule targets with responsible stakeholders.
-• Increase data collection in underreported districts to ensure geographic coverage for the national report.`);
-    }
-    setAiLoading(false);
-  }, [reports, approved, pending, targets, indicators, kpis]);
-
   // ── Early returns ──────────────────────────────────────────
   if (checkingAccess) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, flexDirection: 'column', gap: 16 }}>
@@ -463,12 +397,9 @@ SUGGESTED ACTIONS:
       {/* ── Page Header ── */}
       <div style={{ ...card, padding: '14px 18px', marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <i className="fa-solid fa-chart-mixed" style={{ color: '#38bdf8', fontSize: '1.1rem' }} />
-          </div>
           <div>
-            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)' }}>NBSAP Analytics Dashboard</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>National Biodiversity Strategy 2020–2030 · {reports.length} reports · auto-updates on approval</div>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)' }}>Reports &amp; Analytics</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{reports.length} reports</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -853,50 +784,6 @@ SUGGESTED ACTIONS:
       {/* ── TAB 6: Submissions ── */}
       {activeTab === 6 && (
         <SubmissionsTab reports={reports} allReports={allReports} targets={targets} />
-      )}
-
-      {/* ── TAB 7: AI Insights ── */}
-      {activeTab === 7 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: 'linear-gradient(135deg, #0f2744, #1e3a5f)', borderRadius: 'var(--radius)', padding: 20, color: '#fff' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
-              <div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span>✦</span> AI Analytics Engine
-                  <span style={{ fontSize: '0.62rem', opacity: 0.6, fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>· Powered by Claude API</span>
-                </div>
-                <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: 0 }}>Analyzes {reports.length} reports · {targets.length} targets · {indicators.length} indicators · {kpis.evidenceCount} evidence files</p>
-              </div>
-              <button onClick={handleAI} disabled={aiLoading} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 18px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: aiLoading ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", opacity: aiLoading ? 0.6 : 1 }}>
-                {aiLoading ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> : <i className="fa-solid fa-wand-magic-sparkles" />}
-                {aiLoading ? 'Analyzing…' : 'Generate Analytics Insights'}
-              </button>
-            </div>
-            <div style={{ fontSize: '0.82rem', lineHeight: 1.8, color: '#e0f2fe', whiteSpace: 'pre-wrap' }}>
-              {aiText || <span style={{ opacity: 0.55 }}>Click <strong>Generate Analytics Insights</strong> to receive AI-powered trend analysis, emerging risks, performance insights, and recommended actions — derived from your current reporting data using the Claude API.</span>}
-            </div>
-          </div>
-
-          {/* Data summary for AI context */}
-          <div style={{ ...card, padding: 16 }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-2)', marginBottom: 12 }}>Data Analyzed</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
-              {[
-                { label: 'Implementation Activities', val: approved.filter(r => r.form_data?.activities).length + ' reports with activities' },
-                { label: 'Challenges Documented', val: reports.filter(r => r.form_data?.challenges).length + ' challenge reports' },
-                { label: 'Budget Data Points', val: reports.filter(r => r.form_data?.budget_allocated || r.form_data?.budget_utilized).length + ' finance entries' },
-                { label: 'EIA Compliance Records', val: reports.filter(r => r.tool_id === 'T06').length + ' T06 submissions' },
-                { label: 'Species Sightings', val: reports.filter(r => r.form_data?.species_sightings).length + ' community reports' },
-                { label: 'Research Findings', val: reports.filter(r => r.tool_id === 'T07').length + ' research submissions' },
-              ].map(item => (
-                <div key={item.label} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>{item.val}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       )}
 
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @media print { button { display: none !important; } }`}</style>
