@@ -165,18 +165,18 @@ export default function DashboardLayout() {
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 38, height: 38,
-            background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
-            borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 16, flexShrink: 0,
+            width: 34, height: 34,
+            background: '#1e3a5f',
+            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#94a3b8', fontSize: 14, flexShrink: 0,
           }}>
             <i className="fa-solid fa-leaf" />
           </div>
           <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.05rem', color: '#fff', letterSpacing: 0.5 }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', letterSpacing: 0.3 }}>
               NBSAP
             </div>
-            <div style={{ fontSize: '0.65rem', color: '#7dd3fc', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em', marginTop: 1 }}>
+            <div style={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '0.04em', marginTop: 1 }}>
               Monitoring System
             </div>
           </div>
@@ -194,20 +194,8 @@ export default function DashboardLayout() {
 
       {/* Footer */}
       <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{
-          background: 'rgba(255,255,255,0.06)', borderRadius: 9,
-          padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0,
-            animation: 'pulse-green 2s infinite',
-          }} />
-          <div>
-            <div style={{ fontSize: '0.7rem', color: '#a5f3fc', fontWeight: 600 }}>System Online</div>
-            <div style={{ fontSize: '0.62rem', color: '#7dd3fc' }}>
-              {user ? (USER_ROLE_LABELS[user.role] ?? user.role) : 'Not signed in'}
-            </div>
-          </div>
+        <div style={{ fontSize: '0.7rem', color: '#64748b', padding: '4px 4px' }}>
+          {user ? (USER_ROLE_LABELS[user.role] ?? user.role) : ''}
         </div>
       </div>
     </>
@@ -275,9 +263,8 @@ export default function DashboardLayout() {
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-1)' }}>
                 {getPageTitle(location.pathname)}
               </h2>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-                {getGreeting()}, <strong style={{ color: 'var(--sky-dim)' }}>{user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}</strong>
-                &nbsp;·&nbsp; National Biodiversity Strategy &amp; Action Plan 2025–2030
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 1 }}>
+                {getGreeting()}, {user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}
               </p>
             </div>
           </div>
@@ -385,7 +372,7 @@ export default function DashboardLayout() {
               </span>
               <div style={{
                 width: 28, height: 28,
-                background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
+                background: '#1e3a5f',
                 borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', fontSize: '0.65rem', fontWeight: 700,
               }}>
