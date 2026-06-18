@@ -5,7 +5,7 @@ import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
-import { AIExtractionPanel } from '../components/common/AIExtractionPanel';
+
 
 const TOOL_ICONS: Record<string, string> = {
   T01: 'fa-landmark', T02: 'fa-tree', T03: 'fa-shield',
@@ -253,13 +253,6 @@ export default function VerifQueuePage() {
                   </div>
                 )}
 
-                {/* AI extraction panel — additive, does not affect existing approve/reject flow */}
-                {currentUser && (
-                  <AIExtractionPanel
-                    reportId={report.id}
-                    reviewerId={currentUser.id}
-                  />
-                )}
               </div>
             );
           })}
