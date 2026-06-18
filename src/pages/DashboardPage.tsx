@@ -1,16 +1,13 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { useAuth } from '../services/AuthContext';
+
 import { useDashboardStats, useReports } from '../hooks/useData';
-import { generateAINarrative } from '../services/aiNarrative';
+
 import { DashboardSkeleton } from '../components/Skeleton';
 import { NBSAPTargetProgress } from '../components/NBSAPTargetProgress';
 import { fetchDashboardMetrics, type DashboardMetrics, formatMetricValue } from '../services/systemMetricsService';
 import { eventBus } from '../services/eventBus';
 import { progressColor } from '../utils/progressColors';
 import toast from 'react-hot-toast';
-
-// ── Module-level AI cache — persists across navigation ────────
-let _cachedAiText = '';
 
 // ── Shared card styles ────────────────────────────────────────
 const card: React.CSSProperties = {
@@ -57,11 +54,8 @@ function ProgRow({ label, value, target, color }: { label: string; value: string
 }
 
 export default function DashboardPage() {
-  const { permissions } = useAuth();
   const { stats, loading, refetch: refetchStats } = useDashboardStats(false);
   const { reports, refetch: refetchReports } = useReports({ status: 'approved', pageSize: 4 });
-  const [aiText, setAiText] = useState(_cachedAiText);
-  const [aiLoading, setAiLoading] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState<DashboardMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
 
@@ -93,19 +87,6 @@ export default function DashboardPage() {
     });
   }, [refetchStats, refetchReports, loadSystemMetrics]);
 
-  const handleGenerate = useCallback(async () => {
-    if (!stats) return;
-    setAiLoading(true);
-    try {
-      const text = await generateAINarrative(stats);
-      _cachedAiText = text;
-      setAiText(text);
-    } catch {
-      toast.error('AI narrative generation failed');
-    }
-    setAiLoading(false);
-  }, [stats]);
-
   if (loading) {
     return <DashboardSkeleton />;
   }
@@ -114,47 +95,6 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* ── AI Narrative ── */}
-      {permissions?.canViewAnalytics && (
-        <div style={{
-          background: 'linear-gradient(135deg, #0f2744, #1e3a5f)',
-          borderRadius: 'var(--radius)', padding: 20, color: '#fff',
-          marginBottom: 24, position: 'relative', overflow: 'hidden',
-        }}>
-          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(56,189,248,0.1)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>✦</span> AI Progress Narrative
-              <span style={{ fontSize: '0.65rem', opacity: 0.6, fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>· Powered by Claude API</span>
-            </h3>
-            <button
-              onClick={handleGenerate}
-              disabled={aiLoading}
-              style={{
-                background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
-                color: '#fff', padding: '6px 14px', borderRadius: 7,
-                fontSize: '0.75rem', fontWeight: 600, cursor: aiLoading ? 'not-allowed' : 'pointer',
-                fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6,
-                opacity: aiLoading ? 0.5 : 1,
-              }}
-            >
-              <i className="fa-solid fa-wand-magic-sparkles" />
-              {aiLoading ? 'Generating…' : 'Generate Insight'}
-            </button>
-          </div>
-          <div style={{ fontSize: '0.82rem', lineHeight: 1.7, color: '#e0f2fe', minHeight: 40 }}>
-            {aiText || (
-              <span style={{ opacity: 0.6 }}>
-                Click <strong>Generate Insight</strong> to produce a live AI-powered summary of current NBSAP progress, risks, and recommendations — generated from your actual dashboard data using the Claude API.
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: '0.65rem', color: 'rgba(125,211,252,0.6)', marginTop: 10, fontFamily: "'DM Mono', monospace" }}>
-            Powered by Claude · Data as of {new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-          </div>
-        </div>
-      )}
-
       {/* ── Metric Cards ── */}
       <div className="metric-row" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <MetricCard
