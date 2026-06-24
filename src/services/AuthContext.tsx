@@ -327,6 +327,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
           }
 
+          // With PKCE, a `code` param means Supabase is about to exchange
+          // it — don't load user data yet; wait for the resulting event
+          // (PASSWORD_RECOVERY or SIGNED_IN) to determine the flow type.
+          const hasCode = new URLSearchParams(window.location.search).has('code');
+          if (hasCode) {
+            return;
+          }
+
           if (session?.user) {
             await loadUserData(session.user.id, session);
           } else {
