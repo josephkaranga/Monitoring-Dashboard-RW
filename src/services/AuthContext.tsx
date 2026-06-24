@@ -189,7 +189,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // These refs prevent race conditions — never use state for these
   const fetchingRef = useRef(false);   // true while loadUserData is running
   const initializedRef = useRef(false); // true once INITIAL_SESSION has been handled
-  const passwordRecoveryRef = useRef(isPasswordRecovery); // true when handling a password recovery flow
 
   const loadUserData = useCallback(async (
     userId: string,
@@ -321,20 +320,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearTimeout(safetyTimeout);
           initializedRef.current = true;
 
-          if (passwordRecoveryRef.current) {
-            dispatch({ type: 'SET_LOADING', loading: false });
-            navigate('/auth?mode=set-password', { replace: true });
-            return;
-          }
-
-          // With PKCE, a `code` param means Supabase is about to exchange
-          // it — don't load user data yet; wait for the resulting event
-          // (PASSWORD_RECOVERY or SIGNED_IN) to determine the flow type.
-          const hasCode = new URLSearchParams(window.location.search).has('code');
-          if (hasCode) {
-            return;
-          }
-
           if (session?.user) {
             await loadUserData(session.user.id, session);
           } else {
@@ -342,8 +327,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
         } else if (event === 'SIGNED_IN' && session?.user) {
-          // Skip normal sign-in flow during password recovery
-          if (passwordRecoveryRef.current) return;
           if (initializedRef.current) {
             fetchingRef.current = false;
             await loadUserData(session.user.id, session);
@@ -369,7 +352,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadUserData(session.user.id, session);
 
         } else if (event === 'PASSWORD_RECOVERY') {
-          passwordRecoveryRef.current = true;
           setIsPasswordRecovery(true);
           navigate('/auth?mode=set-password', { replace: true });
         }
