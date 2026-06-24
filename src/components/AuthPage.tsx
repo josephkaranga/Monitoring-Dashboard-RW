@@ -29,10 +29,15 @@ const fieldWrap: React.CSSProperties = { marginBottom: 16 };
 export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  const [mode, setMode] = useState<AuthMode>(
-    searchParams.get('mode') === 'set-password' ? 'set-password' : 'login'
-  );
+  const { user, isPasswordRecovery } = useAuth();
+  const [mode, setMode] = useState<AuthMode>(() => {
+    const m = searchParams.get('mode');
+    if (m === 'set-password') return 'set-password';
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) return 'set-password';
+    if (searchParams.get('type') === 'recovery') return 'set-password';
+    return 'login';
+  });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('policy_monitoring');
@@ -46,8 +51,13 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    if (user && mode !== 'set-password') navigate('/dashboard', { replace: true });
-  }, [user, mode, navigate]);
+    const m = searchParams.get('mode');
+    if (m === 'set-password' && mode !== 'set-password') setMode('set-password');
+  }, [searchParams, mode]);
+
+  useEffect(() => {
+    if (user && mode !== 'set-password' && !isPasswordRecovery) navigate('/dashboard', { replace: true });
+  }, [user, mode, isPasswordRecovery, navigate]);
 
   const validate = useCallback(() => {
     const errs: Record<string, string> = {};
