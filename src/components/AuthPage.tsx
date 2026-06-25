@@ -56,6 +56,10 @@ export default function AuthPage() {
   }, [searchParams, mode]);
 
   useEffect(() => {
+    if (isPasswordRecovery && mode !== 'set-password') setMode('set-password');
+  }, [isPasswordRecovery, mode]);
+
+  useEffect(() => {
     if (user && mode !== 'set-password' && !isPasswordRecovery) navigate('/dashboard', { replace: true });
   }, [user, mode, isPasswordRecovery, navigate]);
 
