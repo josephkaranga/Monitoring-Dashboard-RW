@@ -1,8 +1,9 @@
 # NBSAP Monitoring System — Rwanda
-## Supabase Backend Integration Guide
 
-> National Biodiversity Strategy & Action Plan 2025–2030  
+> National Biodiversity Strategy & Action Plan 2025–2030
 > Full-stack React + Supabase with Role-Based Access Control
+
+**Live:** [nbsap-dashboard-rw.vercel.app](https://nbsap-dashboard-rw.vercel.app)
 
 ---
 
@@ -11,43 +12,52 @@
 ```
 nbsap-monitoring-system/
 ├── src/
-│   ├── types/
-│   │   └── index.ts              # All TypeScript types + RBAC permission maps
-│   ├── services/
-│   │   ├── supabase.ts           # Supabase client singleton
-│   │   ├── authService.ts        # Login, signup, password reset, user management
-│   │   ├── reportService.ts      # Toolkit report CRUD + CSV/JSON export/import
-│   │   └── dataService.ts        # Indicators, risks, audit log, notifications, realtime
-│   ├── context/
-│   │   └── AuthContext.tsx       # Global auth state via React Context + useReducer
-│   ├── hooks/
-│   │   └── useData.ts            # Custom hooks: useReports, useDashboardStats, etc.
 │   ├── components/
-│   │   ├── auth/
-│   │   │   ├── AuthPage.tsx      # Login / Signup / Password reset
-│   │   │   └── ProtectedRoute.tsx # RBAC route guard
-│   │   ├── layout/
-│   │   │   └── DashboardLayout.tsx # Sidebar + topbar with auth-aware nav
-│   │   └── dashboard/
-│   │       ├── DashboardPage.tsx
-│   │       ├── IndicatorsPage.tsx
-│   │       ├── ReportingToolkitPage.tsx
-│   │       ├── VerifQueuePage.tsx
-│   │       ├── CompliancePage.tsx
-│   │       ├── RiskPage.tsx
-│   │       ├── MapPage.tsx
-│   │       ├── ReportsPage.tsx
-│   │       ├── SettingsPage.tsx
-│   │       └── UserManagementPage.tsx
-│   ├── utils/
-│   │   └── aiNarrative.ts        # Claude API integration for AI narratives
-│   ├── App.tsx                   # React Router v6 with protected routes
-│   └── main.tsx                  # Entry point
-├── supabase/migrations/
-│   ├── 001_initial_schema.sql    # Full schema: tables, RLS, triggers, functions
-│   └── 002_seed_data.sql         # Risk register, targets, indicators, compliance seed
-├── .env.example                  # Environment variables template
-├── vercel.json                   # Vercel deployment config with security headers
+│   │   ├── App.tsx                    # React Router v6 with lazy-loaded routes
+│   │   ├── AuthPage.tsx               # Login / Signup / Password reset (PKCE)
+│   │   ├── ProtectedRoute.tsx         # RBAC route guard
+│   │   ├── DashboardLayout.tsx        # Sidebar + topbar
+│   │   ├── map/                       # Map layer components
+│   │   └── panels/                    # Shared panel components
+│   ├── pages/
+│   │   ├── DashboardPage.tsx          # Main analytics dashboard
+│   │   ├── IndicatorsPage.tsx         # 79 biodiversity indicators
+│   │   ├── NationalTargetsPage.tsx    # 22 NBSAP targets
+│   │   ├── ReportingToolkitPage.tsx   # T01–T07 report submissions
+│   │   ├── VerifQueuePage.tsx         # Report verification queue
+│   │   ├── MapPage.tsx                # GIS map with districts, protected areas
+│   │   ├── BiodiversityDataPage.tsx   # RBIS/GBIF biodiversity data
+│   │   ├── ReportsPage.tsx            # Analytics and exports
+│   │   ├── CompliancePage.tsx         # EIA compliance tracking
+│   │   ├── RiskPage.tsx               # Risk register
+│   │   ├── AdaptiveManagementPage.tsx # Adaptive management
+│   │   ├── StakeholdersPage.tsx       # Stakeholder mapping
+│   │   ├── UserManagementPage.tsx     # User admin (REMA admin only)
+│   │   ├── RoleRequestsPage.tsx       # Role change approvals
+│   │   └── SettingsPage.tsx           # User preferences
+│   ├── services/
+│   │   ├── AuthContext.tsx            # Global auth state + password recovery
+│   │   ├── authService.ts            # Login, signup, password reset
+│   │   ├── reportService.ts          # Report CRUD + CSV/JSON export/import
+│   │   ├── dataService.ts            # Indicators, risks, audit log, notifications
+│   │   ├── roleChangeService.ts      # Role change approval workflow
+│   │   ├── rbisService.ts            # RBIS API integration
+│   │   ├── progressCalculator.ts     # Tool-weighted progress calculations
+│   │   └── systemMetricsService.ts   # Dashboard metrics aggregation
+│   ├── hooks/
+│   │   ├── useData.ts                # useReports, useDashboardStats, etc.
+│   │   ├── useBiodiversityData.ts    # Biodiversity data hooks
+│   │   ├── useGBIF.ts                # GBIF species occurrence data
+│   │   ├── useMapLayers.ts           # Map layer management
+│   │   └── useLiveTargetProgress.ts  # Real-time target progress
+│   └── utils/
+│       ├── supabase.ts               # Supabase client (PKCE auth)
+│       ├── progressColors.ts         # Green/amber/red status colors
+│       └── geoUtils.ts               # Geographic utilities
+├── migrations/                        # 22 SQL migrations (001–022)
+├── docs/                              # System documentation
+│   └── pdf/                           # PDF exports of all docs
+├── vercel.json                        # Deployment config + security headers
 ├── vite.config.ts
 └── tsconfig.json
 ```
@@ -56,46 +66,50 @@ nbsap-monitoring-system/
 
 ## User Roles & Permissions
 
-| Role | Label | Can Submit | Can Approve | Verif Queue | Audit Log | User Mgmt | Raw Export |
-|------|-------|-----------|------------|-------------|-----------|-----------|------------|
-| `policy_monitoring` | Policy Monitor | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `sector_reporting` | Sector Reporter | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| `local_reporting` | Local Reporter | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `dashboard_management` | REMA Admin | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `programme_alignment` | Dev. Partner | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Role | Label | Submit | Approve | Verif Queue | Audit Log | User Mgmt |
+|------|-------|--------|---------|-------------|-----------|-----------|
+| `policy_monitoring` | Policy Monitor | — | — | — | — | — |
+| `sector_reporting` | Sector Reporter | Yes | Yes | — | — | — |
+| `local_reporting` | Local Reporter | Yes | — | — | — | — |
+| `dashboard_management` | REMA Admin | Yes | Yes | Yes | Yes | Yes |
+| `programme_alignment` | Dev. Partner | — | — | — | — | — |
 
 ---
 
-## 
+## Setup
+
+### 1. Install & Configure
+
+```bash
+git clone https://github.com/josephkaranga/Monitoring-Dashboard-RW.git
+cd Monitoring-Dashboard-RW
+npm install
+
+# Create .env with your Supabase credentials
+```
+
+Required environment variables:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Public anon key |
+| `VITE_APP_URL` | Yes | Deployed app URL |
+| `VITE_ENABLE_REALTIME` | No | Toggle Supabase Realtime |
 
 ### 2. Run Database Migrations
 
-In the Supabase SQL Editor, run these files **in order**:
-
-```sql
--- First: core schema, RLS policies, triggers
--- Paste contents of: supabase/migrations/001_initial_schema.sql
-
--- Second: seed data (risks, targets, indicators)
--- Paste contents of: supabase/migrations/002_seed_data.sql
-```
+In Supabase SQL Editor, run migrations `001` through `022` in order from the `migrations/` folder.
 
 ### 3. Configure Authentication
 
-In Supabase Dashboard → Authentication → Settings:
-- Enable **Email provider**
-- Set **Site URL** to your Vercel URL (e.g. `https://nbsap.vercel.app`)
-- Add redirect URL: `https://nbsap.vercel.app/auth/reset-password`
+In Supabase Dashboard → Authentication → URL Configuration:
+- **Site URL:** `https://nbsap-dashboard-rw.vercel.app`
+- **Redirect URLs:** `https://nbsap-dashboard-rw.vercel.app/auth`
 
-### 4. Set Up Storage (for file attachments)
+### 4. Create First Admin User
 
-In Supabase Dashboard → Storage:
-- The buckets `report-attachments` and `exports` are created by the migration
-- Verify they appear with correct policies
-
-### 5. Create First Admin User
-
-After deployment, sign up normally via the app, then run this SQL to make yourself admin:
+Sign up via the app, then promote yourself in SQL Editor:
 
 ```sql
 UPDATE public.profiles
@@ -103,124 +117,76 @@ SET role = 'dashboard_management'
 WHERE email = 'your@email.com';
 ```
 
-### 6. Local Development Setup
+### 5. Run Development Server
 
 ```bash
-# Clone and install
-git clone <your-repo>
-cd nbsap-monitoring-system
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Supabase URL and anon key
-
-# Run development server
 npm run dev
 ```
 
-###
+---
 
-## Key Architecture Decisions
+## Architecture
 
-### localStorage → Supabase Database
+### Authentication (PKCE)
 
-| Old (localStorage) | New (Supabase) |
-|-------------------|----------------|
-| `tkData` array | `toolkit_reports` table |
-| Settings object | `user_settings` table |
-| Notification prefs | `notification_preferences` table |
-| Audit events | `audit_log` table |
-| Notifications list | `notifications` table |
+Uses Supabase Auth with PKCE flow — password reset links contain only a short-lived code, not raw tokens. `AuthContext.tsx` handles all auth events including `PASSWORD_RECOVERY` for the reset flow.
 
-### Row Level Security (RLS)
+### Row Level Security
 
 Every table has RLS enabled. The database enforces permissions via SQL functions:
 - `get_user_role()` — returns current user's role
-- `can_write()` — true for sector/local/admin reporters
+- `can_write()` — true for reporters and admin
 - `is_admin()` — true only for `dashboard_management`
 
-This means even if someone bypasses the frontend, the database rejects unauthorised operations.
+### Tool-Weighted Progress
+
+Report approvals automatically update NBSAP target progress using tool-specific weights (T01=0.25, T02=0.20, etc.) via database triggers. Progress is reversed when reports are deleted.
 
 ### Realtime
 
-`subscribeToReports()` and `subscribeToNotifications()` use Supabase Realtime (WebSockets) so the dashboard updates live when any user submits or approves a report — no polling needed.
-
-### Session Management
-
-`AuthContext.tsx` listens to `supabase.auth.onAuthStateChange` and handles:
-- `SIGNED_IN` → loads profile + settings
-- `TOKEN_REFRESHED` → silent refresh
-- `SIGNED_OUT` → clears all state
-- `USER_UPDATED` → reloads profile
-
-JWT tokens are auto-refreshed by the Supabase client every hour.
+`subscribeToReports()` and `subscribeToNotifications()` use Supabase Realtime (WebSockets) for live dashboard updates without polling.
 
 ### Code Splitting
 
-`App.tsx` uses `React.lazy()` for all page components. Vite splits the bundle into:
-- `vendor` chunk — React, React Router
-- `supabase` chunk — Supabase JS client
-- `charts` chunk — Chart.js
+`App.tsx` uses `React.lazy()` for all pages. Vite splits the bundle into vendor, supabase, and charts chunks.
 
 ---
 
-## Adding New Indicator Data
-
-To seed all 79 indicators, extend `002_seed_data.sql` following the same pattern:
-
-```sql
-INSERT INTO public.indicators 
-(name, definition, tier, nbsap_target_id, target_2030, baseline, midterm, final_target, current_value, progress, status, km_gbf, periodicity, data_source, responsible)
-VALUES (
-  'Your Indicator Name',
-  'Definition text',
-  'headline',   -- headline | component | complementary | binary
-  1,            -- nbsap_target_id (1-22)
-  'Target by 2030',
-  'Baseline value',
-  'Midterm 2027',
-  'Final 2030',
-  'Current value',
-  45,           -- progress 0-100
-  'at-risk',    -- on-track | at-risk | behind
-  'GBF Target X',
-  'Annual',
-  'Data source description',
-  ARRAY['REMA', 'MINAGRI']
-);
-```
-
----
-
-## Environment Variables Reference
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_SUPABASE_URL` | ✅ | Your Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Public anon key (safe for browser) |
-| `VITE_APP_ENV` | ❌ | `development` / `production` |
-| `VITE_ENABLE_AI_NARRATIVE` | ❌ | Toggle Claude API integration |
-| `VITE_ENABLE_REALTIME` | ❌ | Toggle Supabase Realtime |
-
-**Never use `SUPABASE_SERVICE_ROLE_KEY` in the browser.** Service role keys bypass RLS and should only be used in secure server-side functions.
-
----
-
-## Database Tables Quick Reference
+## Database Tables
 
 | Table | Purpose | RLS |
 |-------|---------|-----|
-| `profiles` | User accounts + roles | Own row only; admin sees all |
+| `profiles` | User accounts + roles | Own row; admin sees all |
 | `nbsap_targets` | 22 NBSAP targets | Read: all; Write: admin |
 | `indicators` | 79 biodiversity indicators | Read: all; Write: reporters |
 | `toolkit_reports` | T01–T07 submissions | Scoped by role |
-| `districts` | 30 districts + status | Read: all; Write: local/admin |
+| `tool_weights` | Tool weight factors (T01–T07) | Read: all; Write: admin |
+| `districts` | 30 districts + coordinates | Read: all; Write: local/admin |
 | `provinces` | 5 provinces | Read: all |
 | `risks` | Risk register | Read: all; Write: admin |
-| `compliance_records` | Active issues | Read: all; Write: reporters |
+| `compliance_records` | EIA compliance issues | Read: all; Write: reporters |
+| `role_change_requests` | Role change approval workflow | Scoped by role |
+| `system_metrics` | Aggregated dashboard metrics | Read: all; Write: triggers |
 | `notifications` | Per-user alerts | Own row only |
-| `notification_preferences` | Alert settings | Own row only |
 | `audit_log` | Activity history | Own rows; admin sees all |
 | `user_settings` | Dashboard preferences | Own row only |
-| `report_attachments` | File metadata | Scoped by role |
+
+---
+
+## Reporting Tools
+
+| Tool | Name | Weight |
+|------|------|--------|
+| T01 | National Institutional Reporting | 0.250 |
+| T02 | District Biodiversity Monitoring | 0.200 |
+| T03 | Protected Area Monitoring | 0.150 |
+| T04 | Community Biodiversity Monitoring | 0.150 |
+| T05 | Biodiversity Finance Tracking | 0.100 |
+| T06 | Private Sector Compliance | 0.100 |
+| T07 | Research & Academic Contribution | 0.050 |
+
+---
+
+## Deployment
+
+Deployed on **Vercel** with automatic deploys from the `main` branch. Security headers (CSP, X-Frame-Options, etc.) are configured in `vercel.json`.
