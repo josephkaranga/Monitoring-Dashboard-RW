@@ -170,16 +170,35 @@ function clearSessionCache() {
   } catch { /* ignore */ }
 }
 
+// Reads Supabase's own internal state — the code-verifier value is
+// formatted as "verifier/redirectType".  It exists from the moment
+// resetPasswordForEmail is called until the code is exchanged, so it
+// is available during the first React render (before async init).
+function isRecoveryPending(): boolean {
+  try {
+    // PKCE: check Supabase's code-verifier for recovery redirect type
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('code')) {
+      const v = localStorage.getItem('nbsap-auth-token-code-verifier');
+      if (v && v.endsWith('/recovery')) return true;
+    }
+    // Implicit: recovery type lives in the URL hash
+    if (window.location.hash.includes('type=recovery')) return true;
+  } catch { /* incognito / storage disabled */ }
+  return false;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(isRecoveryPending);
   const mountedRef = useRef(true);
   const navigate = useNavigate();
 
   // These refs prevent race conditions — never use state for these
   const fetchingRef = useRef(false);   // true while loadUserData is running
   const initializedRef = useRef(false); // true once INITIAL_SESSION has been handled
+  const recoveryRef = useRef(isPasswordRecovery);
 
   const loadUserData = useCallback(async (
     userId: string,
@@ -311,13 +330,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearTimeout(safetyTimeout);
           initializedRef.current = true;
 
-          if (session?.user) {
+          if (recoveryRef.current) {
+            dispatch({ type: 'SET_LOADING', loading: false });
+            navigate('/auth?mode=set-password', { replace: true });
+          } else if (session?.user) {
             await loadUserData(session.user.id, session);
           } else {
             dispatch({ type: 'CLEAR_SESSION' });
           }
 
         } else if (event === 'SIGNED_IN' && session?.user) {
+          if (recoveryRef.current) return;
           if (initializedRef.current) {
             fetchingRef.current = false;
             await loadUserData(session.user.id, session);
@@ -343,6 +366,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadUserData(session.user.id, session);
 
         } else if (event === 'PASSWORD_RECOVERY') {
+          recoveryRef.current = true;
           setIsPasswordRecovery(true);
           navigate('/auth?mode=set-password', { replace: true });
         }
