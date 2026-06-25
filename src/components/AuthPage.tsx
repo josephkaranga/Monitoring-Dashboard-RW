@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { signIn, signUp, resetPassword, updatePassword } from '../services/authService';
+import { signIn, signUp, resetPassword, updatePassword, RECOVERY_FLAG_KEY } from '../services/authService';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -118,6 +118,7 @@ export default function AuthPage() {
     if (result.error) {
       toast.error(result.error);
     } else {
+      localStorage.removeItem(RECOVERY_FLAG_KEY);
       toast.success('Password updated. Please sign in.');
       await supabase.auth.signOut();
       setNewPassword('');

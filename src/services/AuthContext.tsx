@@ -170,19 +170,27 @@ function clearSessionCache() {
   } catch { /* ignore */ }
 }
 
-// Detect recovery flow from URL before any React rendering
-function detectRecoveryFromUrl(): boolean {
+const RECOVERY_FLAG_KEY = 'nbsap-pending-recovery';
+
+function detectRecoveryFlow(): boolean {
+  // Check localStorage flag set when reset email was sent
+  if (localStorage.getItem(RECOVERY_FLAG_KEY) === 'true') {
+    const params = new URLSearchParams(window.location.search);
+    // Only activate if we're landing from a reset link (has code or on /auth)
+    if (params.has('code') || window.location.pathname === '/auth') {
+      return true;
+    }
+  }
+  // Implicit flow: recovery type in URL hash
   const hash = window.location.hash;
   if (hash && hash.includes('type=recovery')) return true;
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('type') === 'recovery') return true;
   return false;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(detectRecoveryFromUrl);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(detectRecoveryFlow);
   const mountedRef = useRef(true);
   const navigate = useNavigate();
 
