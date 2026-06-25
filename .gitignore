@@ -39,6 +39,7 @@ lerna-debug.log*
 *.tmp
 *.temp
 .cache/
+.vite/
 
 # Supabase
 .branches/
