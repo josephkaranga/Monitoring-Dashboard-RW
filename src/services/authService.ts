@@ -189,8 +189,6 @@ export async function updateProfile(
 }
 
 // ── RESET PASSWORD ───────────────────────────────────────────
-export const RECOVERY_FLAG_KEY = 'nbsap-pending-recovery';
-
 export async function resetPassword(email: string): Promise<ApiResponse<null>> {
   const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '') || window.location.origin;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -198,7 +196,6 @@ export async function resetPassword(email: string): Promise<ApiResponse<null>> {
   });
 
   if (error) return { data: null, error: error.message };
-  localStorage.setItem(RECOVERY_FLAG_KEY, 'true');
   return { data: null, error: null };
 }
 

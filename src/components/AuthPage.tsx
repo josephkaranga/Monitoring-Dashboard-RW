@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { signIn, signUp, resetPassword, updatePassword, RECOVERY_FLAG_KEY } from '../services/authService';
+import { signIn, signUp, resetPassword, updatePassword } from '../services/authService';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -30,14 +30,9 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isPasswordRecovery } = useAuth();
-  const [mode, setMode] = useState<AuthMode>(() => {
-    const m = searchParams.get('mode');
-    if (m === 'set-password') return 'set-password';
-    const hash = window.location.hash;
-    if (hash && hash.includes('type=recovery')) return 'set-password';
-    if (searchParams.get('type') === 'recovery') return 'set-password';
-    return 'login';
-  });
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get('mode') === 'set-password' ? 'set-password' : 'login'
+  );
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('policy_monitoring');
@@ -118,19 +113,23 @@ export default function AuthPage() {
     if (newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
     setLoading(true);
-    const result = await updatePassword(newPassword);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      localStorage.removeItem(RECOVERY_FLAG_KEY);
-      toast.success('Password updated. Please sign in.');
-      await supabase.auth.signOut();
-      setNewPassword('');
-      setConfirmPassword('');
-      setMode('login');
-      navigate('/auth', { replace: true });
+    try {
+      const result = await updatePassword(newPassword);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Password updated successfully! Please sign in with your new password.');
+        await supabase.auth.signOut();
+        setNewPassword('');
+        setConfirmPassword('');
+        setMode('login');
+        navigate('/auth', { replace: true });
+      }
+    } catch {
+      toast.error('Something went wrong. Please request a new reset link.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [newPassword, confirmPassword, navigate]);
 
   const btnStyle: React.CSSProperties = {
