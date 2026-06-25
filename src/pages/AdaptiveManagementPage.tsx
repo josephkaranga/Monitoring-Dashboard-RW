@@ -79,7 +79,7 @@ export default function AdaptiveManagementPage() {
           {[
             { color: '#10b981', label: 'Quarterly 2026', title: 'Institutional Submissions', desc: 'All 7 reporting modules — T01 through T07' },
             { color: '#0ea5e9', label: 'Annual Mar 2026', title: 'National Biodiversity Implementation Report', desc: 'Consolidated progress against 22 NBSAP targets submitted to Cabinet' },
-            { color: '#8b5cf6', label: 'Q3 2027', title: 'Mid-Term Evaluation', desc: 'Comprehensive review of NBSAP 2020–2030 halfway milestone' },
+            { color: '#8b5cf6', label: 'Q3 2027', title: 'Mid-Term Evaluation', desc: 'Comprehensive review of NBSAP 2025–2030 halfway milestone' },
             { color: '#f59e0b', label: 'Annual 2028', title: 'Annual Progress Report', desc: 'Third annual report with course-correction recommendations' },
             { color: '#e11d48', label: 'Jun 2030', title: 'CBD National Report Submission', desc: 'International reporting to Convention on Biological Diversity Secretariat' },
             { color: '#0f2744', label: 'Q4 2030', title: 'Final Evaluation', desc: 'Comprehensive evaluation against all 22 targets and KM-GBF commitments' },

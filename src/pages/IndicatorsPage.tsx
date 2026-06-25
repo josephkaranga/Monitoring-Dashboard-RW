@@ -208,7 +208,7 @@ export default function IndicatorsPage() {
         <div style={{ background: 'linear-gradient(135deg,#0f2744,#1e3a5f)', borderRadius: 'var(--radius)', padding: 16, color: '#fff', position: 'relative', overflow: 'hidden' }}>
           <div style={{ fontSize: '0.72rem', opacity: 0.8, marginBottom: 4 }}>Total Indicators</div>
           <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: "'Playfair Display', serif" }}>{indicators.length}</div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 4 }}>NBSAP 2020–2030</div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 4 }}>NBSAP 2025–2030</div>
           <i className="fa-solid fa-layer-group" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: '2rem', opacity: 0.2 }} />
         </div>
         {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => (
@@ -227,7 +227,7 @@ export default function IndicatorsPage() {
         <div style={{ fontSize: '0.84rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
           <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)' }} />
           KM-GBF Aligned 4-Tier Indicator Hierarchy
-          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>Rwanda NBSAP 2020–2030</span>
+          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>Rwanda NBSAP 2020H–2030</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => {

@@ -493,7 +493,7 @@ export function ReportsPage() {
                 />
               </div>
               <div style={{ fontSize: '2rem', fontWeight: 700, color: C.green, fontFamily: "'Playfair Display', serif", marginTop: -120 }}>{kpis.overallProgress}%</div>
-              <div style={{ marginTop: 110, fontSize: '0.68rem', color: 'var(--text-3)' }}>National NBSAP 2020–2030</div>
+              <div style={{ marginTop: 110, fontSize: '0.68rem', color: 'var(--text-3)' }}>National NBSAP 2025–2030</div>
             </div>
             <ChartBox title="Submission Trend (12 Months)" height={168}>
               {reports.length ? <Line data={trendsData} options={{ ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { position: 'bottom' as const, labels: { font: { size: 10 }, padding: 8 } } } }} /> : <NoData />}
