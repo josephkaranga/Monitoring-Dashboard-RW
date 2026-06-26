@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 // Lazy-loaded to avoid bundling ~800KB on initial page load
 const loadXLSX = () => import('xlsx');
 const loadMammoth = () => import('mammoth');
+import DOMPurify from 'dompurify';
 import type { ToolkitReport, ReportAttachment } from '../types/index';
 import { flattenFormData, groupedFormData } from '../utils/formData';
 
@@ -219,7 +220,7 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
               }
               .excel-preview tr:nth-child(even) td { background: #f9fafb; }
             `}</style>
-            <div className="excel-preview" dangerouslySetInnerHTML={{ __html: excelHtml }} />
+            <div className="excel-preview" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(excelHtml) }} />
           </div>
         </div>
       )}
@@ -234,7 +235,7 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
             .word-preview td, .word-preview th { border: 1px solid var(--border); padding: 4px 8px; font-size: 0.8rem; }
             .word-preview img { max-width: 100%; }
           `}</style>
-          <div className="word-preview" dangerouslySetInnerHTML={{ __html: wordHtml }} />
+          <div className="word-preview" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(wordHtml) }} />
         </div>
       )}
 
