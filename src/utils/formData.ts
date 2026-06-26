@@ -1,60 +1,84 @@
 /**
- * Single render layer for form_data values across the entire app.
+ * Render layer for form_data values.
  *
- * Three rendering strategies for three contexts:
- *   formatFieldValue  → inline/compact (one line per value)
- *   flattenFormData   → tables/CSV (one row per value, parent-prefixed)
- *   groupedFormData   → detail views (sectioned, ordered, labeled)
+ * Responsibilities are strictly separated:
+ *   Registry   → defines meaning (section, label, format declaration)
+ *   Formatter  → defines presentation (how a value looks on screen)
+ *   Data       → defines nothing beyond keys and values
  *
- * Display metadata comes from fieldRegistry.ts (loose string-key coupling).
- * formatFieldLabel is the fallback when the registry has no entry.
+ * No layer reinterprets another layer's responsibility.
+ *
+ * Three rendering strategies:
+ *   formatFieldValue   → type coercion only (unknown → string)
+ *   applyDisplayFormat → presentation only (string → decorated string)
+ *   flattenFormData    → tables/CSV (one row per value, parent-prefixed)
+ *   groupedFormData    → detail views (sectioned, ordered, labeled)
  */
 
 import { lookupField, sectionSortIndex } from './fieldRegistry';
 import type { FieldMeta } from './fieldRegistry';
 
-// ── 1. Label fallback (no registry) ─────────────────────────
+// ── Label fallback (no registry) ────────────────────────────
 export function formatFieldLabel(key: string): string {
   return key
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// ── 2. Value formatting ─────────────────────────────────────
-export function formatFieldValue(val: unknown, format?: FieldMeta['format']): string {
+// ── Value coercion (type → string, nothing else) ────────────
+// Converts any JS type to a human-readable string.
+// Does NOT apply formatting (currency, percent, etc.).
+// Does NOT consult the registry.
+export function formatFieldValue(val: unknown): string {
   if (val === null || val === undefined || val === '') return '—';
   if (typeof val === 'boolean') return val ? 'Yes' : 'No';
-  if (typeof val === 'number') {
-    if (format === 'currency') return `${val.toLocaleString()} RWF`;
-    if (format === 'percent') return `${val}%`;
-    return val.toLocaleString();
-  }
-  if (typeof val === 'string') {
-    if (format === 'currency') {
-      const n = Number(val);
-      if (!isNaN(n)) return `${n.toLocaleString()} RWF`;
-    }
-    if (format === 'percent') {
-      const n = Number(val);
-      if (!isNaN(n)) return `${n}%`;
-    }
-    return val;
-  }
-  if (Array.isArray(val)) return val.map(v => formatFieldValue(v)).join(', ');
+  if (typeof val === 'number') return val.toLocaleString();
+  if (typeof val === 'string') return val;
+  if (Array.isArray(val)) return val.map(formatFieldValue).join(', ');
   if (typeof val === 'object') {
     const entries = Object.entries(val as Record<string, unknown>);
     if (entries.length === 0) return '—';
     return entries
-      .map(([k, v]) => {
-        const meta = lookupField(k);
-        return `${meta.label}: ${formatFieldValue(v, meta.format)}`;
-      })
+      .map(([k, v]) => `${formatFieldLabel(k)}: ${formatFieldValue(v)}`)
       .join(' · ');
   }
   return String(val);
 }
 
-// ── 3. Flat list (tables, CSV) ──────────────────────────────
+// ── Display formatting (presentation only) ──────────────────
+// Takes an already-coerced string value and applies the format
+// declared by the registry. Separate from coercion so the
+// formatter never decides what a value IS, only how it LOOKS.
+export function applyDisplayFormat(
+  coercedValue: string,
+  format: FieldMeta['format'] | undefined
+): string {
+  if (!format || format === 'text' || coercedValue === '—') return coercedValue;
+
+  const num = Number(coercedValue.replace(/,/g, ''));
+
+  if (format === 'currency') {
+    return isNaN(num) ? coercedValue : `${num.toLocaleString()} RWF`;
+  }
+  if (format === 'percent') {
+    return isNaN(num) ? coercedValue : `${num}%`;
+  }
+  if (format === 'number') {
+    return isNaN(num) ? coercedValue : num.toLocaleString();
+  }
+
+  return coercedValue;
+}
+
+// ── Resolve a single field: coerce then format ──────────────
+function resolveField(key: string, val: unknown): { label: string; value: string; section: string } {
+  const meta = lookupField(key);
+  const coerced = formatFieldValue(val);
+  const formatted = applyDisplayFormat(coerced, meta.format);
+  return { label: meta.label, value: formatted, section: meta.section };
+}
+
+// ── Flat list (tables, CSV) ─────────────────────────────────
 export function flattenFormData(
   data: Record<string, unknown>
 ): Array<{ key: string; label: string; value: string }> {
@@ -62,29 +86,25 @@ export function flattenFormData(
 
   for (const [key, val] of Object.entries(data)) {
     if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
-      const parentMeta = lookupField(key);
+      const parent = lookupField(key);
       for (const [subKey, subVal] of Object.entries(val as Record<string, unknown>)) {
-        const childMeta = lookupField(subKey);
+        const child = resolveField(subKey, subVal);
         result.push({
           key: `${key}.${subKey}`,
-          label: `${parentMeta.label} — ${childMeta.label}`,
-          value: formatFieldValue(subVal, childMeta.format),
+          label: `${parent.label} — ${child.label}`,
+          value: child.value,
         });
       }
     } else {
-      const meta = lookupField(key);
-      result.push({
-        key,
-        label: meta.label,
-        value: formatFieldValue(val, meta.format),
-      });
+      const resolved = resolveField(key, val);
+      result.push({ key, label: resolved.label, value: resolved.value });
     }
   }
 
   return result;
 }
 
-// ── 4. Grouped sections (detail views) ──────────────────────
+// ── Grouped sections (detail views) ─────────────────────────
 export interface FormSection {
   id: string;
   label: string;
@@ -107,33 +127,30 @@ export function groupedFormData(
 
   for (const [key, val] of Object.entries(data)) {
     if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
-      // Nested object → try to place children individually;
-      // if none are known, group under parent label
-      const parentMeta = lookupField(key);
+      const parent = lookupField(key);
       const childEntries = Object.entries(val as Record<string, unknown>);
       const anyChildKnown = childEntries.some(([ck]) => lookupField(ck).section !== 'Other');
 
       for (const [subKey, subVal] of childEntries) {
-        const childMeta = lookupField(subKey);
-        const sectionLabel = anyChildKnown ? childMeta.section : parentMeta.section;
-        const label = anyChildKnown ? childMeta.label : `${parentMeta.label} — ${childMeta.label}`;
+        const child = resolveField(subKey, subVal);
+        const sectionLabel = anyChildKnown ? child.section : parent.section;
+        const label = anyChildKnown ? child.label : `${parent.label} — ${child.label}`;
         ensureSection(sectionLabel).fields.push({
           key: `${key}.${subKey}`,
           label,
-          value: formatFieldValue(subVal, childMeta.format),
+          value: child.value,
         });
       }
     } else {
-      const meta = lookupField(key);
-      ensureSection(meta.section).fields.push({
+      const resolved = resolveField(key, val);
+      ensureSection(resolved.section).fields.push({
         key,
-        label: meta.label,
-        value: formatFieldValue(val, meta.format),
+        label: resolved.label,
+        value: resolved.value,
       });
     }
   }
 
-  // Sort sections by defined order, "Other" last
   return [...sections.values()]
     .filter(s => s.fields.length > 0)
     .sort((a, b) => sectionSortIndex(a.label) - sectionSortIndex(b.label));

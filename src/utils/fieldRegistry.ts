@@ -98,27 +98,17 @@ const SECTION_ORDER = [
   'Other',
 ];
 
-// ── Lookup with normalization ───────────────────────────────
-// Handles keys that arrive in different casings or with dots
-// from nested objects (e.g. "budget.allocated" → "budget_allocated").
-function normalizeKey(key: string): string {
-  return key
-    .toLowerCase()
-    .replace(/\./g, '_')
-    .replace(/\s+/g, '_');
-}
-
+// ── Lookup: exact match or fallback ─────────────────────────
+// Priority: registry exact match → fallback.
+// No normalization, no inference, no key transformation.
+// If the key isn't registered, it goes to "Other" with an
+// auto-generated label. Register new keys explicitly.
 export function lookupField(key: string): FieldMeta {
-  const direct = FIELD_REGISTRY[key];
-  if (direct) return direct;
+  const match = FIELD_REGISTRY[key];
+  if (match) return match;
 
-  const normalized = normalizeKey(key);
-  const found = FIELD_REGISTRY[normalized];
-  if (found) return found;
-
-  // Fallback: auto-generate label, place in "Other"
   const label = key
-    .replace(/[_.]/g, ' ')
+    .replace(/[_]/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
   return { section: 'Other', label };
 }
