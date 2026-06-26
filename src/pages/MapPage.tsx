@@ -300,6 +300,9 @@ export function MapPage() {
   
   // Selected district state for detail panel
   const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
   
   // GeoJSON state
   const [geoData, setGeoData] = useState<GeoJSONData | null>(null);
@@ -1257,19 +1260,73 @@ export function MapPage() {
             
             {/* Legend */}
             {!loading && !error && (
-              <MapLegend activeLayer={layer} position="bottom-right" isMobile={isMobile} />
+              <MapLegend activeLayer={layer} enabledOverlays={enabledOverlays} position="bottom-right" isMobile={isMobile} />
             )}
           </div>
         </div>
 
-        {/* District list */}
+        {/* District list + search */}
         <div style={{ ...card, padding: isMobile ? 12 : 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.9rem', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: '0.9rem', fontWeight: 700 }}>
             <i className="fa-solid fa-table-cells" style={{ color: 'var(--sky-dim)' }} />
             District Summary
           </div>
+
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <i className="fa-solid fa-search" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: '0.7rem', color: 'var(--text-3)' }} />
+            <input
+              type="text"
+              placeholder="Search districts, parks, rivers, lakes..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '8px 10px 8px 30px', border: '1px solid var(--border)', borderRadius: 8, fontSize: '0.78rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', background: 'var(--surface)', color: 'var(--text-1)' }}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '0.75rem', padding: 2 }}>
+                <i className="fa-solid fa-xmark" />
+              </button>
+            )}
+          </div>
+
+          {/* Search results for overlays */}
+          {searchQuery.length >= 2 && (() => {
+            const q = searchQuery.toLowerCase();
+            const matchedAreas = (protectedAreas?.features || []).filter(a => a.properties.name.toLowerCase().includes(q));
+            const matchedRivers = (rivers?.features || []).filter(r => r.properties.name.toLowerCase().includes(q));
+            const matchedLakes = (lakes?.features || []).filter(l => l.properties.name.toLowerCase().includes(q));
+            const hasOverlayResults = matchedAreas.length + matchedRivers.length + matchedLakes.length > 0;
+
+            if (!hasOverlayResults) return null;
+            return (
+              <div style={{ marginBottom: 10, padding: '8px 10px', background: 'var(--surface-2)', borderRadius: 8, fontSize: '0.75rem' }}>
+                {matchedAreas.map((a, i) => (
+                  <div key={`pa-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: '#16a34a' }}>
+                    <i className="fa-solid fa-shield-halved" style={{ fontSize: '0.65rem' }} />
+                    <span style={{ fontWeight: 600 }}>{a.properties.name}</span>
+                    <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{a.properties.type}</span>
+                  </div>
+                ))}
+                {matchedRivers.map((r, i) => (
+                  <div key={`rv-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: '#0284c7' }}>
+                    <i className="fa-solid fa-water" style={{ fontSize: '0.65rem' }} />
+                    <span style={{ fontWeight: 600 }}>{r.properties.name}</span>
+                    <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{r.properties.basin}</span>
+                  </div>
+                ))}
+                {matchedLakes.map((l, i) => (
+                  <div key={`lk-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: '#2563eb' }}>
+                    <i className="fa-solid fa-droplet" style={{ fontSize: '0.65rem' }} />
+                    <span style={{ fontWeight: 600 }}>{l.properties.name}</span>
+                    <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{l.properties.area_km2 ? `${l.properties.area_km2} km²` : ''}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
           <div style={{ maxHeight: isMobile ? 300 : 400, overflowY: 'auto' }}>
-            {[...districts].sort((a, b) => b.compliance - a.compliance).map(d => {
+            {[...districts].filter(d => !searchQuery || d.name.toLowerCase().includes(searchQuery.toLowerCase())).sort((a, b) => b.compliance - a.compliance).map(d => {
               const dot = d.status === 'submitted' ? '#10b981' : d.status === 'pending' ? '#f59e0b' : '#f43f5e';
               return (
                 <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--surface-3)' }}>

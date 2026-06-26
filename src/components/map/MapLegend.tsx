@@ -7,8 +7,16 @@ interface LegendStop {
   label: string;
 }
 
+interface OverlayLegendItem {
+  id: string;
+  label: string;
+  color: string;
+  style: 'fill' | 'line' | 'dot';
+}
+
 interface MapLegendProps {
   activeLayer: MapLayer;
+  enabledOverlays?: Set<string>;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   isMobile?: boolean;
 }
@@ -26,7 +34,14 @@ interface MapLegendProps {
  * - Matches existing MapPage styling
  * - Accessible with ARIA labels
  */
-export function MapLegend({ activeLayer, position = 'bottom-right', isMobile = false }: MapLegendProps) {
+const OVERLAY_LEGEND: OverlayLegendItem[] = [
+  { id: 'protected-areas', label: 'Protected Areas', color: '#16a34a', style: 'fill' },
+  { id: 'rivers', label: 'Rivers', color: '#0284c7', style: 'line' },
+  { id: 'lakes', label: 'Lakes', color: '#2563eb', style: 'fill' },
+  { id: 'gbif', label: 'GBIF Occurrences', color: '#3b82f6', style: 'dot' },
+];
+
+export function MapLegend({ activeLayer, enabledOverlays, position = 'bottom-right', isMobile = false }: MapLegendProps) {
   const getLegendData = (layer: MapLayer): { title: string; stops: LegendStop[] } => {
     switch (layer) {
       case 'biodiversity':
@@ -202,6 +217,25 @@ export function MapLegend({ activeLayer, position = 'bottom-right', isMobile = f
           </span>
         </div>
       ))}
+      {enabledOverlays && enabledOverlays.size > 0 && (
+        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--text-2)', fontFamily: "'DM Mono', monospace", fontSize: isMobile ? '0.55rem' : '0.6rem' }}>
+            OVERLAYS
+          </div>
+          {OVERLAY_LEGEND.filter(o => enabledOverlays.has(o.id)).map(o => (
+            <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              {o.style === 'line' ? (
+                <div style={{ width: isMobile ? 10 : 12, height: 3, borderRadius: 2, background: o.color, flexShrink: 0 }} />
+              ) : o.style === 'dot' ? (
+                <div style={{ width: isMobile ? 8 : 10, height: isMobile ? 8 : 10, borderRadius: '50%', background: o.color, opacity: 0.7, flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: isMobile ? 10 : 12, height: isMobile ? 10 : 12, borderRadius: 2, background: o.color, opacity: 0.35, border: `2px solid ${o.color}`, flexShrink: 0 }} />
+              )}
+              <span style={{ color: 'var(--text-1)', fontFamily: "'DM Sans', sans-serif" }}>{o.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div
         style={{
           marginTop: 8,
