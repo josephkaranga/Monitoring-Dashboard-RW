@@ -8,6 +8,7 @@ import { useAuth } from '../services/AuthContext';
 import { eventBus } from '../services/eventBus';
 import toast from 'react-hot-toast';
 import type { ReportType, ReportAttachment, NBSAPTarget, Indicator, District } from '../types/index';
+import { formatFieldLabel, formatFieldValue } from '../utils/formData';
 import { validateYear } from '../utils/validation';
 
 
@@ -1065,7 +1066,7 @@ export default function ReportingToolkitPage() {
                             <span style={{ background: statusConf.bg, color: statusConf.color, fontSize: '0.62rem', padding: '2px 8px', borderRadius: 8, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{statusConf.label}</span>
                           </td>
                           <td style={{ padding: '11px 14px', color: '#475569', fontSize: '0.78rem' }}>
-                            {keyField ? `${keyField[0].replace(/_/g, ' ')}: ${keyField[1]}` : `${Object.keys(r.form_data || {}).length} fields`}
+                            {keyField ? `${formatFieldLabel(keyField[0])}: ${formatFieldValue(keyField[1])}` : `${Object.keys(r.form_data || {}).length} fields`}
                           </td>
                           <td style={{ padding: '11px 14px', color: '#475569', fontSize: '0.75rem' }}>
                             {r.submitted_by_profile?.full_name || r.submitted_by_profile?.email || '—'}

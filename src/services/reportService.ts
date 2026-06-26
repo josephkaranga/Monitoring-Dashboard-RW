@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabase';
+import { formatFieldValue } from '../utils/formData';
 
 import { automatedProcessingEngine } from './automatedProcessingEngine';
 import { writeAuditEntry } from './dataService';
@@ -474,7 +475,7 @@ export function exportReportsToCSV(reports: ToolkitReport[]): string {
     });
     const formValues = [...allFormKeys].map((k) => {
       const val = (r.form_data || {})[k];
-      return `"${String(val ?? '').replace(/"/g, '""')}"`;
+      return `"${formatFieldValue(val ?? '').replace(/"/g, '""')}"`;
     });
     return [...baseValues, ...formValues].join(',');
   });

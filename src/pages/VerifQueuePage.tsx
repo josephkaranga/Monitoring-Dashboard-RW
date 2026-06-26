@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 const loadXLSX = () => import('xlsx');
 const loadMammoth = () => import('mammoth');
 import type { ToolkitReport, ReportAttachment } from '../types/index';
+import { formatFieldLabel, formatFieldValue, flattenFormData } from '../utils/formData';
 
 const TOOL_EMOJI: Record<string, string> = {
   T01: '\u{1F3DB}️', T02: '\u{1F33F}', T03: '\u{1F6E1}️',
@@ -39,10 +40,6 @@ async function downloadFileBytes(storagePath: string): Promise<ArrayBuffer | nul
     .download(storagePath);
   if (error || !data) return null;
   return data.arrayBuffer();
-}
-
-function formatFieldKey(key: string): string {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function formatFileSize(bytes: number): string {
@@ -264,7 +261,7 @@ function ReportDetailModal({
   actioning: string | null;
 }) {
   const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
-  const formEntries = Object.entries(report.form_data || {});
+  const formFields = flattenFormData(report.form_data || {});
   const attachments = report.attachments || [];
 
   useEffect(() => {
@@ -333,19 +330,19 @@ function ReportDetailModal({
           </div>
 
           {/* All form data */}
-          {formEntries.length > 0 && (
+          {formFields.length > 0 && (
             <>
               <h3 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <i className="fa-solid fa-table-list" style={{ color: 'var(--sky-dim)' }} /> Form Data
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 24 }}>
-                {formEntries.map(([key, val]) => (
-                  <div key={key} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+                {formFields.map(f => (
+                  <div key={f.key} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
                     <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Mono', monospace", marginBottom: 3 }}>
-                      {formatFieldKey(key)}
+                      {f.label}
                     </div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)', wordBreak: 'break-word' }}>
-                      {val === null || val === undefined || val === '' ? '—' : String(val)}
+                      {f.value}
                     </div>
                   </div>
                 ))}
@@ -578,13 +575,13 @@ export default function VerifQueuePage() {
 
                 {/* Form data preview — first 4 fields */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 10 }}>
-                  {Object.entries(report.form_data || {}).slice(0, 4).map(([key, val]) => (
-                    <div key={key} style={{ background: 'var(--surface-2)', borderRadius: 7, padding: '6px 10px' }}>
+                  {flattenFormData(report.form_data || {}).slice(0, 4).map(f => (
+                    <div key={f.key} style={{ background: 'var(--surface-2)', borderRadius: 7, padding: '6px 10px' }}>
                       <div style={{ fontSize: '0.58rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>
-                        {key.replace(/_/g, ' ')}
+                        {f.label}
                       </div>
                       <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {String(val || '—')}
+                        {f.value}
                       </div>
                     </div>
                   ))}
