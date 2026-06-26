@@ -427,7 +427,7 @@ export async function getDashboardStats() {
         .select('tool_id, status, form_data')
         .order('submitted_at', { ascending: false }),
       supabase
-        .from('indicators')
+        .from('v_indicator_progress')
         .select('status, progress, tier'),
       supabase
         .from('districts')
@@ -437,7 +437,7 @@ export async function getDashboardStats() {
         .select('id, severity, is_resolved')
         .eq('is_resolved', false),
       supabase
-        .from('nbsap_targets')
+        .from('v_target_progress')
         .select('id', { count: 'exact', head: true }),
     ]);
 

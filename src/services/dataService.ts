@@ -28,7 +28,7 @@ export async function fetchIndicators(filters?: {
   const from = (page - 1) * pageSize;
 
   let query = supabase
-    .from('indicators')
+    .from('v_indicator_progress')
     .select('*')
     .order('id', { ascending: true })
     .range(from, from + pageSize - 1);
@@ -54,28 +54,10 @@ export async function fetchIndicators(filters?: {
   return (data || []) as Indicator[];
 }
 
-export async function updateIndicatorProgress(
-  indicatorId: number,
-  progress: number
-): Promise<ApiResponse<Indicator>> {
-  const status =
-    progress >= 70 ? 'on-track' : progress >= 40 ? 'at-risk' : 'behind';
-
-  const { data, error } = await supabase
-    .from('indicators')
-    .update({ progress, status })
-    .eq('id', indicatorId)
-    .select()
-    .single();
-
-  if (error) return { data: null, error: error.message };
-  return { data: data as Indicator, error: null };
-}
-
 export async function fetchTargets(): Promise<NBSAPTarget[]> {
   const { data, error } = await supabase
-    .from('nbsap_targets')
-    .select('*, indicators(*)')
+    .from('v_target_progress')
+    .select('*')
     .order('id', { ascending: true });
 
   if (error) {
@@ -92,7 +74,7 @@ export async function fetchTargets(): Promise<NBSAPTarget[]> {
 
 export async function fetchTargetsWithReportStats(): Promise<NBSAPTarget[]> {
   const { data, error } = await supabase
-    .from('target_progress_with_reports')
+    .from('v_target_progress')
     .select('*')
     .order('id', { ascending: true });
 
@@ -100,7 +82,10 @@ export async function fetchTargetsWithReportStats(): Promise<NBSAPTarget[]> {
     console.error('fetchTargetsWithReportStats error:', error);
     return [];
   }
-  return (data || []) as NBSAPTarget[];
+  return (data || []).map((t: any) => ({
+    ...t,
+    responsible_stakeholders: t.responsible_stakeholders || [],
+  })) as NBSAPTarget[];
 }
 
 export async function fetchUserResponsibleTargets(userOrganization?: string): Promise<NBSAPTarget[]> {
@@ -516,7 +501,7 @@ export async function getIndicatorsByDistrict(filters?: {
 }): Promise<Map<number, { progress: number; indicatorCount: number }>> {
   // Fetch all indicators (optionally filtered by target)
   let query = supabase
-    .from('indicators')
+    .from('v_indicator_progress')
     .select('id, progress, nbsap_target_id');
 
   if (filters?.targetId) {

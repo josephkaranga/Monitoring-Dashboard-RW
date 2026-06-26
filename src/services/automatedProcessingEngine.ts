@@ -3,12 +3,10 @@
 // ============================================================
 
 import { supabase } from '../utils/supabase';
-import { progressCalculator } from './progressCalculator';
 import type {
   OrganizationConfig,
   ProcessingResult,
   ReportSubmission,
-  UpdateResult,
 } from '../types/automaticReporting';
 import { UpdateStatus, getToolWeight } from '../types/automaticReporting';
 
@@ -75,73 +73,14 @@ export class AutomatedProcessingEngine {
     return result;
   }
 
-  /**
-   * Apply the tool-weighted progress contribution to the report's target
-   * immediately and persist the result.
-   */
+  // Progress is now computed deterministically from approved reports
+  // via database views (migration 023). No direct mutations needed.
   private async processImmediate(report: ReportSubmission): Promise<ProcessingResult> {
-    const startTime = Date.now();
-
-    if (report.nbsapTargetId === null) {
-      return {
-        success: true,
-        progressUpdated: false,
-        processingTime: Date.now() - startTime,
-        status: UpdateStatus.COMPLETED,
-      };
-    }
-
-    const { data: target, error: fetchError } = await supabase
-      .from('nbsap_targets')
-      .select('progress')
-      .eq('id', report.nbsapTargetId)
-      .single();
-
-    if (fetchError || !target) {
-      return {
-        success: false,
-        progressUpdated: false,
-        processingTime: Date.now() - startTime,
-        error: fetchError?.message || 'Target not found',
-        status: UpdateStatus.FAILED,
-      };
-    }
-
-    const calculation = progressCalculator.calculateContribution(
-      report,
-      report.nbsapTargetId,
-      target.progress
-    );
-    const updateResult: UpdateResult = {
-      ...progressCalculator.buildUpdateResult(calculation, report.toolId),
-      processingTime: Date.now() - startTime,
-    };
-
-    const { error: updateError } = await supabase
-      .from('nbsap_targets')
-      .update({
-        progress: calculation.newProgress,
-        last_auto_update: new Date().toISOString(),
-      })
-      .eq('id', report.nbsapTargetId);
-
-    if (updateError) {
-      return {
-        success: false,
-        progressUpdated: false,
-        processingTime: Date.now() - startTime,
-        error: updateError.message,
-        status: UpdateStatus.FAILED,
-        updateResults: [updateResult],
-      };
-    }
-
     return {
       success: true,
-      progressUpdated: updateResult.progressUpdated,
-      processingTime: Date.now() - startTime,
+      progressUpdated: report.nbsapTargetId !== null,
+      processingTime: 0,
       status: UpdateStatus.COMPLETED,
-      updateResults: [updateResult],
     };
   }
 
