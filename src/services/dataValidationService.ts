@@ -143,7 +143,7 @@ export function validateProgressCalculation(calculation: ProgressCalculation): V
  * integrity audits.
  */
 export async function auditTargetProgressIntegrity(): Promise<ValidationResult> {
-  const { data, error } = await supabase.from('v_target_progress').select('id, progress');
+  const { data, error } = await supabase.from('nbsap_targets').select('id, progress, auto_update_count');
 
   if (error || !data) {
     return result([{ field: 'nbsap_targets', message: error?.message || 'Unable to load targets' }]);

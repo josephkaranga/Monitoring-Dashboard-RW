@@ -357,7 +357,7 @@ function mapIndicatorStatus(dbStatus: string): 'on-track' | 'at-risk' | 'off-tra
 export async function fetchTargetsWithIndicators(): Promise<NBSAPTarget[]> {
   try {
     const { data: targets, error } = await supabase
-      .from('v_target_progress')
+      .from('nbsap_targets')
       .select('*')
       .order('id', { ascending: true });
 

@@ -59,40 +59,52 @@ export interface DashboardMetrics {
  */
 export async function fetchSystemMetrics(): Promise<SystemMetrics> {
   try {
-    const { data, error } = await supabase
-      .from('v_system_metrics')
-      .select('metric_type, metric_value');
+    const { data, error } = await supabase.rpc('get_system_metrics');
 
     if (error) {
       console.error('Error fetching system metrics:', error);
       throw new Error(`Failed to fetch system metrics: ${error.message}`);
     }
 
-    const m = new Map<string, number>();
-    for (const row of data || []) {
-      m.set(row.metric_type, parseFloat(row.metric_value) || 0);
+    if (!data || data.length === 0) {
+      return {
+        totalForestHa: 0,
+        totalWetlandHa: 0,
+        restorationCommitmentsHa: 0,
+        financeAllocatedRwf: 0,
+        financeDisbursedRwf: 0,
+        financeUtilizedRwf: 0,
+        totalHwcIncidents: 0,
+        eiaFullCompliance: 0,
+        eiaPartialCompliance: 0,
+        eiaNonCompliance: 0,
+        eiaCompliancePercentage: 0,
+        districtsActive: 0,
+        companiesReporting: 0,
+        protectedAreasMonitored: 0,
+        lastUpdated: new Date().toISOString()
+      };
     }
 
-    const eiaFull = m.get('eia_compliance_full') ?? 0;
-    const eiaPartial = m.get('eia_compliance_partial') ?? 0;
-    const eiaNon = m.get('eia_compliance_non') ?? 0;
-    const totalEia = eiaFull + eiaPartial + eiaNon;
+    const row = data[0];
+    const totalEia = row.eia_full_compliance + row.eia_partial_compliance + row.eia_non_compliance;
+    const eiaCompliancePercentage = totalEia > 0 ? Math.round((row.eia_full_compliance / totalEia) * 100) : 0;
 
     return {
-      totalForestHa: m.get('forest_ha_total') ?? 0,
-      totalWetlandHa: m.get('wetland_ha_total') ?? 0,
-      restorationCommitmentsHa: 0,
-      financeAllocatedRwf: m.get('finance_rwf_allocated') ?? 0,
-      financeDisbursedRwf: m.get('finance_rwf_disbursed') ?? 0,
-      financeUtilizedRwf: m.get('finance_rwf_utilized') ?? 0,
-      totalHwcIncidents: m.get('hwc_incidents_total') ?? 0,
-      eiaFullCompliance: eiaFull,
-      eiaPartialCompliance: eiaPartial,
-      eiaNonCompliance: eiaNon,
-      eiaCompliancePercentage: totalEia > 0 ? Math.round((eiaFull / totalEia) * 100) : 0,
-      districtsActive: m.get('districts_reporting') ?? 0,
-      companiesReporting: m.get('companies_reporting') ?? 0,
-      protectedAreasMonitored: m.get('protected_areas_monitored') ?? 0,
+      totalForestHa: parseFloat(row.forest_ha) || 0,
+      totalWetlandHa: parseFloat(row.wetland_ha) || 0,
+      restorationCommitmentsHa: parseFloat(row.restoration_commitments_ha) || 0,
+      financeAllocatedRwf: parseFloat(row.finance_allocated_rwf) || 0,
+      financeDisbursedRwf: parseFloat(row.finance_disbursed_rwf) || 0,
+      financeUtilizedRwf: parseFloat(row.finance_utilized_rwf) || 0,
+      totalHwcIncidents: parseInt(row.hwc_incidents) || 0,
+      eiaFullCompliance: parseInt(row.eia_full_compliance) || 0,
+      eiaPartialCompliance: parseInt(row.eia_partial_compliance) || 0,
+      eiaNonCompliance: parseInt(row.eia_non_compliance) || 0,
+      eiaCompliancePercentage,
+      districtsActive: parseInt(row.districts_active) || 0,
+      companiesReporting: parseInt(row.companies_active) || 0,
+      protectedAreasMonitored: parseInt(row.protected_areas_monitored) || 0,
       lastUpdated: new Date().toISOString()
     };
   } catch (error) {
@@ -165,7 +177,17 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
  * Use this to ensure data integrity
  */
 export async function recalculateSystemMetrics(): Promise<string> {
-  return 'Metrics are now computed on read — no recalculation needed.';
+  try {
+    const { data, error } = await supabase.rpc('recalculate_system_metrics');
+    if (error) {
+      console.error('Error recalculating metrics:', error);
+      throw new Error(`Failed to recalculate metrics: ${error.message}`);
+    }
+    return data || 'Metrics recalculated successfully';
+  } catch (error) {
+    console.error('Error in recalculateSystemMetrics:', error);
+    throw error;
+  }
 }
 
 /**

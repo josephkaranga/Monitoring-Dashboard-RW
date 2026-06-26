@@ -28,7 +28,7 @@ export async function fetchIndicators(filters?: {
   const from = (page - 1) * pageSize;
 
   let query = supabase
-    .from('v_indicator_progress')
+    .from('indicators')
     .select('*')
     .order('id', { ascending: true })
     .range(from, from + pageSize - 1);
@@ -56,15 +56,15 @@ export async function fetchIndicators(filters?: {
 
 export async function fetchTargets(): Promise<NBSAPTarget[]> {
   const { data, error } = await supabase
-    .from('v_target_progress')
-    .select('*')
+    .from('nbsap_targets')
+    .select('*, indicators(*)')
     .order('id', { ascending: true });
 
   if (error) {
     console.error('fetchTargets error:', error);
     return [];
   }
-  
+
   // Map the data and handle missing responsible_stakeholders column gracefully
   return (data || []).map((target: any) => ({
     ...target,
@@ -74,7 +74,7 @@ export async function fetchTargets(): Promise<NBSAPTarget[]> {
 
 export async function fetchTargetsWithReportStats(): Promise<NBSAPTarget[]> {
   const { data, error } = await supabase
-    .from('v_target_progress')
+    .from('target_progress_with_reports')
     .select('*')
     .order('id', { ascending: true });
 
@@ -82,10 +82,7 @@ export async function fetchTargetsWithReportStats(): Promise<NBSAPTarget[]> {
     console.error('fetchTargetsWithReportStats error:', error);
     return [];
   }
-  return (data || []).map((t: any) => ({
-    ...t,
-    responsible_stakeholders: t.responsible_stakeholders || [],
-  })) as NBSAPTarget[];
+  return (data || []) as NBSAPTarget[];
 }
 
 export async function fetchUserResponsibleTargets(userOrganization?: string): Promise<NBSAPTarget[]> {
@@ -501,7 +498,7 @@ export async function getIndicatorsByDistrict(filters?: {
 }): Promise<Map<number, { progress: number; indicatorCount: number }>> {
   // Fetch all indicators (optionally filtered by target)
   let query = supabase
-    .from('v_indicator_progress')
+    .from('indicators')
     .select('id, progress, nbsap_target_id');
 
   if (filters?.targetId) {
