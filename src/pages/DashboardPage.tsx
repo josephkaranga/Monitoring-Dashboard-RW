@@ -1,6 +1,8 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 
 import { useDashboardStats, useReports } from '../hooks/useData';
+import { fetchIndicators } from '../services/dataService';
+import type { Indicator } from '../types/index';
 
 import { DashboardSkeleton } from '../components/Skeleton';
 import { NBSAPTargetProgress } from '../components/NBSAPTargetProgress';
@@ -32,32 +34,20 @@ function MetricCard({ label, value, sub, color }: {
   );
 }
 
-// ── Progress Row ──────────────────────────────────────────────
-function ProgRow({ label, value, target, color }: { label: string; value: string; target: string; color: string }) {
-  const numVal = parseFloat(value) || 0;
-  const numTarget = parseFloat(target) || 0;
-  // If value contains '%', treat as absolute percentage; otherwise compute ratio
-  const pct = value.includes('%')
-    ? Math.min(100, Math.max(0, numVal))
-    : numTarget > 0 ? Math.min(100, (numVal / numTarget) * 100) : 0;
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: 5 }}>
-        <span style={{ fontWeight: 500, color: 'var(--text-2)' }}>{label}</span>
-        <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>{value} / {target}</span>
-      </div>
-      <div style={{ height: 7, background: 'var(--surface-3)', borderRadius: 4, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 1.2s cubic-bezier(.4,0,.2,1)' }} />
-      </div>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const { stats, loading, refetch: refetchStats } = useDashboardStats(false);
   const { reports, refetch: refetchReports } = useReports({ status: 'approved', pageSize: 4 });
   const [systemMetrics, setSystemMetrics] = useState<DashboardMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  const [indicators, setIndicators] = useState<Indicator[]>([]);
+  const [indicatorFilter, setIndicatorFilter] = useState<string>('all');
+
+  useEffect(() => { fetchIndicators({ pageSize: 200 }).then(setIndicators); }, []);
+
+  const filteredIndicators = useMemo(() => {
+    if (indicatorFilter === 'all') return indicators;
+    return indicators.filter(i => i.status === indicatorFilter);
+  }, [indicators, indicatorFilter]);
 
   // Load automated system metrics
   const loadSystemMetrics = useCallback(async () => {
@@ -215,10 +205,14 @@ export default function DashboardPage() {
 
       {/* ── Charts + Activity + NBSAP Targets ── */}
       <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: 16, marginBottom: 24 }}>
-        {/* Progress */}
+        {/* Overall Progress vs Submissions — side-by-side comparison */}
         <div style={{ ...card, padding: 18 }}>
-          <div style={{ marginBottom: 16, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>
-            Indicator Progress
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>🎯 NBSAP Indicator Progress</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              Progress linked to report submissions • {indicators.length} tracked indicators
+              <span style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: 8, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#dcfce7', color: '#166534' }}>● Live</span>
+            </div>
           </div>
           {(() => {
             const total = s?.totalIndicators ?? 0;
@@ -227,26 +221,64 @@ export default function DashboardPage() {
             const behind = s?.behindIndicators ?? 0;
             const avg = s?.avgProgress ?? 0;
             const avgPc = progressColor(avg);
+            const totalSub = s?.totalSubmissions ?? 0;
+            const pending = s?.pendingVerifications ?? 0;
+            const approved = totalSub - pending;
+            const approvalRate = totalSub > 0 ? Math.round((approved / totalSub) * 100) : 0;
+            const approvalPc = progressColor(approvalRate);
+
             return (
               <>
-                <ProgRow label="Average Progress" value={`${avg}%`} target="100%" color={avgPc.color} />
-                <ProgRow label="On-Track" value={`${onTrack}`} target={`${total}`} color="#16a34a" />
-                <ProgRow label="At-Risk" value={`${atRisk}`} target={`${total}`} color="#d97706" />
-                <ProgRow label="Behind Schedule" value={`${behind}`} target={`${total}`} color="#dc2626" />
-                {/* Tier breakdown — informational chips, not progress bars */}
-                <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid var(--surface-3)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {[
-                    { label: 'Headline', count: s?.headlineIndicators ?? 0, bg: '#dcfce7', color: '#16a34a' },
-                    { label: 'Component', count: s?.componentIndicators ?? 0, bg: '#fef3c7', color: '#d97706' },
-                    { label: 'Binary', count: s?.binaryIndicators ?? 0, bg: '#fee2e2', color: '#dc2626' },
-                  ].map(({ label, count, bg, color }) => (
-                    <span key={label} style={{ background: bg, color, fontSize: '0.68rem', fontWeight: 600, padding: '3px 10px', borderRadius: 10 }}>
-                      {label}: {count}
-                    </span>
-                  ))}
-                  <span style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--text-3)', alignSelf: 'center' }}>
-                    {total} total
-                  </span>
+                {/* Status filter */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {[
+                      { key: 'all', label: 'All', count: total },
+                      { key: 'on-track', label: 'On-Track', count: onTrack },
+                      { key: 'at-risk', label: 'At-Risk', count: atRisk },
+                      { key: 'behind', label: 'Behind', count: behind },
+                    ].map(f => (
+                      <button key={f.key} onClick={() => setIndicatorFilter(f.key)}
+                        style={{
+                          padding: '3px 8px', borderRadius: 6, fontSize: '0.62rem', fontWeight: 600,
+                          border: indicatorFilter === f.key ? '1px solid var(--sky-dim)' : '1px solid var(--border)',
+                          background: indicatorFilter === f.key ? 'rgba(14,165,233,0.1)' : 'transparent',
+                          color: indicatorFilter === f.key ? 'var(--sky-dim)' : 'var(--text-3)',
+                          cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+                        }}>
+                        {f.label} ({f.count})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scrollable indicator list */}
+                <div style={{ maxHeight: 280, overflowY: 'auto', borderTop: '1px solid var(--surface-3)', paddingTop: 8 }}>
+                  {filteredIndicators.map(ind => {
+                    const pc = progressColor(ind.progress);
+                    return (
+                      <div key={ind.id} style={{ padding: '10px 0', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0f172a', marginBottom: 4 }}>{ind.name}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                            <span style={{ fontSize: '0.65rem', color: '#64748b' }}>Overall</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: pc.color }}>{ind.progress}% · {pc.label}</span>
+                          </div>
+                          <div style={{ height: 4, background: '#f1f5f9', borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${ind.progress}%`, background: pc.color, borderRadius: 2, transition: 'width 0.8s ease' }} />
+                          </div>
+                          {ind.nbsap_target_id && (
+                            <div style={{ fontSize: '0.62rem', color: '#94a3b8', marginTop: 2 }}>
+                              Target {ind.nbsap_target_id} {ind.periodicity && `• ${ind.periodicity}`}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {filteredIndicators.length === 0 && (
+                    <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.78rem' }}>No indicators match this filter.</div>
+                  )}
                 </div>
               </>
             );
