@@ -143,16 +143,18 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
     <g className="river-network-overlay" aria-label="River network">
       {rivers.features.filter(isInViewport).map((river, idx) => {
         const pathData = renderLine(river.geometry);
-        const strokeWidth = getStrokeWidth(river.properties.length);
+        const len = river.properties.length_km || river.properties.length || 0;
+        const strokeWidth = getStrokeWidth(len);
+        const isMajor = (river.properties.type || '').includes('Major');
 
         return (
           <path
             key={`river-${idx}`}
             d={pathData}
             fill="none"
-            stroke="#0ea5e9"
+            stroke={isMajor ? '#0284c7' : '#38bdf8'}
             strokeWidth={strokeWidth}
-            strokeOpacity={0.6}
+            strokeOpacity={isMajor ? 0.75 : 0.55}
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
@@ -160,20 +162,22 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
               transition: 'stroke-opacity 0.2s, stroke-width 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.strokeOpacity = '0.9';
-              e.currentTarget.style.strokeWidth = String(strokeWidth * 1.5);
+              e.currentTarget.style.strokeOpacity = '1';
+              e.currentTarget.style.strokeWidth = String(strokeWidth * 1.8);
               onHover(river);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.strokeOpacity = '0.6';
+              e.currentTarget.style.strokeOpacity = isMajor ? '0.75' : '0.55';
               e.currentTarget.style.strokeWidth = String(strokeWidth);
               onHover(null);
             }}
-            aria-label={`${river.properties.name} river`}
+            aria-label={`${river.properties.name}`}
           >
             <title>
               {river.properties.name}
-              {'\n'}Length: {river.properties.length.toFixed(1)} km
+              {len > 0 && `\nLength: ${len} km`}
+              {river.properties.basin && `\nBasin: ${river.properties.basin}`}
+              {river.properties.description && `\n${river.properties.description}`}
             </title>
           </path>
         );

@@ -16,9 +16,16 @@ export interface ProtectedArea {
   type: 'Feature';
   properties: {
     name: string;
-    designationType: 'National Park' | 'Reserve' | 'Wetland' | 'Forest Reserve';
-    area: number; // in square kilometers
-    established: string;
+    type: string;
+    designationType?: string;
+    iucn_category?: string;
+    area?: number;
+    area_km2?: number;
+    district?: string;
+    managing_authority?: string;
+    description?: string;
+    established?: number | string;
+    key_species?: string[];
   };
   geometry: {
     type: 'Polygon' | 'MultiPolygon';
@@ -35,7 +42,11 @@ export interface RiverFeature {
   type: 'Feature';
   properties: {
     name: string;
-    length: number; // in kilometers
+    type?: string;
+    length?: number;
+    length_km?: number;
+    basin?: string;
+    description?: string;
   };
   geometry: {
     type: 'LineString' | 'MultiLineString';
@@ -52,11 +63,13 @@ export interface LakeFeature {
   type: 'Feature';
   properties: {
     name: string;
-    area_km2: number;
-    max_depth_m: number;
-    elevation_m: number;
-    ecological_significance: string;
-    related_indicators: number[];
+    area_km2?: number;
+    max_depth_m?: number;
+    elevation_m?: number;
+    district?: string;
+    catchment?: string;
+    ecological_significance?: string;
+    related_indicators?: number[];
   };
   geometry: {
     type: 'Polygon' | 'MultiPolygon';

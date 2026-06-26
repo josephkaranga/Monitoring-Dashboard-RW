@@ -101,14 +101,15 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
   /**
    * Get color based on designation type
    */
-  const getDesignationColor = (designationType: string): string => {
+  const getDesignationColor = (area: ProtectedArea): string => {
+    const t = area.properties.type || area.properties.designationType || '';
     const colors: Record<string, string> = {
       'National Park': '#16a34a',
       'Reserve': '#0891b2',
-      'Wetland': '#0ea5e9',
+      'Wetland Reserve': '#0ea5e9',
       'Forest Reserve': '#059669',
     };
-    return colors[designationType] || '#10b981';
+    return colors[t] || '#10b981';
   };
 
   // Show loading state
@@ -154,38 +155,45 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
     <g className="protected-areas-overlay" aria-label="Protected areas">
       {areas.features.filter(isInViewport).map((area, idx) => {
         const pathData = renderPolygon(area.geometry);
-        const color = getDesignationColor(area.properties.designationType);
+        const color = getDesignationColor(area);
+        const areaType = area.properties.type || area.properties.designationType || 'Protected Area';
+        const areaSize = area.properties.area_km2 || area.properties.area || 0;
 
         return (
           <path
             key={`protected-area-${idx}`}
             d={pathData}
             fill={color}
-            fillOpacity={0.2}
+            fillOpacity={0.25}
             stroke={color}
-            strokeWidth="0.008"
-            strokeOpacity={0.8}
+            strokeWidth="0.01"
+            strokeOpacity={0.9}
+            strokeLinejoin="round"
             style={{
               cursor: 'pointer',
               transition: 'fill-opacity 0.2s, stroke-width 0.2s',
+              filter: 'drop-shadow(0 0 0.005px rgba(0,0,0,0.2))',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.fillOpacity = '0.35';
-              e.currentTarget.style.strokeWidth = '0.012';
+              e.currentTarget.style.fillOpacity = '0.45';
+              e.currentTarget.style.strokeWidth = '0.015';
               onHover(area);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.fillOpacity = '0.2';
-              e.currentTarget.style.strokeWidth = '0.008';
+              e.currentTarget.style.fillOpacity = '0.25';
+              e.currentTarget.style.strokeWidth = '0.01';
               onHover(null);
             }}
-            aria-label={`${area.properties.name} - ${area.properties.designationType}`}
+            aria-label={`${area.properties.name} - ${areaType}`}
           >
             <title>
               {area.properties.name}
-              {'\n'}Type: {area.properties.designationType}
-              {'\n'}Area: {area.properties.area.toFixed(2)} km²
+              {'\n'}Type: {areaType}
+              {areaSize > 0 && `\nArea: ${areaSize.toLocaleString()} km²`}
+              {area.properties.iucn_category && `\nIUCN: ${area.properties.iucn_category}`}
+              {area.properties.managing_authority && `\nManaged by: ${area.properties.managing_authority}`}
               {area.properties.established && `\nEstablished: ${area.properties.established}`}
+              {area.properties.key_species && area.properties.key_species.length > 0 && `\nKey species: ${area.properties.key_species.join(', ')}`}
             </title>
           </path>
         );

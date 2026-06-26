@@ -143,28 +143,30 @@ export const LakesOverlay = React.memo(function LakesOverlay({
     <g className="lakes-overlay" aria-label="Major lakes">
       {lakes.features.filter(isInViewport).map((lake, idx) => {
         const pathData = renderPolygon(lake.geometry);
+        const isLarge = (lake.properties.area_km2 || 0) > 50;
 
         return (
           <path
             key={`lake-${idx}`}
             d={pathData}
-            fill="#3b82f6"
-            fillOpacity={0.3}
-            stroke="#3b82f6"
-            strokeWidth="0.01"
-            strokeOpacity={0.8}
+            fill={isLarge ? '#2563eb' : '#3b82f6'}
+            fillOpacity={isLarge ? 0.4 : 0.3}
+            stroke="#1d4ed8"
+            strokeWidth={isLarge ? '0.012' : '0.008'}
+            strokeOpacity={0.85}
+            strokeLinejoin="round"
             style={{
               cursor: 'pointer',
               transition: 'fill-opacity 0.2s, stroke-width 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.fillOpacity = '0.5';
-              e.currentTarget.style.strokeWidth = '0.015';
+              e.currentTarget.style.fillOpacity = '0.55';
+              e.currentTarget.style.strokeWidth = isLarge ? '0.018' : '0.014';
               onHover(lake);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.fillOpacity = '0.3';
-              e.currentTarget.style.strokeWidth = '0.01';
+              e.currentTarget.style.fillOpacity = isLarge ? '0.4' : '0.3';
+              e.currentTarget.style.strokeWidth = isLarge ? '0.012' : '0.008';
               onHover(null);
             }}
             onClick={() => onClick(lake)}
@@ -172,9 +174,11 @@ export const LakesOverlay = React.memo(function LakesOverlay({
           >
             <title>
               {lake.properties.name}
-              {'\n'}Area: {lake.properties.area_km2} km²
-              {'\n'}Max Depth: {lake.properties.max_depth_m} m
-              {'\n'}Elevation: {lake.properties.elevation_m} m
+              {lake.properties.area_km2 && `\nArea: ${lake.properties.area_km2.toLocaleString()} km²`}
+              {lake.properties.max_depth_m && `\nMax depth: ${lake.properties.max_depth_m} m`}
+              {lake.properties.elevation_m && `\nElevation: ${lake.properties.elevation_m.toLocaleString()} m`}
+              {lake.properties.district && `\nDistrict: ${lake.properties.district}`}
+              {lake.properties.catchment && `\nCatchment: ${lake.properties.catchment}`}
             </title>
           </path>
         );
