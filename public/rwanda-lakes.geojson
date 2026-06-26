@@ -8,30 +8,25 @@
         "area_km2": 2700,
         "max_depth_m": 480,
         "elevation_m": 1460,
-        "ecological_significance": "One of the African Great Lakes with unique methane reserves, supports diverse fish species and local fisheries. Important for regional water supply and biodiversity.",
-        "related_indicators": [12, 15, 23, 45]
+        "district": "Rubavu / Karongi / Nyamasheke / Rusizi",
+        "catchment": "Congo Basin",
+        "ecological_significance": "One of the African Great Lakes with unique methane reserves, supports diverse fish species and local fisheries."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [29.05, -1.55],
-          [29.25, -1.55],
-          [29.35, -1.65],
-          [29.35, -1.85],
-          [29.25, -2.05],
-          [29.15, -2.15],
-          [29.05, -2.25],
-          [28.95, -2.35],
-          [28.85, -2.35],
-          [28.85, -2.25],
-          [28.85, -2.15],
-          [28.85, -2.05],
-          [28.85, -1.95],
-          [28.85, -1.85],
-          [28.85, -1.75],
-          [28.85, -1.65],
-          [28.95, -1.55],
-          [29.05, -1.55]
+          [29.05, -1.58], [29.10, -1.56], [29.15, -1.55], [29.20, -1.56],
+          [29.25, -1.58], [29.28, -1.61], [29.30, -1.65], [29.31, -1.70],
+          [29.30, -1.75], [29.29, -1.80], [29.27, -1.85], [29.25, -1.90],
+          [29.22, -1.95], [29.19, -2.00], [29.16, -2.05], [29.13, -2.10],
+          [29.10, -2.14], [29.07, -2.18], [29.04, -2.22], [29.01, -2.25],
+          [28.98, -2.28], [28.96, -2.30], [28.94, -2.32], [28.92, -2.34],
+          [28.90, -2.34], [28.88, -2.33], [28.87, -2.30], [28.865, -2.26],
+          [28.86, -2.22], [28.86, -2.18], [28.86, -2.14], [28.86, -2.10],
+          [28.86, -2.06], [28.86, -2.02], [28.86, -1.98], [28.865, -1.94],
+          [28.87, -1.90], [28.875, -1.86], [28.88, -1.82], [28.885, -1.78],
+          [28.89, -1.74], [28.90, -1.70], [28.91, -1.67], [28.93, -1.64],
+          [28.95, -1.62], [28.98, -1.60], [29.01, -1.58], [29.05, -1.58]
         ]]
       }
     },
@@ -42,21 +37,20 @@
         "area_km2": 34.5,
         "max_depth_m": 5,
         "elevation_m": 1450,
-        "ecological_significance": "Long narrow lake important for local fisheries, water supply, and tourism. Supports aquatic biodiversity and surrounding wetland ecosystems.",
-        "related_indicators": [15, 23, 34]
+        "district": "Rwamagana / Gasabo",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Long narrow lake important for local fisheries and tourism."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [30.05, -1.95],
-          [30.35, -1.95],
-          [30.45, -1.95],
-          [30.55, -1.95],
-          [30.55, -2.00],
-          [30.45, -2.00],
-          [30.35, -2.00],
-          [30.05, -2.00],
-          [30.05, -1.95]
+          [30.02, -1.855], [30.06, -1.85], [30.10, -1.85], [30.15, -1.845],
+          [30.20, -1.84], [30.25, -1.84], [30.30, -1.845], [30.35, -1.85],
+          [30.38, -1.855], [30.40, -1.86], [30.42, -1.865], [30.44, -1.87],
+          [30.44, -1.885], [30.42, -1.89], [30.40, -1.89], [30.38, -1.885],
+          [30.35, -1.88], [30.30, -1.875], [30.25, -1.87], [30.20, -1.87],
+          [30.15, -1.87], [30.10, -1.875], [30.06, -1.875], [30.02, -1.87],
+          [30.02, -1.855]
         ]]
       }
     },
@@ -67,17 +61,18 @@
         "area_km2": 55,
         "max_depth_m": 152,
         "elevation_m": 1862,
-        "ecological_significance": "Highland lake in volcanic region, supports local fisheries and provides water for agriculture. Part of twin lakes system with Lake Ruhondo.",
-        "related_indicators": [12, 15, 23]
+        "district": "Burera",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Highland volcanic lake, part of twin lakes system with Lake Ruhondo."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [29.65, -1.45],
-          [29.75, -1.45],
-          [29.75, -1.55],
-          [29.65, -1.55],
-          [29.65, -1.45]
+          [29.64, -1.42], [29.67, -1.41], [29.70, -1.405], [29.73, -1.41],
+          [29.755, -1.42], [29.77, -1.435], [29.775, -1.455], [29.77, -1.475],
+          [29.755, -1.49], [29.73, -1.50], [29.70, -1.505], [29.67, -1.50],
+          [29.65, -1.49], [29.635, -1.47], [29.63, -1.45], [29.635, -1.435],
+          [29.64, -1.42]
         ]]
       }
     },
@@ -88,17 +83,17 @@
         "area_km2": 28,
         "max_depth_m": 68,
         "elevation_m": 1764,
-        "ecological_significance": "Highland lake connected to Lake Burera, important for local water supply and fisheries. Scenic lake supporting tourism and biodiversity.",
-        "related_indicators": [12, 15, 23]
+        "district": "Musanze",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Highland volcanic lake connected to Lake Burera. Scenic tourism destination."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [29.65, -1.55],
-          [29.75, -1.55],
-          [29.75, -1.65],
-          [29.65, -1.65],
-          [29.65, -1.55]
+          [29.64, -1.52], [29.67, -1.515], [29.70, -1.52], [29.725, -1.53],
+          [29.74, -1.545], [29.745, -1.565], [29.74, -1.585], [29.72, -1.60],
+          [29.70, -1.605], [29.68, -1.60], [29.66, -1.59], [29.645, -1.575],
+          [29.635, -1.555], [29.635, -1.535], [29.64, -1.52]
         ]]
       }
     },
@@ -109,17 +104,18 @@
         "area_km2": 90,
         "max_depth_m": 7,
         "elevation_m": 1292,
-        "ecological_significance": "Largest lake in Akagera National Park, critical for wildlife including hippos, crocodiles, and diverse bird species. Important wetland ecosystem.",
-        "related_indicators": [12, 15, 23, 45, 56]
+        "district": "Kayonza",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Largest lake in Akagera National Park. Critical habitat for hippos, crocodiles, and waterbirds."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [30.65, -2.25],
-          [30.75, -2.25],
-          [30.75, -2.35],
-          [30.65, -2.35],
-          [30.65, -2.25]
+          [30.64, -2.10], [30.68, -2.09], [30.72, -2.10], [30.75, -2.12],
+          [30.77, -2.15], [30.78, -2.19], [30.775, -2.23], [30.76, -2.26],
+          [30.74, -2.29], [30.71, -2.31], [30.68, -2.32], [30.65, -2.31],
+          [30.63, -2.29], [30.615, -2.26], [30.61, -2.22], [30.61, -2.18],
+          [30.615, -2.15], [30.625, -2.12], [30.64, -2.10]
         ]]
       }
     },
@@ -130,17 +126,18 @@
         "area_km2": 133,
         "max_depth_m": 3,
         "elevation_m": 1350,
-        "ecological_significance": "Shared with Burundi, important for fisheries and water supply. Supports wetland biodiversity and migratory bird populations.",
-        "related_indicators": [15, 23, 34]
+        "district": "Bugesera",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Shared with Burundi. Important for fisheries and migratory bird populations."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [30.35, -2.35],
-          [30.45, -2.35],
-          [30.45, -2.45],
-          [30.35, -2.45],
-          [30.35, -2.35]
+          [30.26, -2.32], [30.30, -2.31], [30.35, -2.305], [30.40, -2.31],
+          [30.44, -2.32], [30.47, -2.34], [30.49, -2.37], [30.48, -2.40],
+          [30.46, -2.42], [30.43, -2.435], [30.40, -2.44], [30.36, -2.44],
+          [30.32, -2.435], [30.29, -2.42], [30.27, -2.40], [30.26, -2.37],
+          [30.255, -2.35], [30.26, -2.32]
         ]]
       }
     },
@@ -151,101 +148,36 @@
         "area_km2": 15,
         "max_depth_m": 4,
         "elevation_m": 1380,
-        "ecological_significance": "Part of Akagera wetland complex, important for aquatic biodiversity and bird habitat. Supports local fishing communities.",
-        "related_indicators": [15, 23, 45]
+        "district": "Bugesera",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Part of Bugesera lakes complex. Important for aquatic biodiversity."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [30.55, -2.15],
-          [30.65, -2.15],
-          [30.65, -2.25],
-          [30.55, -2.25],
-          [30.55, -2.15]
+          [30.12, -2.26], [30.15, -2.255], [30.18, -2.26], [30.20, -2.27],
+          [30.21, -2.29], [30.20, -2.31], [30.18, -2.32], [30.15, -2.325],
+          [30.13, -2.31], [30.12, -2.29], [30.12, -2.26]
         ]]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "name": "Lake Hago",
-        "area_km2": 8,
+        "name": "Lake Sake",
+        "area_km2": 12,
         "max_depth_m": 3,
         "elevation_m": 1310,
-        "ecological_significance": "Small lake in Akagera National Park, provides habitat for aquatic species and waterbirds. Part of park's wetland ecosystem.",
-        "related_indicators": [15, 23, 45]
+        "district": "Kayonza",
+        "catchment": "Nile Basin",
+        "ecological_significance": "Small lake in Akagera region, habitat for waterbirds and fish."
       },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
-          [30.65, -2.15],
-          [30.70, -2.15],
-          [30.70, -2.20],
-          [30.65, -2.20],
-          [30.65, -2.15]
-        ]]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Lake Kivumba",
-        "area_km2": 6,
-        "max_depth_m": 2,
-        "elevation_m": 1300,
-        "ecological_significance": "Small lake in Akagera region, supports local biodiversity and provides water for wildlife. Part of wetland corridor.",
-        "related_indicators": [15, 23]
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-          [30.55, -2.05],
-          [30.60, -2.05],
-          [30.60, -2.10],
-          [30.55, -2.10],
-          [30.55, -2.05]
-        ]]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Lake Shakani",
-        "area_km2": 5,
-        "max_depth_m": 2,
-        "elevation_m": 1295,
-        "ecological_significance": "Small lake in Akagera National Park, provides habitat for aquatic birds and fish. Contributes to park's wetland biodiversity.",
-        "related_indicators": [15, 23, 45]
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-          [30.70, -2.20],
-          [30.75, -2.20],
-          [30.75, -2.25],
-          [30.70, -2.25],
-          [30.70, -2.20]
-        ]]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Lake Mihindi",
-        "area_km2": 4,
-        "max_depth_m": 2,
-        "elevation_m": 1305,
-        "ecological_significance": "Small lake in Akagera wetland system, important for local aquatic biodiversity and bird populations. Part of protected wetland habitat.",
-        "related_indicators": [15, 23]
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-          [30.60, -2.10],
-          [30.65, -2.10],
-          [30.65, -2.15],
-          [30.60, -2.15],
-          [30.60, -2.10]
+          [30.58, -1.92], [30.61, -1.915], [30.635, -1.92], [30.645, -1.94],
+          [30.64, -1.96], [30.62, -1.97], [30.60, -1.965], [30.585, -1.95],
+          [30.58, -1.935], [30.58, -1.92]
         ]]
       }
     }
