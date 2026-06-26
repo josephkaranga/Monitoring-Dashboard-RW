@@ -1,10 +1,13 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useReports } from '../hooks/useData';
 import { verifyReport } from '../services/reportService';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
+// Lazy-loaded to avoid bundling ~800KB on initial page load
+const loadXLSX = () => import('xlsx');
+const loadMammoth = () => import('mammoth');
 import type { ToolkitReport, ReportAttachment } from '../types/index';
 
 const TOOL_EMOJI: Record<string, string> = {
@@ -23,14 +26,19 @@ const card: React.CSSProperties = {
   border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)',
 };
 
-const PREVIEW_EXTS = ['pdf'];
-const DOWNLOADABLE_EXTS = ['xlsx', 'xls', 'csv', 'doc', 'docx', 'ppt', 'pptx', 'zip', 'jpg', 'jpeg', 'png'];
-
-function getSignedUrl(storagePath: string): Promise<string | null> {
-  return supabase.storage
+async function getSignedUrl(storagePath: string): Promise<string | null> {
+  const { data } = await supabase.storage
     .from('report-attachments')
-    .createSignedUrl(storagePath, 600)
-    .then(({ data }) => data?.signedUrl ?? null);
+    .createSignedUrl(storagePath, 600);
+  return data?.signedUrl ?? null;
+}
+
+async function downloadFileBytes(storagePath: string): Promise<ArrayBuffer | null> {
+  const { data, error } = await supabase.storage
+    .from('report-attachments')
+    .download(storagePath);
+  if (error || !data) return null;
+  return data.arrayBuffer();
 }
 
 function formatFieldKey(key: string): string {
@@ -43,37 +51,106 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getFileIcon(ext: string): { icon: string; color: string } {
+  if (ext === 'pdf') return { icon: 'fa-file-pdf', color: '#dc2626' };
+  if (['xlsx', 'xls', 'csv'].includes(ext)) return { icon: 'fa-file-excel', color: '#16a34a' };
+  if (['doc', 'docx'].includes(ext)) return { icon: 'fa-file-word', color: '#2563eb' };
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return { icon: 'fa-file-image', color: '#8b5cf6' };
+  return { icon: 'fa-file', color: '#6b7280' };
+}
+
+const headerBtn: React.CSSProperties = {
+  padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)',
+  background: 'var(--surface)', fontSize: '0.72rem', fontWeight: 600,
+  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+  display: 'flex', alignItems: 'center', gap: 4,
+};
+
 /* ── Attachment Preview Component ────────────────────────── */
 function AttachmentPreview({ att }: { att: ReportAttachment }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const ext = (att.ext || '').toLowerCase().replace('.', '');
-  const canPreview = PREVIEW_EXTS.includes(ext);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLoad = useCallback(async () => {
-    if (!att.storage_path || url) return;
-    setLoading(true);
-    const signed = await getSignedUrl(att.storage_path);
-    setUrl(signed);
-    setLoading(false);
-  }, [att.storage_path, url]);
+  // PDF
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  // Image
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  // Excel
+  const [excelHtml, setExcelHtml] = useState<string | null>(null);
+  const [sheetNames, setSheetNames] = useState<string[]>([]);
+  const [activeSheet, setActiveSheet] = useState(0);
+  const workbookRef = useRef<any>(null);
+  const xlsxRef = useRef<typeof import('xlsx') | null>(null);
+  // Word
+  const [wordHtml, setWordHtml] = useState<string | null>(null);
+
+  const ext = (att.ext || '').toLowerCase().replace('.', '');
+  const { icon, color } = getFileIcon(ext);
+
+  const renderExcelSheet = useCallback((wb: any, idx: number) => {
+    const name = wb.SheetNames[idx];
+    const ws = wb.Sheets[name];
+    if (!ws || !xlsxRef.current) return;
+    setExcelHtml(xlsxRef.current.utils.sheet_to_html(ws, { editable: false }));
+    setActiveSheet(idx);
+  }, []);
+
+  useEffect(() => {
+    if (!att.storage_path) { setLoading(false); setError('No file path'); return; }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (ext === 'pdf') {
+          const url = await getSignedUrl(att.storage_path!);
+          if (!cancelled) { setPdfUrl(url); setLoading(false); }
+
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+          const url = await getSignedUrl(att.storage_path!);
+          if (!cancelled) { setImgUrl(url); setLoading(false); }
+
+        } else if (['xlsx', 'xls', 'csv'].includes(ext)) {
+          const [buf, xlsx] = await Promise.all([downloadFileBytes(att.storage_path!), loadXLSX()]);
+          if (cancelled || !buf) { if (!cancelled) { setError('Failed to load file'); setLoading(false); } return; }
+          xlsxRef.current = xlsx;
+          const wb = xlsx.read(buf, { type: 'array' });
+          workbookRef.current = wb;
+          setSheetNames(wb.SheetNames);
+          renderExcelSheet(wb, 0);
+          if (!cancelled) setLoading(false);
+
+        } else if (['doc', 'docx'].includes(ext)) {
+          const [buf, mam] = await Promise.all([downloadFileBytes(att.storage_path!), loadMammoth()]);
+          if (cancelled || !buf) { if (!cancelled) { setError('Failed to load file'); setLoading(false); } return; }
+          const result = await mam.default.convertToHtml({ arrayBuffer: buf });
+          if (!cancelled) { setWordHtml(result.value); setLoading(false); }
+
+        } else {
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) { setError('Failed to preview file'); setLoading(false); }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [att.storage_path, ext, renderExcelSheet]);
 
   const handleDownload = useCallback(async () => {
     if (!att.storage_path) return;
-    setLoading(true);
     const signed = await getSignedUrl(att.storage_path);
     if (signed) window.open(signed, '_blank');
     else toast.error('Could not generate download link');
-    setLoading(false);
   }, [att.storage_path]);
+
+  const hasPreview = pdfUrl || imgUrl || excelHtml || wordHtml;
 
   return (
     <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 12 }}>
-      {/* Attachment header */}
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface-2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <i className={`fa-solid ${ext === 'pdf' ? 'fa-file-pdf' : ext === 'xlsx' || ext === 'xls' || ext === 'csv' ? 'fa-file-excel' : ext === 'doc' || ext === 'docx' ? 'fa-file-word' : 'fa-file'}`}
-            style={{ color: ext === 'pdf' ? '#dc2626' : ext === 'xlsx' || ext === 'xls' || ext === 'csv' ? '#16a34a' : '#3b82f6', fontSize: '1rem' }} />
+          <i className={`fa-solid ${icon}`} style={{ color, fontSize: '1rem' }} />
           <div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-1)' }}>{att.name}</div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
@@ -81,24 +158,94 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {canPreview && !url && (
-            <button onClick={handleLoad} disabled={loading}
-              style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
-              <i className="fa-solid fa-eye" /> {loading ? 'Loading...' : 'Preview'}
-            </button>
-          )}
-          <button onClick={handleDownload} disabled={loading}
-            style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
-            <i className="fa-solid fa-download" /> Download
-          </button>
-        </div>
+        <button onClick={handleDownload} style={headerBtn}>
+          <i className="fa-solid fa-download" /> Download
+        </button>
       </div>
 
-      {/* PDF inline preview */}
-      {canPreview && url && (
-        <iframe src={url} title={att.name}
-          style={{ width: '100%', height: 500, border: 'none', background: '#f3f4f6' }} />
+      {/* Loading state */}
+      {loading && (
+        <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>
+          <div style={{ width: 18, height: 18, border: '2px solid var(--border)', borderTopColor: 'var(--sky-dim)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 10px' }} />
+          Loading preview...
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div style={{ padding: 20, textAlign: 'center', color: '#dc2626', fontSize: '0.78rem' }}>
+          <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: 6 }} />{error}
+        </div>
+      )}
+
+      {/* PDF */}
+      {pdfUrl && (
+        <iframe src={pdfUrl} title={att.name}
+          style={{ width: '100%', height: 550, border: 'none', background: '#f3f4f6' }} />
+      )}
+
+      {/* Image */}
+      {imgUrl && (
+        <div style={{ padding: 16, textAlign: 'center', background: '#f9fafb' }}>
+          <img src={imgUrl} alt={att.name}
+            style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+        </div>
+      )}
+
+      {/* Excel */}
+      {excelHtml && (
+        <div>
+          {sheetNames.length > 1 && (
+            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+              {sheetNames.map((name, i) => (
+                <button key={name} onClick={() => workbookRef.current && renderExcelSheet(workbookRef.current, i)}
+                  style={{
+                    padding: '6px 14px', fontSize: '0.72rem', fontWeight: activeSheet === i ? 700 : 500,
+                    border: 'none', borderBottom: activeSheet === i ? '2px solid var(--sky-dim)' : '2px solid transparent',
+                    background: 'transparent', cursor: 'pointer', color: activeSheet === i ? 'var(--sky-dim)' : 'var(--text-3)',
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}>
+                  {name}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ maxHeight: 400, overflow: 'auto', fontSize: '0.75rem' }}>
+            <style>{`
+              .excel-preview table { width: 100%; border-collapse: collapse; }
+              .excel-preview td, .excel-preview th {
+                border: 1px solid var(--border); padding: 4px 8px;
+                text-align: left; font-size: 0.75rem; white-space: nowrap;
+              }
+              .excel-preview tr:first-child td, .excel-preview tr:first-child th {
+                background: var(--surface-2); font-weight: 700; position: sticky; top: 0;
+              }
+              .excel-preview tr:nth-child(even) td { background: #f9fafb; }
+            `}</style>
+            <div className="excel-preview" dangerouslySetInnerHTML={{ __html: excelHtml }} />
+          </div>
+        </div>
+      )}
+
+      {/* Word */}
+      {wordHtml && (
+        <div style={{ maxHeight: 500, overflow: 'auto', padding: '16px 20px', fontSize: '0.85rem', lineHeight: 1.6, color: 'var(--text-1)' }}>
+          <style>{`
+            .word-preview h1, .word-preview h2, .word-preview h3 { margin: 12px 0 6px; }
+            .word-preview p { margin: 6px 0; }
+            .word-preview table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+            .word-preview td, .word-preview th { border: 1px solid var(--border); padding: 4px 8px; font-size: 0.8rem; }
+            .word-preview img { max-width: 100%; }
+          `}</style>
+          <div className="word-preview" dangerouslySetInnerHTML={{ __html: wordHtml }} />
+        </div>
+      )}
+
+      {/* Unsupported file type */}
+      {!loading && !error && !hasPreview && (
+        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.78rem' }}>
+          Preview not available for this file type. Use the download button above.
+        </div>
       )}
     </div>
   );
