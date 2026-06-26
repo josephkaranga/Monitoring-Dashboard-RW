@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const loadXLSX = () => import('xlsx');
 const loadMammoth = () => import('mammoth');
 import type { ToolkitReport, ReportAttachment } from '../types/index';
-import { formatFieldLabel, formatFieldValue, flattenFormData } from '../utils/formData';
+import { flattenFormData, groupedFormData } from '../utils/formData';
 
 const TOOL_EMOJI: Record<string, string> = {
   T01: '\u{1F3DB}️', T02: '\u{1F33F}', T03: '\u{1F6E1}️',
@@ -261,7 +261,7 @@ function ReportDetailModal({
   actioning: string | null;
 }) {
   const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
-  const formFields = flattenFormData(report.form_data || {});
+  const sections = groupedFormData(report.form_data || {});
   const attachments = report.attachments || [];
 
   useEffect(() => {
@@ -329,14 +329,14 @@ function ReportDetailModal({
             )}
           </div>
 
-          {/* All form data */}
-          {formFields.length > 0 && (
-            <>
-              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="fa-solid fa-table-list" style={{ color: 'var(--sky-dim)' }} /> Form Data
+          {/* Form data — grouped by section */}
+          {sections.map(sec => (
+            <div key={sec.id} style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sky-dim)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'DM Mono', monospace", display: 'flex', alignItems: 'center', gap: 6 }}>
+                {sec.label}
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 24 }}>
-                {formFields.map(f => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                {sec.fields.map(f => (
                   <div key={f.key} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
                     <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Mono', monospace", marginBottom: 3 }}>
                       {f.label}
@@ -347,8 +347,8 @@ function ReportDetailModal({
                   </div>
                 ))}
               </div>
-            </>
-          )}
+            </div>
+          ))}
 
           {/* Attachments */}
           {attachments.length > 0 && (
