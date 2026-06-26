@@ -303,6 +303,40 @@ export function MapPage() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Zoom/pan state for desktop (modifies viewBox)
+  const [mapView, setMapView] = useState({
+    x: RWANDA_VIEWBOX.x,
+    y: RWANDA_VIEWBOX.y,
+    width: RWANDA_VIEWBOX.width,
+    height: RWANDA_VIEWBOX.height,
+  });
+
+  const zoomIn = useCallback(() => {
+    setMapView(v => {
+      const factor = 0.75;
+      const newW = v.width * factor;
+      const newH = v.height * factor;
+      return { x: v.x + (v.width - newW) / 2, y: v.y + (v.height - newH) / 2, width: newW, height: newH };
+    });
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setMapView(v => {
+      const factor = 1.33;
+      const newW = Math.min(v.width * factor, RWANDA_VIEWBOX.width * 1.2);
+      const newH = Math.min(v.height * factor, RWANDA_VIEWBOX.height * 1.2);
+      return { x: v.x + (v.width - newW) / 2, y: v.y + (v.height - newH) / 2, width: newW, height: newH };
+    });
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    setMapView({ x: RWANDA_VIEWBOX.x, y: RWANDA_VIEWBOX.y, width: RWANDA_VIEWBOX.width, height: RWANDA_VIEWBOX.height });
+  }, []);
+
+  const zoomToCoords = useCallback((lon: number, lat: number, padding = 0.15) => {
+    setMapView({ x: lon - padding, y: -lat - padding, width: padding * 2, height: padding * 2 });
+  }, []);
   
   // GeoJSON state
   const [geoData, setGeoData] = useState<GeoJSONData | null>(null);
@@ -1015,26 +1049,27 @@ export function MapPage() {
             )}
             
             {!loading && !error && geoData && (
-              <svg 
-                viewBox={`${RWANDA_VIEWBOX.x} ${RWANDA_VIEWBOX.y} ${RWANDA_VIEWBOX.width} ${RWANDA_VIEWBOX.height}`}
-                style={{ 
-                  width: '100%', 
-                  height: isMobile ? 300 : 400, 
+              <svg
+                viewBox={`${mapView.x} ${mapView.y} ${mapView.width} ${mapView.height}`}
+                style={{
+                  width: '100%',
+                  height: isMobile ? 300 : 400,
                   cursor: touchState.isPanning ? 'grabbing' : 'pointer',
-                  touchAction: 'none' // Prevent default touch behaviors
-                }} 
+                  touchAction: 'none'
+                }}
                 preserveAspectRatio="xMidYMid meet"
                 onTouchStart={isMobile ? handleTouchStart : undefined}
                 onTouchMove={isMobile ? handleTouchMove : undefined}
                 onTouchEnd={isMobile ? handleTouchEnd : undefined}
+                onWheel={!isMobile ? (e) => { e.preventDefault(); e.deltaY < 0 ? zoomIn() : zoomOut(); } : undefined}
               >
                 <g transform={isMobile ? `scale(${touchState.scale})` : undefined}>
-                <rect 
-                  x={RWANDA_VIEWBOX.x} 
-                  y={RWANDA_VIEWBOX.y} 
-                  width={RWANDA_VIEWBOX.width} 
-                  height={RWANDA_VIEWBOX.height} 
-                  fill="#f0f9ff" 
+                <rect
+                  x={mapView.x - 1}
+                  y={mapView.y - 1}
+                  width={mapView.width + 2}
+                  height={mapView.height + 2}
+                  fill="#f0f9ff"
                 />
                 
                 {/* District base layer */}
@@ -1262,6 +1297,22 @@ export function MapPage() {
             {!loading && !error && (
               <MapLegend activeLayer={layer} enabledOverlays={enabledOverlays} position="bottom-right" isMobile={isMobile} />
             )}
+
+            {/* Zoom controls */}
+            {!loading && !error && !isMobile && (
+              <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 4, zIndex: 10 }}>
+                {[
+                  { icon: 'fa-plus', action: zoomIn, label: 'Zoom in' },
+                  { icon: 'fa-minus', action: zoomOut, label: 'Zoom out' },
+                  { icon: 'fa-expand', action: resetZoom, label: 'Reset view' },
+                ].map(b => (
+                  <button key={b.icon} onClick={b.action} title={b.label} aria-label={b.label}
+                    style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 6, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--text-1)', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                    <i className={`fa-solid ${b.icon}`} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1300,27 +1351,43 @@ export function MapPage() {
             if (!hasOverlayResults) return null;
             return (
               <div style={{ marginBottom: 10, padding: '8px 10px', background: 'var(--surface-2)', borderRadius: 8, fontSize: '0.75rem' }}>
-                {matchedAreas.map((a, i) => (
-                  <div key={`pa-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: '#16a34a' }}>
-                    <i className="fa-solid fa-shield-halved" style={{ fontSize: '0.65rem' }} />
-                    <span style={{ fontWeight: 600 }}>{a.properties.name}</span>
-                    <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{a.properties.type}</span>
-                  </div>
-                ))}
-                {matchedRivers.map((r, i) => (
-                  <div key={`rv-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: '#0284c7' }}>
-                    <i className="fa-solid fa-water" style={{ fontSize: '0.65rem' }} />
-                    <span style={{ fontWeight: 600 }}>{r.properties.name}</span>
-                    <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{r.properties.basin}</span>
-                  </div>
-                ))}
-                {matchedLakes.map((l, i) => (
-                  <div key={`lk-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: '#2563eb' }}>
-                    <i className="fa-solid fa-droplet" style={{ fontSize: '0.65rem' }} />
-                    <span style={{ fontWeight: 600 }}>{l.properties.name}</span>
-                    <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{l.properties.area_km2 ? `${l.properties.area_km2} km²` : ''}</span>
-                  </div>
-                ))}
+                {matchedAreas.map((a, i) => {
+                  const coords = (a.geometry.type === 'Polygon' ? a.geometry.coordinates[0] : (a.geometry.coordinates as number[][][][])[0][0]) as number[][];
+                  const cLon = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+                  const cLat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+                  const size = Math.max(...coords.map(c => c[0])) - Math.min(...coords.map(c => c[0]));
+                  return (
+                    <div key={`pa-${i}`} onClick={() => { zoomToCoords(cLon, cLat, Math.max(size * 0.8, 0.1)); setSearchQuery(''); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 4px', color: '#16a34a', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <i className="fa-solid fa-shield-halved" style={{ fontSize: '0.65rem' }} />
+                      <span style={{ fontWeight: 600 }}>{a.properties.name}</span>
+                      <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{a.properties.type}</span>
+                    </div>
+                  );
+                })}
+                {matchedRivers.map((r, i) => {
+                  const coords = (r.geometry.type === 'LineString' ? r.geometry.coordinates : (r.geometry.coordinates as number[][][])[0]) as number[][];
+                  const mid = coords[Math.floor(coords.length / 2)];
+                  return (
+                    <div key={`rv-${i}`} onClick={() => { zoomToCoords(mid[0], mid[1], 0.3); setSearchQuery(''); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 4px', color: '#0284c7', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <i className="fa-solid fa-water" style={{ fontSize: '0.65rem' }} />
+                      <span style={{ fontWeight: 600 }}>{r.properties.name}</span>
+                      <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{r.properties.basin}</span>
+                    </div>
+                  );
+                })}
+                {matchedLakes.map((l, i) => {
+                  const coords = (l.geometry.coordinates[0]) as number[][];
+                  const cLon = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+                  const cLat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+                  const size = Math.max(...coords.map(c => c[0])) - Math.min(...coords.map(c => c[0]));
+                  return (
+                    <div key={`lk-${i}`} onClick={() => { zoomToCoords(cLon, cLat, Math.max(size * 0.8, 0.08)); setSearchQuery(''); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 4px', color: '#2563eb', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <i className="fa-solid fa-droplet" style={{ fontSize: '0.65rem' }} />
+                      <span style={{ fontWeight: 600 }}>{l.properties.name}</span>
+                      <span style={{ color: 'var(--text-3)', fontSize: '0.65rem', marginLeft: 'auto' }}>{l.properties.area_km2 ? `${l.properties.area_km2} km²` : ''}</span>
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
