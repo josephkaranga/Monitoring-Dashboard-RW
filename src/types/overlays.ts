@@ -2,7 +2,7 @@
 
 import type { GBIFOccurrence, ClusteredPoint } from './biodiversity';
 
-export type MapOverlay = 'gbif' | 'protected-areas' | 'rivers' | 'lakes';
+export type MapOverlay = 'gbif' | 'protected-areas' | 'rivers' | 'lakes' | 'reports';
 
 export interface OverlayConfig {
   id: MapOverlay;

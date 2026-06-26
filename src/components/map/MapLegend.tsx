@@ -39,6 +39,7 @@ const OVERLAY_LEGEND: OverlayLegendItem[] = [
   { id: 'rivers', label: 'Rivers', color: '#0284c7', style: 'line' },
   { id: 'lakes', label: 'Lakes', color: '#2563eb', style: 'fill' },
   { id: 'gbif', label: 'GBIF Occurrences', color: '#3b82f6', style: 'dot' },
+  { id: 'reports', label: 'Approved Reports', color: '#1E7D4B', style: 'dot' },
 ];
 
 export function MapLegend({ activeLayer, enabledOverlays, position = 'bottom-right', isMobile = false }: MapLegendProps) {

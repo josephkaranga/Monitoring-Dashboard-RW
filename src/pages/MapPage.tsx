@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useDistricts, useNBSAPProgress, useThreatLevels } from '../hooks/useData';
-import type { District } from '../types/index';
+import { useDistricts, useNBSAPProgress, useThreatLevels, useReports } from '../hooks/useData';
+import type { District, ToolkitReport } from '../types/index';
 import type { MapLayer } from '../types/mapLayers';
 import type { MapOverlay } from '../types/overlays';
 import { LayerSwitcher } from '../components/map/LayerSwitcher';
@@ -10,6 +10,8 @@ import { GBIFOccurrencesOverlay } from '../components/map/GBIFOccurrencesOverlay
 import { ProtectedAreasOverlay } from '../components/map/ProtectedAreasOverlay';
 import { RiverNetworkOverlay } from '../components/map/RiverNetworkOverlay';
 import { LakesOverlay } from '../components/map/LakesOverlay';
+import { ReportMarkersOverlay } from '../components/map/ReportMarkersOverlay';
+import { TimeSlider } from '../components/map/TimeSlider';
 import { MapLoadingSkeleton } from '../components/map/MapLoadingSkeleton';
 import { ExportButton } from '../components/map/ExportButton';
 import { RefreshButton } from '../components/map/RefreshButton';
@@ -304,6 +306,26 @@ export function MapPage() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Report overlay data
+  const { reports: allReports, loading: reportsLoading } = useReports({ status: 'approved', pageSize: 500 });
+  const [selectedMapReport, setSelectedMapReport] = useState<ToolkitReport | null>(null);
+  const [hoveredReport, setHoveredReport] = useState<ToolkitReport | null>(null);
+
+  // Time filter
+  const reportDateRange = useMemo(() => {
+    if (allReports.length === 0) return { min: new Date(2025, 0, 1), max: new Date() };
+    const dates = allReports.map(r => new Date(r.submitted_at).getTime());
+    return { min: new Date(Math.min(...dates)), max: new Date(Math.max(...dates)) };
+  }, [allReports]);
+  const [timeRange, setTimeRange] = useState<[Date, Date]>([new Date(2025, 0, 1), new Date()]);
+  const filteredReports = useMemo(() => {
+    const [start, end] = timeRange;
+    return allReports.filter(r => {
+      const d = new Date(r.submitted_at).getTime();
+      return d >= start.getTime() && d <= end.getTime();
+    });
+  }, [allReports, timeRange]);
+
   // Zoom/pan state for desktop (modifies viewBox)
   const [mapView, setMapView] = useState({
     x: RWANDA_VIEWBOX.x,
@@ -567,8 +589,15 @@ export function MapPage() {
       enabled: enabledOverlays.has('lakes'),
       loading: lakesLoading,
       error: lakesError
+    },
+    {
+      id: 'reports' as MapOverlay,
+      label: `Approved Reports (${filteredReports.length})`,
+      enabled: enabledOverlays.has('reports'),
+      loading: reportsLoading,
+      error: null
     }
-  ], [enabledOverlays, gbifLoading, gbifError, areasLoading, areasError, riversLoading, riversError, lakesLoading, lakesError]);
+  ], [enabledOverlays, gbifLoading, gbifError, areasLoading, areasError, riversLoading, riversError, lakesLoading, lakesError, reportsLoading, filteredReports.length]);
 
   // Export error state
   const [exportError, setExportError] = useState<string | null>(null);
@@ -1251,11 +1280,22 @@ export function MapPage() {
                 
                 {/* GBIF Occurrences Overlay */}
                 {enabledOverlays.has('gbif') && occurrences.length > 0 && (
-                  <GBIFOccurrencesOverlay 
-                    occurrences={occurrences} 
+                  <GBIFOccurrencesOverlay
+                    occurrences={occurrences}
                     onHover={handleGBIFHover}
                     loading={gbifLoading}
                     error={gbifError}
+                  />
+                )}
+
+                {/* Report Markers Overlay */}
+                {enabledOverlays.has('reports') && filteredReports.length > 0 && (
+                  <ReportMarkersOverlay
+                    reports={filteredReports}
+                    districts={districts}
+                    geoData={geoData}
+                    onReportClick={setSelectedMapReport}
+                    onReportHover={setHoveredReport}
                   />
                 )}
                 </g>
@@ -1313,7 +1353,34 @@ export function MapPage() {
                 ))}
               </div>
             )}
+            {/* Hovered report tooltip */}
+            {hoveredReport && (
+              <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(4px)', borderRadius: 8, padding: '8px 12px', fontSize: '0.72rem', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.06)', zIndex: 10, maxWidth: 220 }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-1)', marginBottom: 2 }}>{hoveredReport.tool_name}</div>
+                <div style={{ color: 'var(--text-3)', fontFamily: "'DM Mono', monospace", fontSize: '0.65rem' }}>
+                  {hoveredReport.district || (hoveredReport.form_data?.district as string) || '—'}
+                  {hoveredReport.period && ` · ${hoveredReport.period}`}
+                </div>
+                {hoveredReport.submitted_by_profile?.full_name && (
+                  <div style={{ color: 'var(--text-2)', marginTop: 2 }}>{hoveredReport.submitted_by_profile.full_name}</div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Time slider — shown when reports overlay is active */}
+          {enabledOverlays.has('reports') && allReports.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <TimeSlider
+                minDate={reportDateRange.min}
+                maxDate={reportDateRange.max}
+                value={timeRange}
+                onChange={setTimeRange}
+                totalCount={allReports.length}
+                filteredCount={filteredReports.length}
+              />
+            </div>
+          )}
         </div>
 
         {/* District list + search */}
@@ -1461,6 +1528,43 @@ export function MapPage() {
         threatData={threatLevelData}
         nbsapData={nbsapProgressData}
       />
+
+      {/* Report Detail Modal (from map marker click) */}
+      {selectedMapReport && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={() => setSelectedMapReport(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }} />
+          <div style={{ position: 'relative', width: '90%', maxWidth: 600, maxHeight: '80vh', background: 'var(--surface)', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'auto', padding: 24 }}>
+            <button onClick={() => setSelectedMapReport(null)} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-3)' }}>
+              <i className="fa-solid fa-xmark" />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: ({ T01: '#1B6CA8', T02: '#1E7D4B', T03: '#5B3FA6', T04: '#B56A00', T05: '#0E6655', T06: '#922B21', T07: '#1A5276' })[selectedMapReport.tool_id] || '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.9rem', fontWeight: 700 }}>
+                {selectedMapReport.tool_id}
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-1)' }}>{selectedMapReport.tool_name}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+                  {new Date(selectedMapReport.submitted_at).toLocaleDateString()}
+                  {selectedMapReport.submitted_by_profile?.full_name && ` · ${selectedMapReport.submitted_by_profile.full_name}`}
+                  {selectedMapReport.period && ` · ${selectedMapReport.period}`}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              {Object.entries(selectedMapReport.form_data || {}).map(([key, val]) => (
+                <div key={key} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>
+                    {key.replace(/_/g, ' ')}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)', wordBreak: 'break-word' }}>
+                    {val === null || val === undefined || val === '' ? '—' : typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
