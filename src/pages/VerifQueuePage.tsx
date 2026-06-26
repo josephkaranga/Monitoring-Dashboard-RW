@@ -1,24 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useReports } from '../hooks/useData';
 import { verifyReport } from '../services/reportService';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
+import type { ToolkitReport, ReportAttachment } from '../types/index';
 
-
-const TOOL_ICONS: Record<string, string> = {
-  T01: 'fa-landmark', T02: 'fa-tree', T03: 'fa-shield',
-  T04: 'fa-people-group', T05: 'fa-coins', T06: 'fa-building', T07: 'fa-flask',
-};
 const TOOL_EMOJI: Record<string, string> = {
-  T01: '🏛️', T02: '🌿', T03: '🛡️', T04: '👥', T05: '💰', T06: '🏗️', T07: '🔬',
+  T01: '\u{1F3DB}️', T02: '\u{1F33F}', T03: '\u{1F6E1}️',
+  T04: '\u{1F465}', T05: '\u{1F4B0}', T06: '\u{1F3D7}️', T07: '\u{1F52C}',
 };
 
 const STATUS_CFG: Record<string, { bg: string; color: string; label: string }> = {
-  pending:  { bg: '#fef9c3', color: '#854d0e', label: '⏳ PENDING'  },
-  approved: { bg: '#dcfce7', color: '#166534', label: '✓ APPROVED'  },
-  rejected: { bg: '#fee2e2', color: '#991b1b', label: '✕ REJECTED'  },
+  pending:  { bg: '#fef9c3', color: '#854d0e', label: 'PENDING'  },
+  approved: { bg: '#dcfce7', color: '#166534', label: 'APPROVED' },
+  rejected: { bg: '#fee2e2', color: '#991b1b', label: 'REJECTED' },
 };
 
 const card: React.CSSProperties = {
@@ -26,12 +23,266 @@ const card: React.CSSProperties = {
   border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)',
 };
 
+const PREVIEW_EXTS = ['pdf'];
+const DOWNLOADABLE_EXTS = ['xlsx', 'xls', 'csv', 'doc', 'docx', 'ppt', 'pptx', 'zip', 'jpg', 'jpeg', 'png'];
+
+function getSignedUrl(storagePath: string): Promise<string | null> {
+  return supabase.storage
+    .from('report-attachments')
+    .createSignedUrl(storagePath, 600)
+    .then(({ data }) => data?.signedUrl ?? null);
+}
+
+function formatFieldKey(key: string): string {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/* ── Attachment Preview Component ────────────────────────── */
+function AttachmentPreview({ att }: { att: ReportAttachment }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const ext = (att.ext || '').toLowerCase().replace('.', '');
+  const canPreview = PREVIEW_EXTS.includes(ext);
+
+  const handleLoad = useCallback(async () => {
+    if (!att.storage_path || url) return;
+    setLoading(true);
+    const signed = await getSignedUrl(att.storage_path);
+    setUrl(signed);
+    setLoading(false);
+  }, [att.storage_path, url]);
+
+  const handleDownload = useCallback(async () => {
+    if (!att.storage_path) return;
+    setLoading(true);
+    const signed = await getSignedUrl(att.storage_path);
+    if (signed) window.open(signed, '_blank');
+    else toast.error('Could not generate download link');
+    setLoading(false);
+  }, [att.storage_path]);
+
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 12 }}>
+      {/* Attachment header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface-2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <i className={`fa-solid ${ext === 'pdf' ? 'fa-file-pdf' : ext === 'xlsx' || ext === 'xls' || ext === 'csv' ? 'fa-file-excel' : ext === 'doc' || ext === 'docx' ? 'fa-file-word' : 'fa-file'}`}
+            style={{ color: ext === 'pdf' ? '#dc2626' : ext === 'xlsx' || ext === 'xls' || ext === 'csv' ? '#16a34a' : '#3b82f6', fontSize: '1rem' }} />
+          <div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-1)' }}>{att.name}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+              {ext.toUpperCase()} {att.size ? `· ${formatFileSize(att.size)}` : ''}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {canPreview && !url && (
+            <button onClick={handleLoad} disabled={loading}
+              style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
+              <i className="fa-solid fa-eye" /> {loading ? 'Loading...' : 'Preview'}
+            </button>
+          )}
+          <button onClick={handleDownload} disabled={loading}
+            style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
+            <i className="fa-solid fa-download" /> Download
+          </button>
+        </div>
+      </div>
+
+      {/* PDF inline preview */}
+      {canPreview && url && (
+        <iframe src={url} title={att.name}
+          style={{ width: '100%', height: 500, border: 'none', background: '#f3f4f6' }} />
+      )}
+    </div>
+  );
+}
+
+/* ── Report Detail Modal ─────────────────────────────────── */
+function ReportDetailModal({
+  report, noteValue, onNoteChange, onVerify, onDelete, onClose, actioning,
+}: {
+  report: ToolkitReport;
+  noteValue: string;
+  onNoteChange: (v: string) => void;
+  onVerify: (id: string, status: 'approved' | 'rejected' | 'pending') => void;
+  onDelete: (id: string, name: string) => void;
+  onClose: () => void;
+  actioning: string | null;
+}) {
+  const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
+  const formEntries = Object.entries(report.form_data || {});
+  const attachments = report.attachments || [];
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }} />
+
+      {/* Modal */}
+      <div style={{
+        position: 'relative', width: '90%', maxWidth: 800, maxHeight: '90vh',
+        background: 'var(--surface)', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }}>
+        {/* Modal header */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '1.6rem' }}>{TOOL_EMOJI[report.tool_id] || ''}</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-1)' }}>{report.tool_name}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+                {new Date(report.submitted_at).toLocaleString()}
+                {report.submitted_by_profile?.full_name && ` · ${report.submitted_by_profile.full_name}`}
+                {report.period && ` · ${report.period}`}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ background: st.bg, color: st.color, fontSize: '0.68rem', padding: '3px 10px', borderRadius: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>
+              {st.label}
+            </span>
+            <button onClick={onClose}
+              style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-3)', padding: '4px 8px' }}>
+              <i className="fa-solid fa-xmark" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+          {/* Submission info */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+            {report.district && (
+              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>District</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>{report.district}</div>
+              </div>
+            )}
+            {report.institution && (
+              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>Institution</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>{report.institution}</div>
+              </div>
+            )}
+            {report.submitted_by_profile?.organization && (
+              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>Organization</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>{report.submitted_by_profile.organization}</div>
+              </div>
+            )}
+          </div>
+
+          {/* All form data */}
+          {formEntries.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="fa-solid fa-table-list" style={{ color: 'var(--sky-dim)' }} /> Form Data
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 24 }}>
+                {formEntries.map(([key, val]) => (
+                  <div key={key} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Mono', monospace", marginBottom: 3 }}>
+                      {formatFieldKey(key)}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)', wordBreak: 'break-word' }}>
+                      {val === null || val === undefined || val === '' ? '—' : String(val)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Attachments */}
+          {attachments.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="fa-solid fa-paperclip" style={{ color: 'var(--sky-dim)' }} /> Attachments ({attachments.length})
+              </h3>
+              {attachments.map((att, i) => (
+                <AttachmentPreview key={att.storage_path || i} att={att} />
+              ))}
+            </>
+          )}
+
+          {/* Review note from previous reviewer */}
+          {report.review_note && (
+            <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8 }}>
+              <div style={{ fontSize: '0.65rem', color: '#92400e', fontWeight: 700, marginBottom: 4, fontFamily: "'DM Mono', monospace" }}>REVIEWER NOTE</div>
+              <div style={{ fontSize: '0.82rem', color: '#78350f' }}>{report.review_note}</div>
+              {report.reviewed_at && (
+                <div style={{ fontSize: '0.65rem', color: '#a16207', marginTop: 4, fontFamily: "'DM Mono', monospace" }}>
+                  {new Date(report.reviewed_at).toLocaleString()}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer — actions */}
+        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', background: 'var(--surface-2)', flexShrink: 0 }}>
+          <div style={{ marginBottom: 10 }}>
+            <input type="text" placeholder="Add a reviewer note..."
+              value={noteValue}
+              onChange={e => onNoteChange(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: '0.82rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', color: 'var(--text-1)', background: 'var(--surface)' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {report.status === 'pending' ? (
+              <>
+                <button onClick={() => onVerify(report.id, 'approved')} disabled={actioning === report.id}
+                  style={{ padding: '8px 20px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', border: 'none', fontFamily: "'DM Sans', sans-serif", background: '#16a34a', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <i className="fa-solid fa-check" /> {actioning === report.id ? 'Processing...' : 'Approve'}
+                </button>
+                <button onClick={() => onVerify(report.id, 'rejected')} disabled={actioning === report.id}
+                  style={{ padding: '8px 20px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', border: 'none', fontFamily: "'DM Sans', sans-serif", background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <i className="fa-solid fa-xmark" /> Reject
+                </button>
+              </>
+            ) : (
+              <button onClick={() => onVerify(report.id, report.status === 'approved' ? 'rejected' : 'approved')} disabled={actioning === report.id}
+                style={{ padding: '8px 20px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif", background: 'var(--surface)', color: 'var(--text-2)' }}>
+                {report.status === 'approved' ? 'Revoke Approval' : 'Reinstate'}
+              </button>
+            )}
+            <button onClick={() => onVerify(report.id, 'pending')}
+              style={{ padding: '8px 16px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif", background: 'var(--surface)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <i className="fa-solid fa-floppy-disk" /> Save Note
+            </button>
+            <div style={{ flex: 1 }} />
+            <button onClick={() => onDelete(report.id, report.tool_name)}
+              style={{ padding: '8px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', border: '1px solid #fecaca', fontFamily: "'DM Sans', sans-serif", background: '#fff1f2', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <i className="fa-solid fa-trash-can" /> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Page ───────────────────────────────────────────── */
 export default function VerifQueuePage() {
   const { permissions, user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'dashboard_management';
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
   const [actioning, setActioning] = useState<string | null>(null);
+  const [selectedReport, setSelectedReport] = useState<ToolkitReport | null>(null);
   const { reports, count, loading, refetch } = useReports({
     status: statusFilter === 'all' ? undefined : statusFilter as 'pending' | 'approved' | 'rejected',
     pageSize: 25,
@@ -48,13 +299,14 @@ export default function VerifQueuePage() {
     if (result.error) {
       toast.error(result.error);
     } else {
-      const label = newStatus === 'approved' ? 'approved ✓' : newStatus === 'rejected' ? 'rejected' : 'updated';
+      const label = newStatus === 'approved' ? 'approved' : newStatus === 'rejected' ? 'rejected' : 'updated';
       toast.success(`Submission ${label}`);
       await writeAuditEntry(
         newStatus === 'approved' ? 'approve' : newStatus === 'rejected' ? 'reject' : 'view',
         `${newStatus === 'approved' ? 'Approved' : newStatus === 'rejected' ? 'Rejected' : 'Updated'} report: ${result.data?.tool_name}`,
         note ? `Note: ${note}` : undefined
       );
+      setSelectedReport(null);
       refetch();
     }
     setActioning(null);
@@ -63,15 +315,13 @@ export default function VerifQueuePage() {
   const handleDeleteSubmission = useCallback(async (reportId: string, toolName: string) => {
     if (!window.confirm(`Permanently delete this "${toolName}" submission?\n\nThis cannot be undone.`)) return;
     setActioning(reportId);
-    const { error } = await supabase
-      .from('toolkit_reports')
-      .delete()
-      .eq('id', reportId);
+    const { error } = await supabase.from('toolkit_reports').delete().eq('id', reportId);
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success(`Submission deleted`);
+      toast.success('Submission deleted');
       await writeAuditEntry('delete', `Deleted submission: ${toolName}`);
+      setSelectedReport(null);
       refetch();
     }
     setActioning(null);
@@ -89,12 +339,14 @@ export default function VerifQueuePage() {
           <h2 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
             <i className="fa-solid fa-file-circle-check" style={{ color: 'var(--sky-dim)' }} />
             Submission Verification Queue
-            <span style={{ background: '#f59e0b', color: '#fff', fontSize: '0.6rem', padding: '1px 7px', borderRadius: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>
-              {pendingCount}
-            </span>
+            {pendingCount > 0 && (
+              <span style={{ background: '#f59e0b', color: '#fff', fontSize: '0.6rem', padding: '1px 7px', borderRadius: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>
+                {pendingCount}
+              </span>
+            )}
           </h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', marginTop: 4 }}>
-            Review, approve or reject toolkit submissions before they update live dashboard metrics. Only approved records influence indicator calculations.
+            Review, approve or reject toolkit submissions. Click a submission to review attachments and full form data.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -131,7 +383,7 @@ export default function VerifQueuePage() {
       {loading ? (
         <div style={{ color: 'var(--text-3)', fontSize: '0.82rem', padding: 40, textAlign: 'center' }}>
           <div style={{ width: 20, height: 20, border: '2px solid var(--border)', borderTopColor: 'var(--sky-dim)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
-          Loading submissions…
+          Loading submissions...
         </div>
       ) : reports.length === 0 ? (
         <div style={{ ...card, padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)' }}>
@@ -142,121 +394,77 @@ export default function VerifQueuePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {reports.map(report => {
             const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
+            const hasAttachments = (report.attachments || []).length > 0;
             return (
-              <div key={report.id} style={{ ...card, padding: 16 }}>
+              <div key={report.id}
+                onClick={() => isAdmin && setSelectedReport(report)}
+                style={{ ...card, padding: 16, cursor: isAdmin ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
+                onMouseEnter={e => { if (isAdmin) (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--sky-dim)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'; }}
+              >
                 {/* Card header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '1.4rem' }}>{TOOL_EMOJI[report.tool_id] || '📋'}</span>
+                    <span style={{ fontSize: '1.4rem' }}>{TOOL_EMOJI[report.tool_id] || ''}</span>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-1)' }}>{report.tool_name}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
-                        Submitted {new Date(report.submitted_at).toLocaleString()}
+                        {new Date(report.submitted_at).toLocaleString()}
                         {report.submitted_by_profile?.full_name && ` · ${report.submitted_by_profile.full_name}`}
                       </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {hasAttachments && (
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <i className="fa-solid fa-paperclip" /> {report.attachments.length}
+                      </span>
+                    )}
                     <span style={{ background: st.bg, color: st.color, fontSize: '0.62rem', padding: '2px 9px', borderRadius: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>
                       {st.label}
                     </span>
-                    <span style={{ fontSize: '0.72rem', fontFamily: "'DM Mono', monospace", color: 'var(--text-3)' }}>
-                      #{String(reports.indexOf(report) + 1).padStart(3, '0')}
-                    </span>
-                    {/* Delete — admin only, in header for easy access */}
                     {isAdmin && (
-                      <button
-                        onClick={() => handleDeleteSubmission(report.id, report.tool_name)}
-                        disabled={actioning === report.id}
-                        title="Delete submission"
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          padding: '3px 10px', borderRadius: 6, border: '1px solid #fecaca',
-                          background: '#fff1f2', color: '#dc2626',
-                          fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer',
-                          fontFamily: "'DM Sans', sans-serif",
-                          opacity: actioning === report.id ? 0.5 : 1,
-                        }}
-                      >
-                        <i className="fa-solid fa-trash-can" style={{ fontSize: '0.65rem' }} />
-                        Delete
-                      </button>
+                      <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.7rem', color: 'var(--text-3)' }} />
                     )}
                   </div>
                 </div>
 
-                {/* Form data preview */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
-                  {Object.entries(report.form_data || {}).slice(0, 6).map(([key, val]) => (
-                    <div key={key} style={{ background: 'var(--surface-2)', borderRadius: 7, padding: '8px 10px' }}>
-                      <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: "'DM Mono', monospace", marginBottom: 3 }}>
+                {/* Form data preview — first 4 fields */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 10 }}>
+                  {Object.entries(report.form_data || {}).slice(0, 4).map(([key, val]) => (
+                    <div key={key} style={{ background: 'var(--surface-2)', borderRadius: 7, padding: '6px 10px' }}>
+                      <div style={{ fontSize: '0.58rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>
                         {key.replace(/_/g, ' ')}
                       </div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-1)', wordBreak: 'break-word' }}>
-                        {String(val) || '—'}
+                      <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {String(val || '—')}
                       </div>
                     </div>
                   ))}
                 </div>
-
-                {/* Attachments */}
-                {(report.attachments || []).length > 0 && (
-                  <div style={{ marginBottom: 10, fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    <i className="fa-solid fa-paperclip" style={{ marginRight: 4 }} />
-                    {report.attachments.map(a => a.name).join(', ')}
-                  </div>
-                )}
-
-                {/* Reviewer note */}
-                <div style={{ marginBottom: 10 }}>
-                  <input type="text" placeholder="Reviewer note (optional)…"
-                    value={noteInputs[report.id] || ''}
-                    onChange={e => setNoteInputs(prev => ({ ...prev, [report.id]: e.target.value }))}
-                    style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 7, fontSize: '0.78rem', fontFamily: "'DM Sans', sans-serif", outline: 'none', color: 'var(--text-1)' }}
-                  />
-                </div>
-
-                {/* Actions */}
-                {report.status === 'pending' ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => handleVerify(report.id, 'approved')} disabled={actioning === report.id}
-                      style={{ padding: '7px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', border: 'none', fontFamily: "'DM Sans', sans-serif", background: '#dcfce7', color: '#166534', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <i className="fa-solid fa-check" />
-                      {actioning === report.id ? '⟳' : 'Approve'}
-                    </button>
-                    <button onClick={() => handleVerify(report.id, 'rejected')} disabled={actioning === report.id}
-                      style={{ padding: '7px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', border: 'none', fontFamily: "'DM Sans', sans-serif", background: '#fee2e2', color: '#991b1b', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <i className="fa-solid fa-times" />
-                      Reject
-                    </button>
-                    <button onClick={() => handleVerify(report.id, 'pending')}
-                      style={{ padding: '7px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif", background: 'var(--surface-3)', color: 'var(--text-2)', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <i className="fa-solid fa-comment" /> Save Note
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => handleVerify(report.id, report.status === 'approved' ? 'rejected' : 'approved')} disabled={actioning === report.id}
-                      style={{ padding: '7px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif", background: 'var(--surface-3)', color: 'var(--text-2)' }}>
-                      ↩ {report.status === 'approved' ? 'Revoke Approval' : 'Reinstate'}
-                    </button>
-                    <button onClick={() => handleVerify(report.id, 'pending')}
-                      style={{ padding: '7px 16px', borderRadius: 8, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', fontFamily: "'DM Sans', sans-serif", background: 'var(--surface-3)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <i className="fa-solid fa-comment" /> Save Note
-                    </button>
-                  </div>
-                )}
 
                 {report.review_note && (
                   <div style={{ marginTop: 8, fontSize: '0.72rem', color: 'var(--text-2)', fontStyle: 'italic' }}>
                     Note: {report.review_note}
                   </div>
                 )}
-
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Detail modal */}
+      {selectedReport && isAdmin && (
+        <ReportDetailModal
+          report={selectedReport}
+          noteValue={noteInputs[selectedReport.id] || ''}
+          onNoteChange={v => setNoteInputs(prev => ({ ...prev, [selectedReport.id]: v }))}
+          onVerify={handleVerify}
+          onDelete={handleDeleteSubmission}
+          onClose={() => setSelectedReport(null)}
+          actioning={actioning}
+        />
       )}
     </div>
   );
