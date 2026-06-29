@@ -227,7 +227,7 @@ export default function IndicatorsPage() {
         <div style={{ fontSize: '0.84rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
           <i className="fa-solid fa-layer-group" style={{ color: 'var(--sky-dim)' }} />
           KM-GBF Aligned 4-Tier Indicator Hierarchy
-          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>Rwanda NBSAP 2020H–2030</span>
+          <span style={{ marginLeft: 'auto', fontSize: '0.65rem', padding: '3px 8px', borderRadius: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", background: '#e0f2fe', color: '#0369a1' }}>4-Tier Indicator Framework</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {(Object.entries(TIER_CFG) as [IndicatorTier, typeof TIER_CFG[IndicatorTier]][]).map(([key, cfg]) => {
