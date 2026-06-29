@@ -113,13 +113,6 @@ function getColor(
   nbsapData?: Map<number, { progress: number; indicatorCount: number }>,
   threatData?: Map<number, { threatScore: number; threatLevel: 'high' | 'medium' | 'low'; riskFactors: string[] }>
 ): string {
-  // Existing layers
-  if (layer === 'submission') {
-    return d.status === 'submitted' ? '#10b981' : d.status === 'pending' ? '#f59e0b' : '#f43f5e';
-  }
-  if (layer === 'compliance') {
-    return d.compliance >= 85 ? '#10b981' : d.compliance >= 75 ? '#0ea5e9' : d.compliance >= 65 ? '#f59e0b' : '#f43f5e';
-  }
   if (layer === 'forest') {
     return d.forest_cover >= 35 ? '#064e3b' : d.forest_cover >= 25 ? '#059669' : d.forest_cover >= 18 ? '#10b981' : '#6ee7b7';
   }
@@ -204,10 +197,6 @@ function getTooltipContent(
   const districtData = biodiversityData?.get(d.id);
   
   switch (layer) {
-    case 'submission':
-      return d.status;
-    case 'compliance':
-      return `${d.compliance}%`;
     case 'forest':
       return `${d.forest_cover}%`;
     case 'nbsap-progress': {
@@ -290,7 +279,7 @@ export function MapPage() {
   }, [refetchNBSAP, refetchThreat]);
   
   // Layer and overlay state
-  const [layer, setLayer] = useState<MapLayer>('submission');
+  const [layer, setLayer] = useState<MapLayer>('biodiversity');
   const [enabledOverlays, setEnabledOverlays] = useState<Set<MapOverlay>>(new Set());
   
   // Mobile controls state
@@ -734,12 +723,6 @@ export function MapPage() {
         // Get layer-specific value
         let layerValue = '';
         switch (layer) {
-          case 'submission':
-            layerValue = d.status;
-            break;
-          case 'compliance':
-            layerValue = `${d.compliance}%`;
-            break;
           case 'forest':
             layerValue = `${d.forest_cover}%`;
             break;
@@ -1101,6 +1084,29 @@ export function MapPage() {
                   fill="#f0f9ff"
                 />
                 
+                {/* Clip path from all district boundaries — used to clip lakes/overlays to Rwanda border */}
+                <defs>
+                  <clipPath id="rwanda-clip">
+                    {geoData.features.map((feature, ci) => {
+                      const clipCoords = (coords: any, type: string): string => {
+                        if (type === 'Polygon') {
+                          return coords.map((ring: any) =>
+                            ring.map((p: any, i: number) => `${i === 0 ? 'M' : 'L'}${p[0]},${-p[1]}`).join(' ') + ' Z'
+                          ).join(' ');
+                        } else if (type === 'MultiPolygon') {
+                          return coords.map((poly: any) =>
+                            poly.map((ring: any) =>
+                              ring.map((p: any, i: number) => `${i === 0 ? 'M' : 'L'}${p[0]},${-p[1]}`).join(' ') + ' Z'
+                            ).join(' ')
+                          ).join(' ');
+                        }
+                        return '';
+                      };
+                      return <path key={`clip-${ci}`} d={clipCoords(feature.geometry.coordinates, feature.geometry.type)} />;
+                    })}
+                  </clipPath>
+                </defs>
+
                 {/* District base layer */}
                 {geoData.features.map((feature, idx) => {
                   const districtData = getDistrictData(feature.properties.shapeName);
@@ -1264,18 +1270,19 @@ export function MapPage() {
                   />
                 )}
                 
-                {/* Lakes Overlay */}
+                {/* Lakes Overlay — clipped to Rwanda border */}
                 {enabledOverlays.has('lakes') && lakes && (
-                  <LakesOverlay 
-                    lakes={lakes} 
-                    onHover={handleLakeHover}
-                    onClick={(lake) => {
-                      console.log('Lake clicked:', lake.properties.name);
-                      // Future enhancement: show lake detail panel
-                    }}
-                    loading={lakesLoading}
-                    error={lakesError}
-                  />
+                  <g clipPath="url(#rwanda-clip)">
+                    <LakesOverlay
+                      lakes={lakes}
+                      onHover={handleLakeHover}
+                      onClick={(lake) => {
+                        console.log('Lake clicked:', lake.properties.name);
+                      }}
+                      loading={lakesLoading}
+                      error={lakesError}
+                    />
+                  </g>
                 )}
                 
                 {/* GBIF Occurrences Overlay */}
@@ -1460,61 +1467,13 @@ export function MapPage() {
           })()}
 
           <div style={{ maxHeight: isMobile ? 300 : 400, overflowY: 'auto' }}>
-            {[...districts].filter(d => !searchQuery || d.name.toLowerCase().includes(searchQuery.toLowerCase())).sort((a, b) => b.compliance - a.compliance).map(d => {
-              const dot = d.status === 'submitted' ? '#10b981' : d.status === 'pending' ? '#f59e0b' : '#f43f5e';
-              return (
-                <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--surface-3)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{d.name}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>{d.province?.name}</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: d.compliance >= 80 ? '#10b981' : d.compliance >= 70 ? '#f59e0b' : '#f43f5e' }}>{d.compliance}%</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Province chart (static bars) */}
-      <div style={{ ...card, padding: isMobile ? 12 : 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.9rem', fontWeight: 700 }}>
-          <i className="fa-solid fa-chart-bar" style={{ color: 'var(--sky-dim)' }} />
-          District Reporting by Province
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: 12 }}>
-          {['Kigali','South','North','West','East'].map(prov => {
-            const provDistricts = districts.filter(d => d.province?.name === prov);
-            const sub = provDistricts.filter(d => d.status === 'submitted').length;
-            const pend = provDistricts.filter(d => d.status === 'pending').length;
-            const miss = provDistricts.filter(d => d.status === 'missing').length;
-            const total = provDistricts.length || 1;
-            return (
-              <div key={prov} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 12 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: 8 }}>{prov}</div>
-                <div style={{ height: 80, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 2 }}>
-                  {[['#10b981', sub, 'Submitted'], ['#f59e0b', pend, 'Pending'], ['#f43f5e', miss, 'Missing']].map(([color, count, label]) => (
-                    Number(count) > 0 && (
-                      <div key={String(label)} style={{ background: String(color), borderRadius: 3, height: `${(Number(count) / total) * 70}px`, minHeight: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '0.6rem', color: '#fff', fontWeight: 700 }}>{count}</span>
-                      </div>
-                    )
-                  ))}
-                </div>
-                <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginTop: 6, fontFamily: "'DM Mono', monospace" }}>{provDistricts.length} districts</div>
+            {[...districts].filter(d => !searchQuery || d.name.toLowerCase().includes(searchQuery.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name)).map(d => (
+              <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--surface-3)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{d.name}</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>{d.province?.name}</span>
               </div>
-            );
-          })}
-        </div>
-        <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
-          {[['#10b981','Submitted'],['#f59e0b','Pending'],['#f43f5e','Missing']].map(([c,l]) => (
-            <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', color: 'var(--text-3)' }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

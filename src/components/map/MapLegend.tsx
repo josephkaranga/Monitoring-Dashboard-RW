@@ -125,27 +125,6 @@ export function MapLegend({ activeLayer, enabledOverlays, position = 'bottom-rig
           ],
         };
       
-      case 'submission':
-        return {
-          title: 'SUBMISSION STATUS',
-          stops: [
-            { value: 2, color: '#10b981', label: 'Submitted' },
-            { value: 1, color: '#f59e0b', label: 'Pending' },
-            { value: 0, color: '#f43f5e', label: 'Missing' },
-          ],
-        };
-      
-      case 'compliance':
-        return {
-          title: 'COMPLIANCE SCORE',
-          stops: [
-            { value: 85, color: '#10b981', label: '≥85%' },
-            { value: 75, color: '#0ea5e9', label: '75-84%' },
-            { value: 65, color: '#f59e0b', label: '65-74%' },
-            { value: 0, color: '#f43f5e', label: '<65%' },
-          ],
-        };
-      
       default:
         return {
           title: 'LEGEND',

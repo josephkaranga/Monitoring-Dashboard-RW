@@ -15,8 +15,6 @@ const layerOptions: Array<{ id: MapLayer; label: string }> = [
   { id: 'wetlands', label: 'Wetlands' },
   { id: 'threat-level', label: 'Threat Level' },
   { id: 'nbsap-progress', label: 'NBSAP Progress' },
-  { id: 'submission', label: 'Submission Status' },
-  { id: 'compliance', label: 'Compliance Score' },
 ];
 
 /**

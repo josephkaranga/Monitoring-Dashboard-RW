@@ -2,16 +2,14 @@
 
 import type { District } from '../types/index';
 
-export type MapLayer = 
+export type MapLayer =
   | 'biodiversity'
   | 'forest'
   | 'species-richness'
   | 'protected-areas'
   | 'wetlands'
   | 'threat-level'
-  | 'nbsap-progress'
-  | 'submission'
-  | 'compliance';
+  | 'nbsap-progress';
 
 export interface LayerConfig {
   id: MapLayer;
