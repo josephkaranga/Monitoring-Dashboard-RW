@@ -194,7 +194,7 @@ const TOOLKIT_TOOLS = [
   { id: 'T07', name: 'Research & Academic Contribution', icon: '🔬', color: '#1A5276', accent: '#2E86C1', frequency: 'Annual', output: 'Biodiversity Evidence Repository',
     fields: [
       { key: 'stakeholder', label: 'Reporting Stakeholder', type: 'stakeholder_select', required: true },
-      { key: 'institution', label: 'Research Institution', type: 'text', placeholder: 'University or institute', required: true },
+      { key: 'institution', label: 'Lead Institution', type: 'text', placeholder: 'University or institute', required: true },
       { key: 'study_title', label: 'Study Title', type: 'text', placeholder: 'Full title', required: true },
       { key: 'year', label: 'Year Completed', type: 'select', options: ['2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'], required: true },
       { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
