@@ -13,164 +13,91 @@ import { validateYear } from '../utils/validation';
 
 
 // ── STAKEHOLDER RESPONSIBILITIES MAPPING ─────────────────────────
-// COMPLETE MAPPING - includes ALL stakeholders from indicators database (31 stakeholders)
-const STAKEHOLDER_RESPONSIBILITIES = {
-  'REMA': {
-    name: 'Rwanda Environment Management Authority',
-    responsibilities: ['Environmental policy enforcement', 'Environmental impact assessments', 'Biodiversity monitoring', 'Waste management oversight'],
-    targets: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-  },
-  'Ministry of Environment': {
-    name: 'Ministry of Environment',
-    responsibilities: ['Environmental policy development', 'Climate change coordination', 'Environmental education'],
-    targets: [1, 8, 14]
-  },
-  'MINAGRI': {
-    name: 'Ministry of Agriculture and Animal Resources',
-    responsibilities: ['Agricultural biodiversity', 'Sustainable farming practices', 'Animal genetic resources'],
-    targets: [1, 5, 6, 7, 8, 9, 10, 11, 18]
-  },
-  'RFA': {
-    name: 'Rwanda Forestry Authority',
-    responsibilities: ['Forest conservation', 'Reforestation programs', 'Forest biodiversity management'],
-    targets: [2, 5, 6, 8, 10, 11, 12]
-  },
-  'RDB': {
-    name: 'Rwanda Development Board',
-    responsibilities: ['Tourism and conservation', 'Protected area management', 'Wildlife conservation'],
-    targets: [1, 3, 4, 6, 9]
-  },
-  'District Authorities': {
-    name: 'District Authorities',
-    responsibilities: ['Local biodiversity monitoring', 'Community engagement', 'Local environmental enforcement'],
-    targets: [2, 3, 8, 9, 10, 14, 22]
-  },
-  'MININFRA': {
-    name: 'Ministry of Infrastructure',
-    responsibilities: ['Infrastructure environmental compliance', 'Sustainable urban development'],
-    targets: [1, 12]
-  },
-  'RAB': {
-    name: 'Rwanda Agriculture and Animal Resources Development Board',
-    responsibilities: ['Agricultural research', 'Crop and livestock improvement', 'Sustainable agriculture'],
-    targets: [5, 9, 10]
-  },
-  'WASAC': {
-    name: 'Water and Sanitation Corporation',
-    responsibilities: ['Water resource management', 'Aquatic ecosystem protection'],
-    targets: [7, 11]
-  },
-  'Private Sector': {
-    name: 'Private Sector Companies',
-    responsibilities: ['Environmental compliance', 'Corporate sustainability', 'Green business practices'],
-    targets: [15, 19]
-  },
-  'NGOs': {
-    name: 'Non-Governmental Organizations',
-    responsibilities: ['Community mobilization', 'Environmental advocacy', 'Capacity building'],
-    targets: [14, 20]
-  },
-  'Conservation NGOs': {
-    name: 'Conservation Organizations',
-    responsibilities: ['Species conservation', 'Habitat protection', 'Conservation education'],
-    targets: [4]
-  },
-  'Research Institutions': {
-    name: 'Universities and Research Centers',
-    responsibilities: ['Biodiversity research', 'Scientific monitoring', 'Evidence generation'],
-    targets: [6, 9, 13, 17, 20, 21]
-  },
-  'MINECOFIN': {
-    name: 'Ministry of Finance and Economic Planning',
-    responsibilities: ['Biodiversity financing', 'Budget allocation', 'Economic instruments'],
-    targets: [18, 19]
-  },
-  'NISR': {
-    name: 'National Institute of Statistics Rwanda',
-    responsibilities: ['Biodiversity data collection', 'Statistical analysis', 'Indicator development'],
-    targets: [16, 21]
-  },
-  'Universities': {
-    name: 'Academic Institutions',
-    responsibilities: ['Research and education', 'Student engagement', 'Scientific publications'],
-    targets: [20]
-  },
-  // NEW STAKEHOLDERS FROM DATABASE (previously missing)
-  'All Sector Ministries': {
-    name: 'All Sector Ministries',
-    responsibilities: ['Cross-sectoral coordination', 'Policy integration', 'Mainstreaming biodiversity'],
-    targets: [14, 18]
-  },
-  'City of Kigali': {
-    name: 'City of Kigali Authority',
-    responsibilities: ['Urban biodiversity planning', 'City-level environmental management', 'Urban green spaces'],
-    targets: [7, 12, 16]
-  },
-  'FDA': {
-    name: 'Food and Drugs Authority',
-    responsibilities: ['Food safety and biodiversity', 'Biosafety regulation'],
-    targets: [17]
-  },
-  'FONERWA': {
-    name: 'Rwanda Green Fund',
-    responsibilities: ['Environmental financing', 'Green fund management', 'Climate finance'],
-    targets: [19]
-  },
-  'Meteo Rwanda': {
-    name: 'Rwanda Meteorology Agency',
-    responsibilities: ['Climate monitoring', 'Weather data for biodiversity', 'Climate change tracking'],
-    targets: [11]
-  },
-  'MIGEPROF': {
-    name: 'Ministry of Gender and Family Promotion',
-    responsibilities: ['Gender mainstreaming in biodiversity', 'Women\'s participation in conservation'],
-    targets: [22]
-  },
-  'MINEMA': {
-    name: 'Ministry of Emergency Management',
-    responsibilities: ['Disaster risk management', 'Environmental emergency response'],
-    targets: [8]
-  },
-  'MINICOM': {
-    name: 'Ministry of Trade and Industry',
-    responsibilities: ['Industrial environmental compliance', 'Trade and biodiversity'],
-    targets: [7, 16]
-  },
-  'Ministry of Education': {
-    name: 'Ministry of Education',
-    responsibilities: ['Environmental education', 'Biodiversity curriculum', 'Student engagement'],
-    targets: [20, 21]
-  },
-  'Ministry of Finance': {
-    name: 'Ministry of Finance',
-    responsibilities: ['Financial disclosure standards', 'Biodiversity economic instruments'],
-    targets: [15]
-  },
-  'Ministry of Health': {
-    name: 'Ministry of Health',
-    responsibilities: ['Health and biodiversity linkages', 'Biosafety health aspects'],
-    targets: [11, 17]
-  },
-  'Ministry of Justice': {
-    name: 'Ministry of Justice',
-    responsibilities: ['Legal framework for biodiversity', 'Access and benefit sharing law'],
-    targets: [13]
-  },
-  'Private Sector Federation': {
-    name: 'Private Sector Federation of Rwanda',
-    responsibilities: ['Business biodiversity standards', 'Private sector coordination'],
-    targets: [15]
-  },
-  'RBS': {
-    name: 'Rwanda Bureau of Standards',
-    responsibilities: ['Environmental standards', 'Biosafety standards'],
-    targets: [17]
-  },
-  'Sector Ministries': {
-    name: 'Line Ministries',
-    responsibilities: ['Sector-specific biodiversity integration', 'Implementation coordination'],
-    targets: [20, 21]
-  }
+// Full NBSAP 2025-2030 institutional framework — all institutions with module assignments
+// modules: which T01-T07 reporting tools this institution uses
+const STAKEHOLDER_RESPONSIBILITIES: Record<string, { name: string; responsibilities: string[]; targets: number[]; modules: string[] }> = {
+  'REMA': { name: 'Rwanda Environment Management Authority', responsibilities: ['Environmental policy enforcement', 'EIA oversight', 'Biodiversity monitoring', 'RBIS management', 'CBD reporting'], targets: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22], modules: ['T01','T02','T03','T06'] },
+  'MoE': { name: 'Ministry of Environment', responsibilities: ['Environmental policy development', 'Climate change coordination', 'Biodiversity mainstreaming'], targets: [1,2,6,7,8,13,14,16,17,18,19], modules: ['T01','T05'] },
+  'MINAGRI': { name: 'Ministry of Agriculture and Animal Resources', responsibilities: ['Agricultural biodiversity', 'Sustainable farming', 'Fisheries regulation'], targets: [1,5,7,10,16,17], modules: ['T01','T02'] },
+  'RFA': { name: 'Rwanda Forestry Authority', responsibilities: ['Forest conservation', 'Reforestation', 'Forest plantations management', 'Urban forestry guidelines'], targets: [1,2,6,8,9,10,11,12,18], modules: ['T01','T02','T03'] },
+  'RDB': { name: 'Rwanda Development Board', responsibilities: ['Tourism & conservation', 'Protected area management', 'Wildlife conservation', 'Revenue sharing'], targets: [1,3,4,5,6,8,9,10,11,12,15,16,18,19], modules: ['T01','T03','T05','T06'] },
+  'NLA': { name: 'National Land Authority', responsibilities: ['Land-use planning', 'Spatial plans', 'NSDI management'], targets: [1,10,11], modules: ['T01'] },
+  'RWB': { name: 'Rwanda Water Resources Board', responsibilities: ['Water resource management', 'Catchment management', 'Wetland oversight'], targets: [2,5,7,8,10], modules: ['T01','T02'] },
+  'RAB': { name: 'Rwanda Agriculture Board', responsibilities: ['Agricultural research', 'Crop improvement', 'Aquaculture', 'Seed management'], targets: [2,5,6,7,10,13,17], modules: ['T01','T02','T07'] },
+  'District Authorities': { name: 'District Local Governments', responsibilities: ['Local biodiversity monitoring', 'Community engagement', 'Local land-use planning'], targets: [2,3,8,10,14,22], modules: ['T02','T04'] },
+  'ARCOS': { name: 'Albertine Rift Conservation Society', responsibilities: ['Ecosystem restoration', 'Community conservation', 'Living lakes monitoring', 'SANCTA programme'], targets: [1,2,3,5,6,8,9,10,11,12,18], modules: ['T02','T03','T04','T07'] },
+  'Nature Rwanda': { name: 'Nature Rwanda', responsibilities: ['IBA monitoring', 'Waterbird surveys', 'Flyway conservation', 'Busaga Forest conservation'], targets: [1,2,3,4,8,9,10,11,12,18], modules: ['T02','T03','T04','T07'] },
+  'CoEB': { name: 'Centre of Excellence in Biodiversity', responsibilities: ['RBIS management', 'Biodiversity research', 'Ecosystem mapping', 'IAS monitoring'], targets: [1,2,3,4,6,7,8,10], modules: ['T03','T07'] },
+  'RWCA': { name: 'Rwanda Wildlife Conservation Association', responsibilities: ['Umusambi Village', 'Species conservation', 'Community conservation education'], targets: [2,3,4,8,9,10,11], modules: ['T03','T04','T07'] },
+  'RECOR': { name: 'Rwanda Environment Conservation Organisation', responsibilities: ['Environmental conservation', 'Ecosystem restoration'], targets: [2,3,8,10,11], modules: ['T02','T04','T07'] },
+  'IUCN': { name: 'International Union for Conservation of Nature', responsibilities: ['Green List', 'Red List', 'PES', 'Nature-based solutions', 'COMBIO project'], targets: [2,3,4,6,8,9,10,11,12,18,19], modules: ['T03','T05','T07'] },
+  'African Parks': { name: 'African Parks', responsibilities: ['Park management', 'Akagera operations', 'IAS control'], targets: [3,6,8,10], modules: ['T03'] },
+  'Prime Biodiversity Conservation': { name: 'Prime Biodiversity Conservation', responsibilities: ['KBA conservation', 'Species monitoring', 'Community projects'], targets: [1,3,8,9,10,12], modules: ['T02','T03','T04','T07'] },
+  'ARECO': { name: 'ARECO Rwanda Nziza', responsibilities: ['Buffer zone conservation', 'Community ecosystem-based adaptation'], targets: [2,7,8,9,10,11], modules: ['T02','T04'] },
+  'Partners for Conservation': { name: 'Partners for Conservation', responsibilities: ['Conservation partnerships', 'Community engagement'], targets: [9,10,11,12], modules: ['T04','T07'] },
+  'Forest of Hope Association': { name: 'Forest of Hope Association', responsibilities: ['Forest conservation', 'Community forestry'], targets: [3,8], modules: ['T02','T04'] },
+  'IGCP': { name: 'International Gorilla Conservation Programme', responsibilities: ['Gorilla conservation', 'IAS management in parks'], targets: [6], modules: ['T03','T07'] },
+  'Karisoke': { name: 'Dian Fossey Gorilla Fund (Karisoke)', responsibilities: ['Gorilla research', 'Conservation science'], targets: [6], modules: ['T03','T07'] },
+  'AWF': { name: 'African Wildlife Foundation', responsibilities: ['Wildlife conservation', 'Landscape conservation'], targets: [3,8], modules: ['T03','T05'] },
+  'WCS': { name: 'Wildlife Conservation Society', responsibilities: ['Wildlife monitoring', 'Conservation research'], targets: [8], modules: ['T03','T07'] },
+  'One Tree Planted': { name: 'One Tree Planted', responsibilities: ['Reforestation', 'Tree planting partnerships'], targets: [8,9], modules: ['T02'] },
+  'One Acre Fund': { name: 'One Acre Fund', responsibilities: ['Smallholder support', 'Agroforestry', 'Seedling production'], targets: [6,9], modules: ['T02','T04'] },
+  'ICRAF': { name: 'World Agroforestry (ICRAF)', responsibilities: ['Agroforestry research', 'Native species integration'], targets: [2,4,9,10], modules: ['T02','T07'] },
+  'Bridge to Rwanda': { name: 'Bridge to Rwanda', responsibilities: ['Organic farming', 'Soil health improvement'], targets: [7,10], modules: ['T02','T04'] },
+  'ROAM': { name: 'Rwanda Organic Agriculture Movement', responsibilities: ['Organic agriculture promotion', 'Fertiliser reduction'], targets: [7], modules: ['T02'] },
+  'GIZ': { name: 'GIZ Rwanda', responsibilities: ['Technical cooperation', 'Capacity building', 'Green growth'], targets: [9,11,12], modules: ['T05','T07'] },
+  'SNV': { name: 'SNV Netherlands Development Organisation', responsibilities: ['Sustainable agriculture', 'Clean energy'], targets: [10,11], modules: ['T05'] },
+  'GGGI': { name: 'Global Green Growth Institute', responsibilities: ['Green growth', 'PES', 'Climate finance'], targets: [9,10,11,12,16,18], modules: ['T05','T07'] },
+  'WRI': { name: 'World Resources Institute', responsibilities: ['Data analytics', 'Forest monitoring', 'NBS'], targets: [9,11], modules: ['T05','T07'] },
+  'FAO': { name: 'Food and Agriculture Organization', responsibilities: ['Agricultural standards', 'IPM', 'Hazardous waste'], targets: [7,9], modules: ['T01','T05'] },
+  'UNDP': { name: 'United Nations Development Programme', responsibilities: ['BIOFIN', 'Capacity building', 'Resource mobilisation'], targets: [18,19], modules: ['T05'] },
+  'RGF': { name: 'Rwanda Green Fund (FONERWA)', responsibilities: ['Green finance', 'Biodiversity window', 'Investment plans'], targets: [2,8,9,10,14,18,19], modules: ['T05'] },
+  'MINECOFIN': { name: 'Ministry of Finance and Economic Planning', responsibilities: ['Budget tagging', 'Biodiversity expenditure review', 'SEEA'], targets: [8,9,14,15,18,19], modules: ['T01','T05'] },
+  'NISR': { name: 'National Institute of Statistics Rwanda', responsibilities: ['Statistical surveys', 'SEEA', 'Census data'], targets: [1,14], modules: ['T01'] },
+  'BNR': { name: 'National Bank of Rwanda', responsibilities: ['Financial sector biodiversity risks', 'Green finance standards'], targets: [8,14], modules: ['T01'] },
+  'MININFRA': { name: 'Ministry of Infrastructure', responsibilities: ['Infrastructure planning', 'Sustainable urban development'], targets: [1,11,16], modules: ['T01','T06'] },
+  'MINICOM': { name: 'Ministry of Trade and Industry', responsibilities: ['Industrial compliance', 'Sustainable trade', 'Special economic zones'], targets: [1,6,16], modules: ['T01','T06'] },
+  'MINALOC': { name: 'Ministry of Local Government', responsibilities: ['Community coordination', 'HWC management', 'Local governance'], targets: [4,9], modules: ['T01','T04'] },
+  'MINEDUC': { name: 'Ministry of Education', responsibilities: ['Environmental education', 'Greening schools'], targets: [11], modules: ['T01'] },
+  'MINEMA': { name: 'Ministry of Emergency Management', responsibilities: ['DRR strategies', 'Flood protection'], targets: [8], modules: ['T01'] },
+  'RMB': { name: 'Rwanda Mines, Petroleum and Gas Board', responsibilities: ['Mine drainage', 'Mining environmental compliance'], targets: [2,7], modules: ['T01','T06'] },
+  'CPCIC': { name: 'Cleaner Production & Climate Innovation Centre', responsibilities: ['Circular economy', 'Pollution control', 'Fertiliser regulation'], targets: [2,7,11,16], modules: ['T01','T06'] },
+  'NIRDA': { name: 'National Industrial Research and Development Agency', responsibilities: ['Industrial R&D', 'Sustainable production'], targets: [9,11,16], modules: ['T01','T07'] },
+  'RICA': { name: 'Rwanda Inspectorate, Competition and Consumer Protection Authority', responsibilities: ['Biosecurity', 'Quality inspections', 'IAS border controls'], targets: [5,6,7,10], modules: ['T01','T06'] },
+  'RSB': { name: 'Rwanda Standards Board', responsibilities: ['Environmental standards', 'Biosafety standards', 'Eco-labelling'], targets: [6,10,16,17], modules: ['T01'] },
+  'RRA': { name: 'Rwanda Revenue Authority', responsibilities: ['Tax incentives', 'Environmental fees'], targets: [6,9], modules: ['T01'] },
+  'FDA': { name: 'Rwanda Food and Drugs Authority', responsibilities: ['Food safety', 'GMO detection', 'Biosafety'], targets: [6,9,17], modules: ['T01','T06'] },
+  'NCST': { name: 'National Council for Science and Technology', responsibilities: ['Research coordination', 'Innovation policy'], targets: [6,7,8], modules: ['T01','T07'] },
+  'Rwanda Space Agency': { name: 'Rwanda Space Agency', responsibilities: ['Remote sensing', 'Land monitoring', 'IAS detection'], targets: [6,8,10], modules: ['T07'] },
+  'NAEB': { name: 'National Agricultural Export Development Board', responsibilities: ['Export crops', 'Organic certification'], targets: [7,10], modules: ['T01','T06'] },
+  'RURA': { name: 'Rwanda Utilities Regulatory Authority', responsibilities: ['Utilities regulation', 'Waste management'], targets: [7,16], modules: ['T01'] },
+  'WASAC': { name: 'Water and Sanitation Corporation', responsibilities: ['Water supply', 'Aquatic ecosystem protection'], targets: [7], modules: ['T01'] },
+  'Meteo Rwanda': { name: 'Rwanda Meteorology Agency', responsibilities: ['Climate monitoring', 'Weather data for biodiversity'], targets: [8], modules: ['T01','T07'] },
+  'LODA': { name: 'Local Administrative Entities Development Agency', responsibilities: ['Community development', 'VUP programme'], targets: [8,9], modules: ['T04','T05'] },
+  'National Police (Marine)': { name: 'Rwanda National Police (Marine)', responsibilities: ['Fisheries enforcement', 'Lake patrols'], targets: [5], modules: ['T01'] },
+  'SGF': { name: 'Special Guaranty Fund', responsibilities: ['HWC compensation', 'Wildlife damage funds'], targets: [4], modules: ['T01','T04'] },
+  'RHA': { name: 'Rwanda Housing Authority', responsibilities: ['Urban planning', 'Green building', 'City master plans'], targets: [11,12], modules: ['T01'] },
+  'Kigali City': { name: 'City of Kigali', responsibilities: ['Urban green spaces', 'City environmental management', 'Car-free zones'], targets: [7,11,12], modules: ['T01','T02'] },
+  'PSF': { name: 'Private Sector Federation', responsibilities: ['Business coordination', 'Private sector standards'], targets: [6,7,10,15,16], modules: ['T06'] },
+  'REG': { name: 'Rwanda Energy Group', responsibilities: ['Clean energy', 'Low-emission infrastructure'], targets: [11], modules: ['T06'] },
+  'RPPA': { name: 'Rwanda Public Procurement Authority', responsibilities: ['Green procurement', 'Sustainable purchasing'], targets: [16], modules: ['T01'] },
+  'RCHA': { name: 'Rwanda Cultural Heritage Academy', responsibilities: ['Traditional knowledge', 'Medicinal plants heritage'], targets: [4,9,13], modules: ['T07'] },
+  'ILO': { name: 'International Labour Organization', responsibilities: ['Green jobs', 'Sustainable livelihoods'], targets: [16], modules: ['T05'] },
+  'Q&A Venue Solution': { name: 'Q&A Venue Solution', responsibilities: ['Conservation support'], targets: [3], modules: ['T04'] },
+  'Eco-planet Bamboo': { name: 'Eco-planet Bamboo', responsibilities: ['Bamboo restoration', 'Sustainable materials'], targets: [9], modules: ['T02','T06'] },
+  'Urugaga Imbaraga': { name: 'Urugaga Imbaraga (Farmers Federation)', responsibilities: ['Farmer mobilization', 'Organic farming promotion'], targets: [7], modules: ['T04'] },
+  'ACORD Rwanda': { name: 'ACORD Rwanda', responsibilities: ['Community development', 'Conservation agriculture'], targets: [10,18], modules: ['T04','T05'] },
+  'WCSS': { name: 'Wildlife Conservation Student Society', responsibilities: ['Student conservation', 'Awareness campaigns'], targets: [1], modules: ['T04','T07'] },
+  'PFC': { name: 'People for Conservation', responsibilities: ['Community conservation', 'KBA monitoring'], targets: [1], modules: ['T04'] },
+  'Ultimate Forest': { name: 'Ultimate Forest Company', responsibilities: ['Forest certification', 'Sustainable forestry'], targets: [8,10], modules: ['T02','T06'] },
+  'Nyungwe Management Company': { name: 'Nyungwe Management Company', responsibilities: ['Nyungwe NP management', 'Tourism operations'], targets: [10], modules: ['T03'] },
+  'ARDI': { name: 'Agriculture and Rural Development Initiative', responsibilities: ['Apiculture', 'Rural livelihoods'], targets: [10], modules: ['T02','T04'] },
+  'Rwanda Mountain Tea': { name: 'Rwanda Mountain Tea', responsibilities: ['Tea plantation biodiversity', 'Bee reserves'], targets: [10], modules: ['T06'] },
+  'RYBN': { name: 'Rwanda Youth in Biodiversity Network', responsibilities: ['Youth environmental engagement', 'Greening schools'], targets: [11], modules: ['T04'] },
+  'ADRRES': { name: 'ADRRES', responsibilities: ['School environmental programmes', 'Youth mobilization'], targets: [11], modules: ['T04'] },
+  'LWD': { name: 'Life and Water Development', responsibilities: ['Community water projects', 'Ecosystem services'], targets: [11], modules: ['T04','T05'] },
+  'ESS OIL': { name: 'ESS OIL Rwanda', responsibilities: ['Essential oils', 'Sustainable sourcing'], targets: [9], modules: ['T06'] },
+  'IKIREZI': { name: 'Ikirezi Natural Products', responsibilities: ['Natural products', 'Sustainable value chains'], targets: [9], modules: ['T06'] },
 };
 
 // ── Tool Definitions ─────────────────────────────────────────

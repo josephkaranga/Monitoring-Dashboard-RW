@@ -18,6 +18,40 @@ interface TargetMapping {
   actions: StrategicAction[];
 }
 
+// Institution → reporting module mapping (mirrors ReportingToolkitPage)
+const INSTITUTION_MODULES: Record<string, string[]> = {
+  'REMA': ['T01','T02','T03','T06'], 'MoE': ['T01','T05'], 'MINAGRI': ['T01','T02'], 'RFA': ['T01','T02','T03'],
+  'RDB': ['T01','T03','T05','T06'], 'NLA': ['T01'], 'RWB': ['T01','T02'], 'RAB': ['T01','T02','T07'],
+  'District Authorities': ['T02','T04'], 'ARCOS': ['T02','T03','T04','T07'], 'Nature Rwanda': ['T02','T03','T04','T07'],
+  'CoEB': ['T03','T07'], 'RWCA': ['T03','T04','T07'], 'RECOR': ['T02','T04','T07'], 'IUCN': ['T03','T05','T07'],
+  'African Parks': ['T03'], 'Prime Biodiversity Conservation': ['T02','T03','T04','T07'], 'ARECO': ['T02','T04'],
+  'Partners for Conservation': ['T04','T07'], 'Forest of Hope Association': ['T02','T04'], 'IGCP': ['T03','T07'],
+  'Karisoke': ['T03','T07'], 'AWF': ['T03','T05'], 'WCS': ['T03','T07'], 'One Tree Planted': ['T02'],
+  'One Acre Fund': ['T02','T04'], 'ICRAF': ['T02','T07'], 'Bridge to Rwanda': ['T02','T04'], 'ROAM': ['T02'],
+  'GIZ': ['T05','T07'], 'SNV': ['T05'], 'GGGI': ['T05','T07'], 'WRI': ['T05','T07'], 'FAO': ['T01','T05'],
+  'UNDP': ['T05'], 'RGF': ['T05'], 'MINECOFIN': ['T01','T05'], 'NISR': ['T01'], 'BNR': ['T01'],
+  'MININFRA': ['T01','T06'], 'MINICOM': ['T01','T06'], 'MINALOC': ['T01','T04'], 'MINEDUC': ['T01'],
+  'MINEMA': ['T01'], 'RMB': ['T01','T06'], 'CPCIC': ['T01','T06'], 'NIRDA': ['T01','T07'],
+  'RICA': ['T01','T06'], 'RSB': ['T01'], 'RRA': ['T01'], 'FDA': ['T01','T06'], 'NCST': ['T01','T07'],
+  'Rwanda Space Agency': ['T07'], 'NAEB': ['T01','T06'], 'RURA': ['T01'], 'WASAC': ['T01'],
+  'Meteo Rwanda': ['T01','T07'], 'LODA': ['T04','T05'], 'National Police (Marine)': ['T01'], 'SGF': ['T01','T04'],
+  'RHA': ['T01'], 'Kigali City': ['T01','T02'], 'PSF': ['T06'], 'REG': ['T06'], 'RPPA': ['T01'],
+  'RCHA': ['T07'], 'Eco-planet Bamboo': ['T02','T06'], 'ACORD Rwanda': ['T04','T05'], 'WCSS': ['T04','T07'],
+  'PFC': ['T04'], 'Ultimate Forest': ['T02','T06'], 'Nyungwe Management Company': ['T03'],
+  'ARDI': ['T02','T04'], 'Rwanda Mountain Tea': ['T06'], 'RYBN': ['T04'], 'ADRRES': ['T04'],
+  'LWD': ['T04','T05'], 'ESS OIL': ['T06'], 'IKIREZI': ['T06'],
+};
+
+const MODULE_NAMES: Record<string, { name: string; color: string }> = {
+  'T01': { name: 'Institutional Reporting', color: '#1B6CA8' },
+  'T02': { name: 'District Monitoring', color: '#1E7D4B' },
+  'T03': { name: 'Protected Areas', color: '#5B3FA6' },
+  'T04': { name: 'Community Monitoring', color: '#B56A00' },
+  'T05': { name: 'Finance Tracking', color: '#0E6655' },
+  'T06': { name: 'Private Sector Compliance', color: '#922B21' },
+  'T07': { name: 'Research & Academic', color: '#1A5276' },
+};
+
 const goalColors: Record<string, { bg: string; color: string; accent: string }> = {
   A: { bg: '#f0fdf4', color: '#166534', accent: '#16a34a' },
   B: { bg: '#eff6ff', color: '#1e40af', accent: '#2563eb' },
@@ -261,7 +295,7 @@ const TARGETS: TargetMapping[] = [
   },
 ];
 
-function getAllInstitutions(): { name: string; targetCount: number; targets: number[] }[] {
+function getAllInstitutions(): { name: string; targetCount: number; targets: number[]; modules: string[] }[] {
   const map = new Map<string, Set<number>>();
   TARGETS.forEach(t => {
     t.actions.forEach(a => {
@@ -272,7 +306,12 @@ function getAllInstitutions(): { name: string; targetCount: number; targets: num
     });
   });
   return Array.from(map.entries())
-    .map(([name, tgts]) => ({ name, targetCount: tgts.size, targets: Array.from(tgts).sort((a, b) => a - b) }))
+    .map(([name, tgts]) => ({
+      name,
+      targetCount: tgts.size,
+      targets: Array.from(tgts).sort((a, b) => a - b),
+      modules: INSTITUTION_MODULES[name] || [],
+    }))
     .sort((a, b) => b.targetCount - a.targetCount);
 }
 
@@ -471,7 +510,7 @@ export default function StakeholdersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
               <thead>
                 <tr>
-                  {['Institution', 'Targets Involved', 'Target Links'].map(h => (
+                  {['Institution', 'Reporting Modules', 'Targets', 'Target Links'].map(h => (
                     <th key={h} style={{
                       padding: '10px 16px', textAlign: 'left', fontSize: '0.62rem', fontWeight: 600,
                       letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-3)',
@@ -484,6 +523,25 @@ export default function StakeholdersPage() {
                 {filteredInstitutions.map(inst => (
                   <tr key={inst.name} style={{ borderBottom: '1px solid #f8fafc' }}>
                     <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-1)' }}>{inst.name}</td>
+                    <td style={{ padding: '10px 16px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {inst.modules.length > 0 ? inst.modules.map(m => {
+                          const mod = MODULE_NAMES[m];
+                          return (
+                            <span key={m} style={{
+                              fontSize: '0.6rem', padding: '2px 7px', borderRadius: 4,
+                              background: `${mod?.color ?? '#6b7280'}14`, color: mod?.color ?? '#6b7280',
+                              fontWeight: 600, border: `1px solid ${mod?.color ?? '#6b7280'}30`,
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {m}
+                            </span>
+                          );
+                        }) : (
+                          <span style={{ fontSize: '0.62rem', color: '#94a3b8' }}>—</span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ padding: '10px 16px' }}>
                       <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--sky-dim)' }}>{inst.targetCount}</span>
                     </td>
