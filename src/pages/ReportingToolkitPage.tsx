@@ -110,7 +110,7 @@ const TOOLKIT_TOOLS = [
       { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
       { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       { key: 'current_status', label: 'Current Status / Value', type: 'number', placeholder: '0', required: true },
-      { key: 'budget_utilized', label: 'Budget Utilized (RWF)', type: 'number', placeholder: '0', required: false },
+      { key: 'budget_utilized', label: 'Budget Utilized (RWF)', type: 'number', placeholder: '0', required: true },
       { key: 'activities', label: 'Implementation Activities', type: 'textarea', placeholder: 'Describe completed activities...', required: false },
       { key: 'challenges', label: 'Challenges Encountered', type: 'textarea', placeholder: 'Describe constraints...', required: false },
     ]
