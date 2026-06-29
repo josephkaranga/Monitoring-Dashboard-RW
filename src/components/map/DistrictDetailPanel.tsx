@@ -182,12 +182,6 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
           <div style={metricValueStyle}>{district.forest_cover}%</div>
         </div>
 
-        {/* Compliance */}
-        <div style={metricCardStyle}>
-          <div style={metricLabelStyle}>COMPLIANCE</div>
-          <div style={metricValueStyle}>{district.compliance}%</div>
-        </div>
-
         {/* Wetland */}
         <div style={metricCardStyle}>
           <div style={metricLabelStyle}>WETLAND</div>
@@ -225,42 +219,20 @@ export const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         )}
       </div>
 
-      {/* Status Footer */}
+      {/* Footer */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '12px 20px',
           borderTop: '1px solid #e2e8f0',
           backgroundColor: '#f8fafc',
           borderBottomLeftRadius: 12,
-          borderBottomRightRadius: 12
+          borderBottomRightRadius: 12,
+          fontSize: 12,
+          color: '#94a3b8',
+          textAlign: 'center',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            fontSize: 13,
-            color: '#475569'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 600 }}>Reporting:</span>
-            <span
-              style={{
-                color: district.status === 'submitted' ? '#10b981' : '#f59e0b',
-                fontWeight: 500
-              }}
-            >
-              {district.status}
-            </span>
-          </div>
-          <span style={{ color: '#cbd5e1' }}>·</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 600 }}>RBIS</span>
-            <span style={{ color: '#10b981', fontWeight: 500 }}>linked</span>
-          </div>
-        </div>
+        {district.province?.name} Province
       </div>
 
       {/* Animation keyframes */}

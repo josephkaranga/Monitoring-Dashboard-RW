@@ -1250,14 +1250,16 @@ export function MapPage() {
                   );
                 })}
                 
-                {/* Protected Areas Overlay */}
+                {/* Protected Areas Overlay — clipped to Rwanda border */}
                 {enabledOverlays.has('protected-areas') && protectedAreas && (
-                  <ProtectedAreasOverlay 
-                    areas={protectedAreas} 
-                    onHover={handleProtectedAreaHover}
-                    loading={areasLoading}
-                    error={areasError}
-                  />
+                  <g clipPath="url(#rwanda-clip)">
+                    <ProtectedAreasOverlay
+                      areas={protectedAreas}
+                      onHover={handleProtectedAreaHover}
+                      loading={areasLoading}
+                      error={areasError}
+                    />
+                  </g>
                 )}
                 
                 {/* River Network Overlay */}
