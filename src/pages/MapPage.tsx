@@ -1067,7 +1067,8 @@ export function MapPage() {
                   width: '100%',
                   height: isMobile ? 300 : 400,
                   cursor: touchState.isPanning ? 'grabbing' : 'pointer',
-                  touchAction: 'none'
+                  touchAction: 'none',
+                  overflow: 'hidden',
                 }}
                 preserveAspectRatio="xMidYMid meet"
                 onTouchStart={isMobile ? handleTouchStart : undefined}
@@ -1084,29 +1085,6 @@ export function MapPage() {
                   fill="#f0f9ff"
                 />
                 
-                {/* Clip path from all district boundaries — used to clip lakes/overlays to Rwanda border */}
-                <defs>
-                  <clipPath id="rwanda-clip">
-                    {geoData.features.map((feature, ci) => {
-                      const clipCoords = (coords: any, type: string): string => {
-                        if (type === 'Polygon') {
-                          return coords.map((ring: any) =>
-                            ring.map((p: any, i: number) => `${i === 0 ? 'M' : 'L'}${p[0]},${-p[1]}`).join(' ') + ' Z'
-                          ).join(' ');
-                        } else if (type === 'MultiPolygon') {
-                          return coords.map((poly: any) =>
-                            poly.map((ring: any) =>
-                              ring.map((p: any, i: number) => `${i === 0 ? 'M' : 'L'}${p[0]},${-p[1]}`).join(' ') + ' Z'
-                            ).join(' ')
-                          ).join(' ');
-                        }
-                        return '';
-                      };
-                      return <path key={`clip-${ci}`} d={clipCoords(feature.geometry.coordinates, feature.geometry.type)} />;
-                    })}
-                  </clipPath>
-                </defs>
-
                 {/* District base layer */}
                 {geoData.features.map((feature, idx) => {
                   const districtData = getDistrictData(feature.properties.shapeName);
@@ -1250,16 +1228,14 @@ export function MapPage() {
                   );
                 })}
                 
-                {/* Protected Areas Overlay — clipped to Rwanda border */}
+                {/* Protected Areas Overlay */}
                 {enabledOverlays.has('protected-areas') && protectedAreas && (
-                  <g clipPath="url(#rwanda-clip)">
-                    <ProtectedAreasOverlay
-                      areas={protectedAreas}
-                      onHover={handleProtectedAreaHover}
-                      loading={areasLoading}
-                      error={areasError}
-                    />
-                  </g>
+                  <ProtectedAreasOverlay
+                    areas={protectedAreas}
+                    onHover={handleProtectedAreaHover}
+                    loading={areasLoading}
+                    error={areasError}
+                  />
                 )}
                 
                 {/* River Network Overlay */}
@@ -1272,19 +1248,17 @@ export function MapPage() {
                   />
                 )}
                 
-                {/* Lakes Overlay — clipped to Rwanda border */}
+                {/* Lakes Overlay */}
                 {enabledOverlays.has('lakes') && lakes && (
-                  <g clipPath="url(#rwanda-clip)">
-                    <LakesOverlay
-                      lakes={lakes}
-                      onHover={handleLakeHover}
-                      onClick={(lake) => {
-                        console.log('Lake clicked:', lake.properties.name);
-                      }}
-                      loading={lakesLoading}
-                      error={lakesError}
-                    />
-                  </g>
+                  <LakesOverlay
+                    lakes={lakes}
+                    onHover={handleLakeHover}
+                    onClick={(lake) => {
+                      console.log('Lake clicked:', lake.properties.name);
+                    }}
+                    loading={lakesLoading}
+                    error={lakesError}
+                  />
                 )}
                 
                 {/* GBIF Occurrences Overlay */}
