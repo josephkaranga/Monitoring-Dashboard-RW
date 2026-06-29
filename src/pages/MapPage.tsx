@@ -1228,7 +1228,7 @@ export function MapPage() {
                   );
                 })}
                 
-                {/* Protected Areas Overlay */}
+                {/* Protected Areas (lowest overlay — dashed green border) */}
                 {enabledOverlays.has('protected-areas') && protectedAreas && (
                   <ProtectedAreasOverlay
                     areas={protectedAreas}
@@ -1237,18 +1237,8 @@ export function MapPage() {
                     error={areasError}
                   />
                 )}
-                
-                {/* River Network Overlay */}
-                {enabledOverlays.has('rivers') && rivers && (
-                  <RiverNetworkOverlay 
-                    rivers={rivers} 
-                    onHover={handleRiverHover}
-                    loading={riversLoading}
-                    error={riversError}
-                  />
-                )}
-                
-                {/* Lakes Overlay */}
+
+                {/* Lakes (above protected areas) */}
                 {enabledOverlays.has('lakes') && lakes && (
                   <LakesOverlay
                     lakes={lakes}
@@ -1258,6 +1248,16 @@ export function MapPage() {
                     }}
                     loading={lakesLoading}
                     error={lakesError}
+                  />
+                )}
+
+                {/* Rivers (above lakes for visibility) */}
+                {enabledOverlays.has('rivers') && rivers && (
+                  <RiverNetworkOverlay
+                    rivers={rivers}
+                    onHover={handleRiverHover}
+                    loading={riversLoading}
+                    error={riversError}
                   />
                 )}
                 

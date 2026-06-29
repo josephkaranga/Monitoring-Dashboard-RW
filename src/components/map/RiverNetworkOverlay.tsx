@@ -95,9 +95,9 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
    */
   const getStrokeWidth = (length: number): number => {
     // Base width + logarithmic scaling for longer rivers
-    if (length > 100) return 0.012; // Major rivers
-    if (length > 50) return 0.008;  // Medium rivers
-    return 0.005;                    // Small rivers/streams
+    if (length > 100) return 0.008;
+    if (length > 50) return 0.005;
+    return 0.003;
   };
 
   // Show loading state
@@ -152,9 +152,9 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
             key={`river-${idx}`}
             d={pathData}
             fill="none"
-            stroke={isMajor ? '#0284c7' : '#38bdf8'}
+            stroke="#3FA9F5"
             strokeWidth={strokeWidth}
-            strokeOpacity={isMajor ? 0.75 : 0.55}
+            strokeOpacity={isMajor ? 0.60 : 0.45}
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
@@ -167,7 +167,7 @@ export const RiverNetworkOverlay = React.memo(function RiverNetworkOverlay({
               onHover(river);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.strokeOpacity = isMajor ? '0.75' : '0.55';
+              e.currentTarget.style.strokeOpacity = isMajor ? '0.60' : '0.45';
               e.currentTarget.style.strokeWidth = String(strokeWidth);
               onHover(null);
             }}

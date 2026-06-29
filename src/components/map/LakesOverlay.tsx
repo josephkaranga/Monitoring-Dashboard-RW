@@ -149,24 +149,26 @@ export const LakesOverlay = React.memo(function LakesOverlay({
           <path
             key={`lake-${idx}`}
             d={pathData}
-            fill={isLarge ? '#2563eb' : '#3b82f6'}
-            fillOpacity={isLarge ? 0.4 : 0.3}
-            stroke="#1d4ed8"
-            strokeWidth={isLarge ? '0.012' : '0.008'}
-            strokeOpacity={0.85}
+            fill="#7EC8FF"
+            fillOpacity={isLarge ? 0.35 : 0.30}
+            stroke="#4A90E2"
+            strokeWidth={isLarge ? '0.008' : '0.005'}
+            strokeOpacity={0.7}
             strokeLinejoin="round"
             style={{
               cursor: 'pointer',
               transition: 'fill-opacity 0.2s, stroke-width 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.fillOpacity = '0.55';
-              e.currentTarget.style.strokeWidth = isLarge ? '0.018' : '0.014';
+              e.currentTarget.style.fillOpacity = '0.50';
+              e.currentTarget.style.strokeWidth = isLarge ? '0.012' : '0.008';
+              e.currentTarget.style.strokeOpacity = '1';
               onHover(lake);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.fillOpacity = isLarge ? '0.4' : '0.3';
-              e.currentTarget.style.strokeWidth = isLarge ? '0.012' : '0.008';
+              e.currentTarget.style.fillOpacity = isLarge ? '0.35' : '0.30';
+              e.currentTarget.style.strokeWidth = isLarge ? '0.008' : '0.005';
+              e.currentTarget.style.strokeOpacity = '0.7';
               onHover(null);
             }}
             onClick={() => onClick(lake)}

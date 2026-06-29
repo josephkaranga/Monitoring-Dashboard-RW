@@ -163,25 +163,25 @@ export const ProtectedAreasOverlay = React.memo(function ProtectedAreasOverlay({
           <path
             key={`protected-area-${idx}`}
             d={pathData}
-            fill={color}
-            fillOpacity={0.25}
-            stroke={color}
-            strokeWidth="0.01"
-            strokeOpacity={0.9}
+            fill="#008F4C"
+            fillOpacity={0.08}
+            stroke="#008F4C"
+            strokeWidth="0.012"
+            strokeOpacity={0.7}
             strokeLinejoin="round"
+            strokeDasharray="0.02 0.008"
             style={{
               cursor: 'pointer',
-              transition: 'fill-opacity 0.2s, stroke-width 0.2s',
-              filter: 'drop-shadow(0 0 0.005px rgba(0,0,0,0.2))',
+              transition: 'fill-opacity 0.3s, stroke-width 0.3s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.fillOpacity = '0.45';
-              e.currentTarget.style.strokeWidth = '0.015';
+              e.currentTarget.style.fillOpacity = '0.20';
+              e.currentTarget.style.strokeWidth = '0.016';
               onHover(area);
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.fillOpacity = '0.25';
-              e.currentTarget.style.strokeWidth = '0.01';
+              e.currentTarget.style.fillOpacity = '0.08';
+              e.currentTarget.style.strokeWidth = '0.012';
               onHover(null);
             }}
             aria-label={`${area.properties.name} - ${areaType}`}
