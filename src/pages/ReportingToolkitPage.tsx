@@ -221,15 +221,11 @@ const ReportForm = ({ tool, onBack, onSuccess }: { tool: typeof TOOLKIT_TOOLS[0]
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get available stakeholders for the selected stakeholder
   const availableStakeholders = useMemo(() => {
-    const stakeholders = Object.entries(STAKEHOLDER_RESPONSIBILITIES).map(([key, info]) => ({
-      id: key,
-      ...info
-    }));
-    console.log('🔍 Available stakeholders for selection:', stakeholders.map(s => ({ id: s.id, name: s.name, targetCount: s.targets.length })));
-    return stakeholders;
-  }, []);
+    return Object.entries(STAKEHOLDER_RESPONSIBILITIES)
+      .filter(([, info]) => info.modules.includes(tool.id))
+      .map(([key, info]) => ({ id: key, ...info }));
+  }, [tool.id]);
 
   // Get filtered targets based on selected stakeholder
   const filteredTargets = useMemo(() => {
