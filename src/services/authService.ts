@@ -196,8 +196,11 @@ export async function resetPassword(email: string): Promise<ApiResponse<null>> {
   // if Supabase's allowed redirect list doesn't include every port.
   const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '')
     || `${window.location.protocol}//${window.location.hostname}`;
+  // type=recovery persists in the URL even after Supabase strips ?code=
+  // via history.replaceState, giving AuthContext a reliable signal that
+  // this is a password-recovery session rather than a normal sign-in.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${appUrl}/auth`,
+    redirectTo: `${appUrl}/auth?type=recovery`,
   });
 
   if (error) return { data: null, error: error.message };

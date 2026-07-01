@@ -55,11 +55,11 @@ export default function AuthPage() {
   }, [isPasswordRecovery, mode]);
 
   useEffect(() => {
-    // Do NOT redirect if there is a PKCE code in the URL — a password
-    // recovery exchange may be in progress and PASSWORD_RECOVERY event
-    // hasn't fired yet. Redirecting now would abort the flow.
-    const hasPendingCode = new URLSearchParams(window.location.search).has('code');
-    if (user && mode !== 'set-password' && !isPasswordRecovery && !hasPendingCode) {
+    // Block the dashboard redirect when this is a password-recovery link.
+    // ?type=recovery persists in the URL after Supabase strips ?code=,
+    // so it is a reliable signal even after the PKCE exchange completes.
+    const isRecoveryLink = new URLSearchParams(window.location.search).get('type') === 'recovery';
+    if (user && mode !== 'set-password' && !isPasswordRecovery && !isRecoveryLink) {
       navigate('/dashboard', { replace: true });
     }
   }, [user, mode, isPasswordRecovery, navigate]);

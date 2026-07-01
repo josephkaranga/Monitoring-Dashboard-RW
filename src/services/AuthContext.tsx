@@ -176,13 +176,12 @@ function clearSessionCache() {
 // is available during the first React render (before async init).
 function isRecoveryPending(): boolean {
   try {
-    // PKCE: check Supabase's code-verifier for recovery redirect type
     const params = new URLSearchParams(window.location.search);
-    if (params.has('code')) {
-      const v = localStorage.getItem('nbsap-auth-token-code-verifier');
-      if (v && v.endsWith('/recovery')) return true;
-    }
-    // Implicit: recovery type lives in the URL hash
+    // Primary signal: ?type=recovery embedded in the redirectTo URL.
+    // This survives Supabase's history.replaceState that strips ?code=
+    // before React renders, making it the only reliable detection method.
+    if (params.get('type') === 'recovery') return true;
+    // Implicit / hash-based flow fallback
     if (window.location.hash.includes('type=recovery')) return true;
   } catch { /* incognito / storage disabled */ }
   return false;
