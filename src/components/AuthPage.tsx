@@ -55,7 +55,13 @@ export default function AuthPage() {
   }, [isPasswordRecovery, mode]);
 
   useEffect(() => {
-    if (user && mode !== 'set-password' && !isPasswordRecovery) navigate('/dashboard', { replace: true });
+    // Do NOT redirect if there is a PKCE code in the URL — a password
+    // recovery exchange may be in progress and PASSWORD_RECOVERY event
+    // hasn't fired yet. Redirecting now would abort the flow.
+    const hasPendingCode = new URLSearchParams(window.location.search).has('code');
+    if (user && mode !== 'set-password' && !isPasswordRecovery && !hasPendingCode) {
+      navigate('/dashboard', { replace: true });
+    }
   }, [user, mode, isPasswordRecovery, navigate]);
 
   const validate = useCallback(() => {
