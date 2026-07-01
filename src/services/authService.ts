@@ -190,7 +190,12 @@ export async function updateProfile(
 
 // ── RESET PASSWORD ───────────────────────────────────────────
 export async function resetPassword(email: string): Promise<ApiResponse<null>> {
-  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '') || window.location.origin;
+  // Use VITE_APP_URL if set, otherwise use hostname without port so the
+  // redirectTo URL is consistent regardless of which dev-server port is
+  // active. Port differences (3000 vs 3001 vs 3002) can break the link
+  // if Supabase's allowed redirect list doesn't include every port.
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '')
+    || `${window.location.protocol}//${window.location.hostname}`;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${appUrl}/auth`,
   });
