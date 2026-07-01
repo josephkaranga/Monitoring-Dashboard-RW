@@ -1,20 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 
 // ── Environment Variables ────────────────────────────────────
-// These MUST be set in your .env file or Vercel project settings
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    'Missing Supabase environment variables.\n' +
-    'Create a .env file with:\n' +
-    '  VITE_SUPABASE_URL=your_project_url\n' +
-    '  VITE_SUPABASE_ANON_KEY=your_anon_key'
+    `Supabase configuration is missing.
+
+Expected environment variables:
+  VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+  VITE_SUPABASE_ANON_KEY=<your-anon-key>
+
+Did you forget to create a .env file, or configure your deployment
+environment variables (Vercel, Docker, server .env)?`
   );
 }
 
 // ── Supabase Client ──────────────────────────────────────────
+// SSR-safe: guard all window references so the client can be
+// imported in Next.js, Remix, Astro, or any SSR environment
+// without crashing on the server side.
 export { supabaseUrl };
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -23,7 +29,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     storageKey: 'nbsap-auth-token',
-    storage: window.localStorage,
+    // Guard: localStorage does not exist in SSR environments
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
   db: {
     schema: 'public',
@@ -40,56 +47,30 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// ── Intercept invalid refresh token errors ───────────────────
-// Supabase JS v2 emits AuthApiError on failed token refresh.
-// We listen on the auth state change for the SIGNED_OUT event
-// that follows, but also patch the global fetch to catch 400s
-// from the token endpoint and dispatch a custom event so
-// AuthContext can sign the user out cleanly.
-const _origFetch = window.fetch.bind(window);
-window.fetch = async (...args) => {
-  const response = await _origFetch(...args);
-  const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url;
-  if (
-    response.status === 400 &&
-    url.includes('/auth/v1/token') &&
-    url.includes('grant_type=refresh_token')
-  ) {
-    // Clone so the original response body is still readable
-    const clone = response.clone();
-    clone.json().then(body => {
-      if (
-        body?.error_description?.includes('Refresh Token Not Found') ||
-        body?.error_description?.includes('Invalid Refresh Token') ||
-        body?.msg?.includes('Refresh Token Not Found')
-      ) {
-        window.dispatchEvent(
-          new CustomEvent('supabase.auth.error', {
-            detail: { status: 400, message: body.error_description || body.msg },
-          })
-        );
-      }
-    }).catch(() => {});
-  }
-  return response;
-};
+// ── Auth error handling ──────────────────────────────────────
+// Invalid / expired refresh tokens are handled entirely via
+// supabase.auth.onAuthStateChange in AuthContext.tsx.
+// Supabase JS v2 emits SIGNED_OUT automatically when a token
+// refresh fails, so no fetch interception is needed here.
 
 // ── Type-safe database access ────────────────────────────────
+// Manually maintained until `supabase gen types typescript`
+// is run post-migration to the National Data Center server.
 export type Database = {
   public: {
     Tables: {
-      profiles: { Row: import('../types/index').UserProfile };
-      indicators: { Row: import('../types/index').Indicator };
-      nbsap_targets: { Row: import('../types/index').NBSAPTarget };
-      toolkit_reports: { Row: import('../types/index').ToolkitReport };
-      districts: { Row: import('../types/index').District };
-      provinces: { Row: import('../types/index').Province };
-      risks: { Row: import('../types/index').Risk };
-      compliance_records: { Row: import('../types/index').ComplianceRecord };
-      notifications: { Row: import('../types/index').Notification };
+      profiles:                 { Row: import('../types/index').UserProfile };
+      indicators:               { Row: import('../types/index').Indicator };
+      nbsap_targets:            { Row: import('../types/index').NBSAPTarget };
+      toolkit_reports:          { Row: import('../types/index').ToolkitReport };
+      districts:                { Row: import('../types/index').District };
+      provinces:                { Row: import('../types/index').Province };
+      risks:                    { Row: import('../types/index').Risk };
+      compliance_records:       { Row: import('../types/index').ComplianceRecord };
+      notifications:            { Row: import('../types/index').Notification };
       notification_preferences: { Row: import('../types/index').NotificationPreferences };
-      audit_log: { Row: import('../types/index').AuditEntry };
-      user_settings: { Row: import('../types/index').UserSettings };
+      audit_log:                { Row: import('../types/index').AuditEntry };
+      user_settings:            { Row: import('../types/index').UserSettings };
     };
   };
 };
