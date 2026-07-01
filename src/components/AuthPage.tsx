@@ -120,19 +120,31 @@ export default function AuthPage() {
     if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
     setLoading(true);
     try {
+      // Verify there is an active recovery session before calling updateUser.
+      // If the link expired or the session was lost, surface a clear message.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Your reset link has expired. Please request a new one.');
+        setMode('reset');
+        return;
+      }
+
       const result = await updatePassword(newPassword);
       if (result.error) {
         toast.error(result.error);
-      } else {
-        toast.success('Password updated successfully! Please sign in with your new password.');
-        await supabase.auth.signOut();
-        setNewPassword('');
-        setConfirmPassword('');
-        setMode('login');
-        navigate('/auth', { replace: true });
+        return;
       }
-    } catch {
-      toast.error('Something went wrong. Please request a new reset link.');
+
+      toast.success('Password updated! Please sign in with your new password.');
+      // Sign out the recovery session so the user logs in fresh.
+      // Use { scope: 'local' } to avoid a network call that could hang.
+      await supabase.auth.signOut({ scope: 'local' });
+      setNewPassword('');
+      setConfirmPassword('');
+      navigate('/auth', { replace: true });
+    } catch (err: any) {
+      console.error('Password update error:', err);
+      toast.error(err?.message || 'Something went wrong. Please request a new reset link.');
     } finally {
       setLoading(false);
     }
