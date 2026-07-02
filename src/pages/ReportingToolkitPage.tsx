@@ -1394,94 +1394,29 @@ const ReportForm = ({
     loadDistricts();
   }, [tool.id]);
 
-  // Load indicators when target is selected
+  // Load all indicators for the selected target.
+  // The stakeholder already narrows the target list; filtering indicators
+  // a second time by stakeholder adds no value and causes empty dropdowns
+  // when indicator.responsible arrays are incomplete.
   useEffect(() => {
     const loadIndicators = async () => {
       if (!formData.nbsap_target) {
-        console.log('📊 No NBSAP target selected, clearing indicators');
         setAvailableIndicators([]);
         return;
       }
-
       const targetId = parseInt(formData.nbsap_target, 10);
-      console.log('🎯 Loading indicators for target ID:', targetId);
-
       setLoadingIndicators(true);
       try {
-        // Use the existing fetchIndicators function from dataService
-        const allIndicators = await fetchIndicators({
-          targetId: targetId,
-        });
-
-        console.log('📊 Raw indicators loaded for target', targetId, ':', allIndicators.length);
-
-        let filteredIndicators = allIndicators;
-
-        // Filter indicators by stakeholder if one is selected
-        if (formData.stakeholder) {
-          // Try both exact match and partial match for stakeholder names
-          filteredIndicators = allIndicators.filter(indicator => {
-            if (!indicator.responsible) return false;
-
-            // Check exact match first
-            if (indicator.responsible.includes(formData.stakeholder)) {
-              return true;
-            }
-
-            // Also check for alternative stakeholder names
-            const stakeholderAliases: Record<string, string[]> = {
-              Districts: ['District Authorities'],
-              'District Authorities': ['Districts'],
-              NGOs: ['Conservation NGOs'],
-              'Conservation NGOs': ['NGOs'],
-              'Research Institutions': ['Universities'],
-              Universities: ['Research Institutions'],
-            };
-
-            const aliases = stakeholderAliases[formData.stakeholder] || [];
-            return aliases.some(alias => indicator.responsible?.includes(alias));
-          });
-
-          console.log(
-            '🔍 Filtered indicators by stakeholder "' + formData.stakeholder + '":',
-            filteredIndicators.length,
-            'of',
-            allIndicators.length
-          );
-          console.log(
-            '📋 Available indicators:',
-            filteredIndicators.map(i => ({
-              id: i.id,
-              name: i.name,
-              responsible: i.responsible,
-            }))
-          );
-
-          // Fall back to all target indicators when none are assigned to this stakeholder
-          if (filteredIndicators.length === 0) {
-            console.log(
-              '⚠️ No stakeholder-matched indicators — showing all indicators for target as fallback'
-            );
-            filteredIndicators = allIndicators;
-          }
-        } else {
-          console.log(
-            '📊 No stakeholder filter - showing all',
-            allIndicators.length,
-            'indicators for target'
-          );
-        }
-
-        setAvailableIndicators(filteredIndicators);
+        const indicators = await fetchIndicators({ targetId });
+        setAvailableIndicators(indicators);
       } catch (error) {
-        console.error('❌ Error loading indicators:', error);
+        console.error('Failed to load indicators:', error);
         toast.error('Failed to load indicators');
       }
       setLoadingIndicators(false);
     };
-
     loadIndicators();
-  }, [formData.nbsap_target, formData.stakeholder]); // Also depend on stakeholder selection
+  }, [formData.nbsap_target]);
 
   // Reset dependent fields when stakeholder changes.
   // For single-institution stakeholders the institution field is auto-filled;
