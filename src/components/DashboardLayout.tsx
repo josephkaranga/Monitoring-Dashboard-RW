@@ -6,7 +6,7 @@ import { useNotifications, usePendingCount } from '../hooks/useData';
 import { USER_ROLE_LABELS } from '../types/index';
 import toast from 'react-hot-toast';
 import PendingRequestsBadge from './PendingRequestsBadge';
-
+// DashboardLayout component: Provides the main layout for the dashboard, including sidebar navigation, topbar, and page content area.
 export default function DashboardLayout() {
   const { user, permissions, signOut } = useAuth();
   const navigate = useNavigate();
