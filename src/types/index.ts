@@ -286,6 +286,7 @@ export interface ToolkitReport {
   district: string | null;
   institution: string | null;
   nbsap_target_id: number | null;
+  nbsap_target?: { id: number; title: string; progress: number; goal: string } | null;
   submitted_at: string;
   created_at: string;
   updated_at: string;

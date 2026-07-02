@@ -565,6 +565,7 @@ export async function importReportsFromJSON(
       attachments: [],
       district: r.district,
       institution: r.institution,
+      nbsap_target_id: r.nbsap_target_id || null,
       submitted_at: r.submitted_at || new Date().toISOString(),
     }));
 

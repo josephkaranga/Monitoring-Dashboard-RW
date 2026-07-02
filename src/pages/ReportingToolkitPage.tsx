@@ -37,6 +37,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   string,
   { name: string; responsibilities: string[]; targets: number[]; modules: string[] }
 > = {
+
   REMA: {
     name: 'Rwanda Environment Management Authority',
     responsibilities: [
@@ -56,13 +57,13 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Climate change coordination',
       'Biodiversity mainstreaming',
     ],
-    targets: [1, 2, 6, 7, 8, 13, 14, 16, 17, 18, 19],
+    targets: [1, 2, 6, 7, 8, 11, 13, 14, 16, 17, 18, 19, 20, 21],
     modules: ['T01', 'T05'],
   },
   MINAGRI: {
     name: 'Ministry of Agriculture and Animal Resources',
     responsibilities: ['Agricultural biodiversity', 'Sustainable farming', 'Fisheries regulation'],
-    targets: [1, 5, 7, 10, 16, 17],
+    targets: [1, 5, 7, 8, 9, 10, 13, 14, 16, 17, 18],
     modules: ['T01', 'T02'],
   },
   RFA: {
@@ -73,7 +74,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Forest plantations management',
       'Urban forestry guidelines',
     ],
-    targets: [1, 2, 6, 8, 9, 10, 11, 12, 18],
+    targets: [1, 2, 5, 6, 8, 9, 10, 11, 12, 18],
     modules: ['T01', 'T02', 'T03'],
   },
   RDB: {
@@ -84,7 +85,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Wildlife conservation',
       'Revenue sharing',
     ],
-    targets: [1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 15, 16, 18, 19],
+    targets: [1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 15, 16, 18, 19, 20, 21],
     modules: ['T01', 'T03', 'T05', 'T06'],
   },
   NLA: {
@@ -96,7 +97,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   RWB: {
     name: 'Rwanda Water Resources Board',
     responsibilities: ['Water resource management', 'Catchment management', 'Wetland oversight'],
-    targets: [2, 5, 7, 8, 10],
+    targets: [2, 5, 7, 8, 10, 11],
     modules: ['T01', 'T02'],
   },
   RAB: {
@@ -107,7 +108,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Aquaculture',
       'Seed management',
     ],
-    targets: [2, 5, 6, 7, 10, 13, 17],
+    targets: [2, 5, 6, 7, 9, 10, 13, 17],
     modules: ['T01', 'T02', 'T07'],
   },
   'District Authorities': {
@@ -117,7 +118,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Community engagement',
       'Local land-use planning',
     ],
-    targets: [2, 3, 8, 10, 14, 22],
+    targets: [1, 2, 3, 8, 9, 10, 11, 12, 14, 22],
     modules: ['T02', 'T04'],
   },
   ARCOS: {
@@ -128,7 +129,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Living lakes monitoring',
       'SANCTA programme',
     ],
-    targets: [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 18],
+    targets: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 22],
     modules: ['T02', 'T03', 'T04', 'T07'],
   },
   'Nature Rwanda': {
@@ -139,7 +140,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Flyway conservation',
       'Busaga Forest conservation',
     ],
-    targets: [1, 2, 3, 4, 8, 9, 10, 11, 12, 18],
+    targets: [1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 18, 22],
     modules: ['T02', 'T03', 'T04', 'T07'],
   },
   CoEB: {
@@ -150,7 +151,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
       'Ecosystem mapping',
       'IAS monitoring',
     ],
-    targets: [1, 2, 3, 4, 6, 7, 8, 10],
+    targets: [1, 2, 3, 4, 6, 7, 8, 9, 10, 13, 20, 21],
     modules: ['T03', 'T07'],
   },
   RWCA: {
@@ -196,7 +197,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   'Partners for Conservation': {
     name: 'Partners for Conservation',
     responsibilities: ['Conservation partnerships', 'Community engagement'],
-    targets: [9, 10, 11, 12],
+    targets: [7, 9, 10, 11, 12],
     modules: ['T04', 'T07'],
   },
   'Forest of Hope Association': {
@@ -208,19 +209,19 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   IGCP: {
     name: 'International Gorilla Conservation Programme',
     responsibilities: ['Gorilla conservation', 'IAS management in parks'],
-    targets: [6],
+    targets: [4, 6],
     modules: ['T03', 'T07'],
   },
   Karisoke: {
     name: 'Dian Fossey Gorilla Fund (Karisoke)',
     responsibilities: ['Gorilla research', 'Conservation science'],
-    targets: [6],
+    targets: [4, 6],
     modules: ['T03', 'T07'],
   },
   AWF: {
     name: 'African Wildlife Foundation',
     responsibilities: ['Wildlife conservation', 'Landscape conservation'],
-    targets: [3, 8],
+    targets: [3, 4, 8],
     modules: ['T03', 'T05'],
   },
   WCS: {
@@ -238,7 +239,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   'One Acre Fund': {
     name: 'One Acre Fund',
     responsibilities: ['Smallholder support', 'Agroforestry', 'Seedling production'],
-    targets: [6, 9],
+    targets: [6, 7, 9],
     modules: ['T02', 'T04'],
   },
   ICRAF: {
@@ -262,7 +263,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   GIZ: {
     name: 'GIZ Rwanda',
     responsibilities: ['Technical cooperation', 'Capacity building', 'Green growth'],
-    targets: [9, 11, 12],
+    targets: [7, 8, 9, 11, 12, 20],
     modules: ['T05', 'T07'],
   },
   SNV: {
@@ -292,7 +293,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   UNDP: {
     name: 'United Nations Development Programme',
     responsibilities: ['BIOFIN', 'Capacity building', 'Resource mobilisation'],
-    targets: [18, 19],
+    targets: [18, 19, 20],
     modules: ['T05'],
   },
   RGF: {
@@ -310,37 +311,37 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   NISR: {
     name: 'National Institute of Statistics Rwanda',
     responsibilities: ['Statistical surveys', 'SEEA', 'Census data'],
-    targets: [1, 14],
+    targets: [1, 14, 21],
     modules: ['T01'],
   },
   BNR: {
     name: 'National Bank of Rwanda',
     responsibilities: ['Financial sector biodiversity risks', 'Green finance standards'],
-    targets: [8, 14],
+    targets: [8, 14, 15],
     modules: ['T01'],
   },
   MININFRA: {
     name: 'Ministry of Infrastructure',
     responsibilities: ['Infrastructure planning', 'Sustainable urban development'],
-    targets: [1, 11, 16],
+    targets: [1, 11, 14, 16],
     modules: ['T01', 'T06'],
   },
   MINICOM: {
     name: 'Ministry of Trade and Industry',
     responsibilities: ['Industrial compliance', 'Sustainable trade', 'Special economic zones'],
-    targets: [1, 6, 16],
+    targets: [1, 6, 14, 16, 18],
     modules: ['T01', 'T06'],
   },
   MINALOC: {
     name: 'Ministry of Local Government',
     responsibilities: ['Community coordination', 'HWC management', 'Local governance'],
-    targets: [4, 9],
+    targets: [4, 9, 14, 22],
     modules: ['T01', 'T04'],
   },
   MINEDUC: {
     name: 'Ministry of Education',
     responsibilities: ['Environmental education', 'Greening schools'],
-    targets: [11],
+    targets: [11, 14, 20, 21],
     modules: ['T01'],
   },
   MINEMA: {
@@ -364,19 +365,19 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   NIRDA: {
     name: 'National Industrial Research and Development Agency',
     responsibilities: ['Industrial R&D', 'Sustainable production'],
-    targets: [9, 11, 16],
+    targets: [7, 9, 11, 16],
     modules: ['T01', 'T07'],
   },
   RICA: {
     name: 'Rwanda Inspectorate, Competition and Consumer Protection Authority',
     responsibilities: ['Biosecurity', 'Quality inspections', 'IAS border controls'],
-    targets: [5, 6, 7, 10],
+    targets: [5, 6, 7, 10, 13],
     modules: ['T01', 'T06'],
   },
   RSB: {
     name: 'Rwanda Standards Board',
     responsibilities: ['Environmental standards', 'Biosafety standards', 'Eco-labelling'],
-    targets: [6, 10, 16, 17],
+    targets: [6, 7, 10, 16, 17],
     modules: ['T01'],
   },
   RRA: {
@@ -394,13 +395,13 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   NCST: {
     name: 'National Council for Science and Technology',
     responsibilities: ['Research coordination', 'Innovation policy'],
-    targets: [6, 7, 8],
+    targets: [6, 7, 8, 13, 20, 21],
     modules: ['T01', 'T07'],
   },
   'Rwanda Space Agency': {
     name: 'Rwanda Space Agency',
     responsibilities: ['Remote sensing', 'Land monitoring', 'IAS detection'],
-    targets: [6, 8, 10],
+    targets: [6, 8, 10, 20, 21],
     modules: ['T07'],
   },
   NAEB: {
@@ -430,7 +431,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   LODA: {
     name: 'Local Administrative Entities Development Agency',
     responsibilities: ['Community development', 'VUP programme'],
-    targets: [8, 9],
+    targets: [8, 9, 22],
     modules: ['T04', 'T05'],
   },
   'National Police (Marine)': {
@@ -460,7 +461,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   PSF: {
     name: 'Private Sector Federation',
     responsibilities: ['Business coordination', 'Private sector standards'],
-    targets: [6, 7, 10, 15, 16],
+    targets: [6, 7, 10, 15, 16, 19],
     modules: ['T06'],
   },
   REG: {
@@ -478,7 +479,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   RCHA: {
     name: 'Rwanda Cultural Heritage Academy',
     responsibilities: ['Traditional knowledge', 'Medicinal plants heritage'],
-    targets: [4, 9, 13],
+    targets: [4, 9, 13, 22],
     modules: ['T07'],
   },
   ILO: {
@@ -508,7 +509,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   'ACORD Rwanda': {
     name: 'ACORD Rwanda',
     responsibilities: ['Community development', 'Conservation agriculture'],
-    targets: [10, 18],
+    targets: [10, 18, 22],
     modules: ['T04', 'T05'],
   },
   WCSS: {
@@ -550,7 +551,7 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   RYBN: {
     name: 'Rwanda Youth in Biodiversity Network',
     responsibilities: ['Youth environmental engagement', 'Greening schools'],
-    targets: [11],
+    targets: [7, 11],
     modules: ['T04'],
   },
   ADRRES: {
@@ -577,7 +578,35 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
     targets: [9],
     modules: ['T06'],
   },
+  'Rwanda Civil Aviation': {
+    name: 'Rwanda Civil Aviation Authority',
+    responsibilities: ['Airport biosecurity', 'IAS border interception at entry points'],
+    targets: [6],
+    modules: ['T06'],
+  },
 };
+
+// ── STAKEHOLDER CONFIG ────────────────────────────────────────
+// Expressive model: each stakeholder carries institutionType so the UI
+// is fully data-driven — no string comparisons against stakeholder keys.
+type StakeholderConfig = {
+  name: string;
+  responsibilities: string[];
+  targets: number[];
+  modules: string[];
+  institutionType: 'single' | 'district';
+  institution?: string; // defined for 'single'; absent for 'district'
+};
+
+function getStakeholderConfig(key: string): StakeholderConfig | undefined {
+  const base = STAKEHOLDER_RESPONSIBILITIES[key];
+  if (!base) return undefined;
+  // District Authorities represents all 30 districts — the only multi-institution exception.
+  if (key === 'District Authorities') {
+    return { ...base, institutionType: 'district' };
+  }
+  return { ...base, institutionType: 'single', institution: base.name };
+}
 
 // ── Tool Definitions ─────────────────────────────────────────
 const TOOLKIT_TOOLS = [
@@ -599,16 +628,7 @@ const TOOLKIT_TOOLS = [
       {
         key: 'institution',
         label: 'Reporting Institution',
-        type: 'select',
-        options: [
-          'Ministry of Environment (MoE)',
-          'Ministry of Agriculture and Animal Resources (MINAGRI)',
-          'Infrastructure Ministry',
-          'Rwanda Forestry Authority (RFA)',
-          'Rwanda Development Board (RDB)',
-          'National Institute of Statistics Rwanda (NISR)',
-          'Rwanda Water Resources Board (RWB)',
-        ],
+        type: 'institution_auto',
         required: true,
       },
       {
@@ -1281,10 +1301,7 @@ const ReportForm = ({
       return responsibleTargets;
     }
 
-    const stakeholderInfo =
-      STAKEHOLDER_RESPONSIBILITIES[
-        formData.stakeholder as keyof typeof STAKEHOLDER_RESPONSIBILITIES
-      ];
+    const stakeholderInfo = getStakeholderConfig(formData.stakeholder);
     if (!stakeholderInfo) {
       console.log('❌ No stakeholder info found for:', formData.stakeholder);
       console.log('🔍 Available stakeholders:', Object.keys(STAKEHOLDER_RESPONSIBILITIES));
@@ -1357,9 +1374,13 @@ const ReportForm = ({
     loadTargets();
   }, [user?.organization]);
 
-  // Load all districts for the district dropdown (T02)
+  // Load all districts for district_select (T02) and institution_auto (T01 — needed when
+  // District Authorities is selected, which maps to individual districts)
   useEffect(() => {
-    if (!tool.fields.some(f => f.type === 'district_select')) return;
+    const needsDistricts =
+      tool.fields.some(f => f.type === 'district_select') ||
+      tool.fields.some(f => f.type === 'institution_auto');
+    if (!needsDistricts) return;
     const loadDistricts = async () => {
       setLoadingDistricts(true);
       try {
@@ -1435,6 +1456,14 @@ const ReportForm = ({
               responsible: i.responsible,
             }))
           );
+
+          // Fall back to all target indicators when none are assigned to this stakeholder
+          if (filteredIndicators.length === 0) {
+            console.log(
+              '⚠️ No stakeholder-matched indicators — showing all indicators for target as fallback'
+            );
+            filteredIndicators = allIndicators;
+          }
         } else {
           console.log(
             '📊 No stakeholder filter - showing all',
@@ -1454,13 +1483,17 @@ const ReportForm = ({
     loadIndicators();
   }, [formData.nbsap_target, formData.stakeholder]); // Also depend on stakeholder selection
 
-  // Reset dependent fields when stakeholder changes
+  // Reset dependent fields when stakeholder changes.
+  // For single-institution stakeholders the institution field is auto-filled;
+  // for District Authorities it is cleared so the user picks from the dropdown.
   useEffect(() => {
     if (formData.stakeholder) {
+      const config = getStakeholderConfig(formData.stakeholder);
       setFormData(prev => ({
         ...prev,
         nbsap_target: '',
         indicator: '',
+        institution: config?.institutionType === 'single' ? (config.institution ?? '') : '',
       }));
     }
   }, [formData.stakeholder]);
@@ -1524,9 +1557,7 @@ const ReportForm = ({
       // Enhanced form data with pipeline information
       const enhancedFormData = {
         ...formData,
-        stakeholder_info: stakeholderId
-          ? STAKEHOLDER_RESPONSIBILITIES[stakeholderId as keyof typeof STAKEHOLDER_RESPONSIBILITIES]
-          : null,
+        stakeholder_info: stakeholderId ? getStakeholderConfig(stakeholderId) : null,
         target_info: nbsapTargetId ? filteredTargets.find(t => t.id === nbsapTargetId) : null,
         indicator_info: indicatorId ? availableIndicators.find(i => i.id === indicatorId) : null,
         submission_timestamp: new Date().toISOString(),
@@ -1559,9 +1590,7 @@ const ReportForm = ({
       } else {
         const selectedTarget = filteredTargets.find(t => t.id === nbsapTargetId);
         const selectedIndicator = availableIndicators.find(i => i.id === indicatorId);
-        const selectedStakeholder = stakeholderId
-          ? STAKEHOLDER_RESPONSIBILITIES[stakeholderId as keyof typeof STAKEHOLDER_RESPONSIBILITIES]
-          : null;
+        const selectedStakeholder = stakeholderId ? getStakeholderConfig(stakeholderId) : null;
 
         const targetInfo = selectedTarget
           ? ` → Target ${selectedTarget.id}: ${selectedTarget.title}`
@@ -1833,6 +1862,91 @@ const ReportForm = ({
                       </option>
                     ))}
                   </select>
+                ) : f.type === 'institution_auto' ? (
+                  (() => {
+                    const config = formData.stakeholder
+                      ? getStakeholderConfig(formData.stakeholder)
+                      : null;
+                    if (!formData.stakeholder || !config) {
+                      return (
+                        <div
+                          style={{
+                            padding: '9px 12px',
+                            border: '1.5px solid #e2e8f0',
+                            borderRadius: 8,
+                            fontSize: '0.83rem',
+                            color: '#94a3b8',
+                            background: '#f8fafc',
+                            fontFamily: "'DM Sans', sans-serif",
+                          }}
+                        >
+                          Select stakeholder first
+                        </div>
+                      );
+                    }
+                    if (config.institutionType === 'single') {
+                      return (
+                        <div
+                          style={{
+                            padding: '9px 12px',
+                            border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#d1fae5'}`,
+                            borderRadius: 8,
+                            fontSize: '0.83rem',
+                            color: '#0f172a',
+                            background: '#f0fdf4',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            fontFamily: "'DM Sans', sans-serif",
+                          }}
+                        >
+                          <span style={{ color: '#16a34a', fontWeight: 700 }}>✓</span>
+                          {config.institution}
+                        </div>
+                      );
+                    }
+                    // institutionType === 'district': user picks from the loaded districts
+                    return (
+                      <select
+                        value={formData[f.key] || ''}
+                        onChange={e => {
+                          setFormData(d => ({ ...d, [f.key]: e.target.value }));
+                          setErrors(err => ({ ...err, [f.key]: false }));
+                        }}
+                        disabled={loadingDistricts}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
+                          borderRadius: 8,
+                          fontSize: '0.83rem',
+                          fontFamily: "'DM Sans', sans-serif",
+                          outline: 'none',
+                          background: '#fff',
+                          color: '#0f172a',
+                        }}
+                      >
+                        <option value="">
+                          {loadingDistricts ? 'Loading districts…' : '— Select Reporting District —'}
+                        </option>
+                        {['Kigali', 'North', 'South', 'East', 'West'].map(province => {
+                          const provDistricts = allDistricts.filter(
+                            d => d.province?.name === province
+                          );
+                          if (provDistricts.length === 0) return null;
+                          return (
+                            <optgroup key={province} label={`${province} Province`}>
+                              {provDistricts.map(d => (
+                                <option key={d.id} value={d.name}>
+                                  {d.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          );
+                        })}
+                      </select>
+                    );
+                  })()
                 ) : f.type === 'district_select' ? (
                   <select
                     value={formData[f.key] || ''}
@@ -1940,10 +2054,7 @@ const ReportForm = ({
                 </div>
               </div>
               {(() => {
-                const stakeholderInfo =
-                  STAKEHOLDER_RESPONSIBILITIES[
-                    formData.stakeholder as keyof typeof STAKEHOLDER_RESPONSIBILITIES
-                  ];
+                const stakeholderInfo = getStakeholderConfig(formData.stakeholder);
                 if (!stakeholderInfo) return null;
 
                 return (
@@ -2706,9 +2817,9 @@ export default function ReportingToolkitPage() {
                       {[
                         'Tool',
                         'NBSAP Target',
+                        'Stakeholder · Indicator',
                         'Date',
                         'Status',
-                        'Key Fields',
                         'Submitted By',
                         '',
                       ].map(h => (
@@ -2764,22 +2875,26 @@ export default function ReportingToolkitPage() {
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding: '11px 14px' }}>
+                          <td style={{ padding: '11px 14px', maxWidth: 180 }}>
                             {r.nbsap_target_id ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ fontSize: '0.9rem' }}>🎯</span>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                                <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>🎯</span>
                                 <div>
                                   <div
                                     style={{
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.73rem',
                                       fontWeight: 600,
                                       color: '#0f172a',
+                                      lineHeight: 1.3,
                                     }}
                                   >
-                                    Target {r.nbsap_target_id}
+                                    T{r.nbsap_target_id}
+                                    {r.nbsap_target?.title
+                                      ? `: ${r.nbsap_target.title.length > 32 ? r.nbsap_target.title.slice(0, 32) + '…' : r.nbsap_target.title}`
+                                      : ''}
                                   </div>
-                                  <div style={{ fontSize: '0.65rem', color: '#10b981' }}>
-                                    Linked
+                                  <div style={{ fontSize: '0.62rem', color: '#10b981', marginTop: 2 }}>
+                                    {r.nbsap_target?.goal ? `Goal ${r.nbsap_target.goal} · ` : ''}Linked
                                   </div>
                                 </div>
                               </div>
@@ -2812,12 +2927,64 @@ export default function ReportingToolkitPage() {
                               {statusConf.label}
                             </span>
                           </td>
-                          <td
-                            style={{ padding: '11px 14px', color: '#475569', fontSize: '0.78rem' }}
-                          >
-                            {keyField
-                              ? `${formatFieldLabel(keyField[0])}: ${formatFieldValue(keyField[1])}`
-                              : `${Object.keys(r.form_data || {}).length} fields`}
+                          <td style={{ padding: '11px 14px', maxWidth: 200 }}>
+                            {(() => {
+                              const fd = r.form_data || {};
+                              const shKey = fd.stakeholder as string | undefined;
+                              const shInfo = shKey
+                                ? STAKEHOLDER_RESPONSIBILITIES[
+                                    shKey as keyof typeof STAKEHOLDER_RESPONSIBILITIES
+                                  ]
+                                : null;
+                              const indInfo = fd.indicator_info as
+                                | { name?: string }
+                                | null
+                                | undefined;
+                              const indName =
+                                indInfo?.name ||
+                                (fd.indicator ? `Indicator #${fd.indicator}` : null);
+                              const fallbackField = keyField
+                                ? `${formatFieldLabel(keyField[0])}: ${formatFieldValue(keyField[1])}`
+                                : null;
+                              return (
+                                <div>
+                                  {shInfo ? (
+                                    <div
+                                      style={{
+                                        fontSize: '0.73rem',
+                                        fontWeight: 600,
+                                        color: '#0f172a',
+                                        lineHeight: 1.3,
+                                      }}
+                                    >
+                                      {shInfo.name.length > 30
+                                        ? shInfo.name.slice(0, 30) + '…'
+                                        : shInfo.name}
+                                    </div>
+                                  ) : fallbackField ? (
+                                    <div style={{ fontSize: '0.73rem', color: '#475569' }}>
+                                      {fallbackField}
+                                    </div>
+                                  ) : (
+                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>—</div>
+                                  )}
+                                  {indName && (
+                                    <div
+                                      style={{
+                                        fontSize: '0.62rem',
+                                        color: '#10b981',
+                                        marginTop: 2,
+                                        lineHeight: 1.3,
+                                      }}
+                                    >
+                                      {String(indName).length > 38
+                                        ? String(indName).slice(0, 38) + '…'
+                                        : String(indName)}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td
                             style={{ padding: '11px 14px', color: '#475569', fontSize: '0.75rem' }}
