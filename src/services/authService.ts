@@ -19,16 +19,8 @@ export async function signIn(
   if (error) return { data: null, error: error.message };
 
   const [profileRes, settingsRes] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single(),
-    supabase
-      .from('user_settings')
-      .select('*')
-      .eq('user_id', data.user.id)
-      .single(),
+    supabase.from('profiles').select('*').eq('id', data.user.id).single(),
+    supabase.from('user_settings').select('*').eq('user_id', data.user.id).single(),
   ]);
 
   if (profileRes.error) return { data: null, error: profileRes.error.message };
@@ -38,7 +30,8 @@ export async function signIn(
     await supabase.auth.signOut();
     return {
       data: null,
-      error: 'Your account is pending approval by a REMA Administrator. You will be notified once approved.',
+      error:
+        'Your account is pending approval by a REMA Administrator. You will be notified once approved.',
     };
   }
 
@@ -77,9 +70,7 @@ export async function signIn(
 }
 
 // ── SIGN UP ──────────────────────────────────────────────────
-export async function signUp(
-  userData: SignupData
-): Promise<ApiResponse<UserProfile>> {
+export async function signUp(userData: SignupData): Promise<ApiResponse<UserProfile>> {
   const { data, error } = await supabase.auth.signUp({
     email: userData.email.trim().toLowerCase(),
     password: userData.password,
@@ -97,14 +88,14 @@ export async function signUp(
     // Provide user-friendly error messages
     return { data: null, error: error.message };
   }
-  
+
   if (!data.user) {
     return { data: null, error: 'Signup failed. Please try again.' };
   }
 
   // Profile is created automatically via DB trigger
   // Fetch the created profile
-  await new Promise((r) => setTimeout(r, 500)); // brief wait for trigger
+  await new Promise(r => setTimeout(r, 500)); // brief wait for trigger
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
@@ -118,7 +109,7 @@ export async function signUp(
 
   if (!profile) {
     // Profile wasn't created by trigger, wait a bit longer and try again
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1000));
     const { data: retryProfile, error: retryError } = await supabase
       .from('profiles')
       .select('*')
@@ -127,7 +118,10 @@ export async function signUp(
 
     if (retryError || !retryProfile) {
       console.error('Profile still not found after retry:', retryError);
-      return { data: null, error: 'Account created but profile setup failed. Please contact support.' };
+      return {
+        data: null,
+        error: 'Account created but profile setup failed. Please contact support.',
+      };
     }
 
     return { data: retryProfile as UserProfile, error: null };
@@ -171,9 +165,10 @@ export async function updateProfile(
   // Prevent role changes through profile update
   const { data: sessionData } = await supabase.auth.getSession();
   if (updates.role && userId === sessionData.session?.user?.id) {
-    return { 
-      data: null, 
-      error: 'Role changes must be requested through the approval workflow. Please submit a role change request.' 
+    return {
+      data: null,
+      error:
+        'Role changes must be requested through the approval workflow. Please submit a role change request.',
     };
   }
 
@@ -194,8 +189,9 @@ export async function resetPassword(email: string): Promise<ApiResponse<null>> {
   // redirectTo URL is consistent regardless of which dev-server port is
   // active. Port differences (3000 vs 3001 vs 3002) can break the link
   // if Supabase's allowed redirect list doesn't include every port.
-  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '')
-    || `${window.location.protocol}//${window.location.hostname}`;
+  const appUrl =
+    (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, '') ||
+    `${window.location.protocol}//${window.location.hostname}`;
   // type=recovery persists in the URL even after Supabase strips ?code=
   // via history.replaceState, giving AuthContext a reliable signal that
   // this is a password-recovery session rather than a normal sign-in.
@@ -208,9 +204,7 @@ export async function resetPassword(email: string): Promise<ApiResponse<null>> {
 }
 
 // ── UPDATE PASSWORD ───────────────────────────────────────────
-export async function updatePassword(
-  newPassword: string
-): Promise<ApiResponse<null>> {
+export async function updatePassword(newPassword: string): Promise<ApiResponse<null>> {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) return { data: null, error: error.message };
   return { data: null, error: null };
@@ -296,7 +290,7 @@ export async function updateUserRoleDirectly(
     action_type: 'admin_role_change',
     action: 'Administrator directly changed user role',
     detail: `Changed ${targetProfile.full_name}'s role from ${oldRole} to ${newRole}. Reason: ${reason || 'Not specified'}`,
-    role: 'dashboard_management'
+    role: 'dashboard_management',
   });
 
   // Notify the user
@@ -304,7 +298,7 @@ export async function updateUserRoleDirectly(
     user_id: userId,
     title: 'Role Changed by Administrator',
     message: `Your role has been changed from ${oldRole} to ${newRole} by a REMA Administrator.`,
-    type: 'info'
+    type: 'info',
   });
 
   return { data: data as UserProfile, error: null };
@@ -360,7 +354,7 @@ export async function deactivateUserAccount(
     action_type: 'deactivate_account',
     action: 'Administrator deactivated user account',
     detail: `Deactivated account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason || 'Not specified'}`,
-    role: 'dashboard_management'
+    role: 'dashboard_management',
   });
 
   // Notify the user
@@ -368,7 +362,7 @@ export async function deactivateUserAccount(
     user_id: userId,
     title: 'Account Deactivated',
     message: `Your account has been deactivated by an administrator. ${reason ? `Reason: ${reason}` : 'Please contact support for more information.'}`,
-    type: 'warning'
+    type: 'warning',
   });
 
   return { data: data as UserProfile, error: null };
@@ -414,7 +408,7 @@ export async function suspendUserAccount(
       suspended_at: new Date().toISOString(),
       suspended_by: sessionData.session.user.id,
       suspension_reason: reason,
-      suspension_end_date: endDate?.toISOString() || null
+      suspension_end_date: endDate?.toISOString() || null,
     })
     .eq('id', userId)
     .select()
@@ -430,7 +424,7 @@ export async function suspendUserAccount(
     action_type: 'suspend_account',
     action: 'Administrator suspended user account',
     detail: `Suspended account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason}. End date: ${endDate?.toISOString() || 'Indefinite'}`,
-    role: 'dashboard_management'
+    role: 'dashboard_management',
   });
 
   // Notify the user
@@ -438,16 +432,14 @@ export async function suspendUserAccount(
     user_id: userId,
     title: 'Account Suspended',
     message: `Your account has been suspended. Reason: ${reason}. ${endDate ? `Suspension ends: ${endDate.toLocaleDateString()}` : 'Contact administrator for more information.'}`,
-    type: 'error'
+    type: 'error',
   });
 
   return { data: data as UserProfile, error: null };
 }
 
 // ── REACTIVATE USER ACCOUNT (admin only) ─────────────────────
-export async function reactivateUserAccount(
-  userId: string
-): Promise<ApiResponse<UserProfile>> {
+export async function reactivateUserAccount(userId: string): Promise<ApiResponse<UserProfile>> {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session?.user) {
     return { data: null, error: 'Not authenticated' };
@@ -483,7 +475,7 @@ export async function reactivateUserAccount(
       suspended_at: null,
       suspended_by: null,
       suspension_reason: null,
-      suspension_end_date: null
+      suspension_end_date: null,
     })
     .eq('id', userId)
     .select()
@@ -499,7 +491,7 @@ export async function reactivateUserAccount(
     action_type: 'reactivate_account',
     action: 'Administrator reactivated user account',
     detail: `Reactivated account for ${targetProfile.full_name} (${targetProfile.email})`,
-    role: 'dashboard_management'
+    role: 'dashboard_management',
   });
 
   // Notify the user
@@ -507,7 +499,7 @@ export async function reactivateUserAccount(
     user_id: userId,
     title: 'Account Reactivated',
     message: 'Your account has been reactivated. You can now log in and access the system.',
-    type: 'success'
+    type: 'success',
   });
 
   return { data: data as UserProfile, error: null };

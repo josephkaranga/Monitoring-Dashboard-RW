@@ -109,9 +109,7 @@ export function TestSignalFeed() {
 
       {/* Test 3: Error state */}
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>
-          Test 3: Error State
-        </h2>
+        <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>Test 3: Error State</h2>
         <div style={{ maxWidth: 800 }}>
           {/* <SignalFeed
             dataStreams={[]}
@@ -138,11 +136,25 @@ export function TestSignalFeed() {
       </div>
 
       {/* Mock data display */}
-      <div style={{ marginTop: 48, padding: 20, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
-        <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 12 }}>
-          Mock Data Streams
-        </h3>
-        <pre style={{ fontSize: '0.75rem', overflow: 'auto', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+      <div
+        style={{
+          marginTop: 48,
+          padding: 20,
+          background: '#fff',
+          borderRadius: 12,
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 12 }}>Mock Data Streams</h3>
+        <pre
+          style={{
+            fontSize: '0.75rem',
+            overflow: 'auto',
+            background: '#f8fafc',
+            padding: 12,
+            borderRadius: 8,
+          }}
+        >
           {JSON.stringify(mockDataStreams, null, 2)}
         </pre>
       </div>

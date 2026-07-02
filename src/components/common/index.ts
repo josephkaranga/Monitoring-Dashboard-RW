@@ -1,6 +1,6 @@
 /**
  * Common Components Index
- * 
+ *
  * Centralized exports for reusable common components
  */
 

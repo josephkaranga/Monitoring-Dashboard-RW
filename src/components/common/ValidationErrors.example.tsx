@@ -4,7 +4,7 @@ import { ValidationError, ErrorCode } from '../../utils/errorHandling';
 
 /**
  * ValidationErrors Component - Usage Examples
- * 
+ *
  * This file demonstrates practical usage patterns for the ValidationErrors component
  * in real-world form scenarios.
  */
@@ -18,7 +18,7 @@ export function LoginFormExample() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors: FieldError[] = [];
 
     // Validate email
@@ -57,7 +57,7 @@ export function LoginFormExample() {
   return (
     <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ marginBottom: '20px' }}>Login</h2>
-      
+
       <form onSubmit={handleSubmit}>
         {/* Display validation errors */}
         {errors.length > 0 && (
@@ -67,25 +67,21 @@ export function LoginFormExample() {
         )}
 
         <div style={{ marginBottom: '16px' }}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -115,7 +111,7 @@ export function ReportSubmissionExample() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors: FieldError[] = [];
     const generalErrorsList: string[] = [];
 
@@ -186,15 +182,12 @@ export function ReportSubmissionExample() {
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ marginBottom: '20px' }}>Submit Report</h2>
-      
+
       <form onSubmit={handleSubmit}>
         {/* Display validation errors */}
         {(errors.length > 0 || generalErrors.length > 0) && (
           <div style={{ marginBottom: '20px' }}>
-            <ValidationErrors
-              fieldErrors={errors}
-              generalErrors={generalErrors}
-            />
+            <ValidationErrors fieldErrors={errors} generalErrors={generalErrors} />
           </div>
         )}
 
@@ -205,7 +198,7 @@ export function ReportSubmissionExample() {
           <input
             type="text"
             value={formData.year}
-            onChange={(e) => handleChange('year', e.target.value)}
+            onChange={e => handleChange('year', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
             placeholder="2024"
           />
@@ -217,7 +210,7 @@ export function ReportSubmissionExample() {
           </label>
           <select
             value={formData.district}
-            onChange={(e) => handleChange('district', e.target.value)}
+            onChange={e => handleChange('district', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
             <option value="">Select district</option>
@@ -233,7 +226,7 @@ export function ReportSubmissionExample() {
           </label>
           <select
             value={formData.indicator}
-            onChange={(e) => handleChange('indicator', e.target.value)}
+            onChange={e => handleChange('indicator', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
             <option value="">Select indicator</option>
@@ -249,7 +242,7 @@ export function ReportSubmissionExample() {
           <input
             type="text"
             value={formData.value}
-            onChange={(e) => handleChange('value', e.target.value)}
+            onChange={e => handleChange('value', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
             placeholder="Enter numeric value"
           />
@@ -280,12 +273,7 @@ export function ValidationErrorInstanceExample() {
         'invalid@email',
         ErrorCode.VALIDATION_INVALID_FORMAT
       ),
-      new ValidationError(
-        'Year out of range',
-        'year',
-        2035,
-        ErrorCode.VALIDATION_OUT_OF_RANGE
-      ),
+      new ValidationError('Year out of range', 'year', 2035, ErrorCode.VALIDATION_OUT_OF_RANGE),
       new ValidationError(
         'Required field missing',
         'district',
@@ -300,7 +288,7 @@ export function ValidationErrorInstanceExample() {
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ marginBottom: '20px' }}>API Validation Errors</h2>
-      
+
       <p style={{ marginBottom: '16px', color: '#6b7280' }}>
         This example shows how to display ValidationError instances returned from API calls.
       </p>
@@ -312,9 +300,7 @@ export function ValidationErrorInstanceExample() {
         Simulate API Validation
       </button>
 
-      {errors.length > 0 && (
-        <ValidationErrors errors={errors} />
-      )}
+      {errors.length > 0 && <ValidationErrors errors={errors} />}
     </div>
   );
 }
@@ -344,7 +330,7 @@ export function DismissibleErrorsExample() {
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ marginBottom: '20px' }}>Dismissible Errors</h2>
-      
+
       <p style={{ marginBottom: '16px', color: '#6b7280' }}>
         Click the × button to dismiss individual errors.
       </p>
@@ -375,7 +361,7 @@ export function CompactModeExample() {
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ marginBottom: '20px' }}>Compact Mode</h2>
-      
+
       <p style={{ marginBottom: '16px', color: '#6b7280' }}>
         Use compact mode for inline validation or when space is limited.
       </p>
@@ -406,12 +392,15 @@ export function ValidationErrorsDemo() {
     { id: 'compact', label: 'Compact Mode', component: CompactModeExample },
   ];
 
-  const ActiveComponent = examples.find(ex => ex.id === activeExample)?.component || LoginFormExample;
+  const ActiveComponent =
+    examples.find(ex => ex.id === activeExample)?.component || LoginFormExample;
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '40px 20px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '16px', textAlign: 'center' }}>
+        <h1
+          style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '16px', textAlign: 'center' }}
+        >
           ValidationErrors Component Examples
         </h1>
         <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '32px' }}>
@@ -419,8 +408,16 @@ export function ValidationErrorsDemo() {
         </p>
 
         {/* Example selector */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {examples.map((example) => (
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '32px',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}
+        >
+          {examples.map(example => (
             <button
               key={example.id}
               onClick={() => setActiveExample(example.id)}
@@ -441,7 +438,14 @@ export function ValidationErrorsDemo() {
         </div>
 
         {/* Active example */}
-        <div style={{ background: '#ffffff', borderRadius: '12px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '32px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          }}
+        >
           <ActiveComponent />
         </div>
       </div>

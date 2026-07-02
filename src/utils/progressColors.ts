@@ -1,8 +1,13 @@
 /** Green ≥70 · Amber 40–69 · Red <40 */
-export function progressColor(p: number): { color: string; bg: string; border: string; label: string } {
-  if (p >= 70) return { color: '#16a34a', bg: '#dcfce7', border: '#bbf7d0', label: 'On Track'  };
-  if (p >= 40) return { color: '#d97706', bg: '#fef3c7', border: '#fde68a', label: 'At Risk'   };
-  return           { color: '#dc2626', bg: '#fee2e2', border: '#fecaca', label: 'Behind'    };
+export function progressColor(p: number): {
+  color: string;
+  bg: string;
+  border: string;
+  label: string;
+} {
+  if (p >= 70) return { color: '#16a34a', bg: '#dcfce7', border: '#bbf7d0', label: 'On Track' };
+  if (p >= 40) return { color: '#d97706', bg: '#fef3c7', border: '#fde68a', label: 'At Risk' };
+  return { color: '#dc2626', bg: '#fee2e2', border: '#fecaca', label: 'Behind' };
 }
 
 /** Single hex string for inline styles */

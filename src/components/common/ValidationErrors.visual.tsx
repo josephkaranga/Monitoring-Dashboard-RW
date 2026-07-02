@@ -4,7 +4,7 @@ import { ValidationError, ErrorCode } from '../../utils/errorHandling';
 
 /**
  * Test file for ValidationErrors component
- * 
+ *
  * This file demonstrates various use cases and validates the component behavior.
  * Run with: npm test ValidationErrors.test.tsx
  */
@@ -53,14 +53,23 @@ export function ValidationErrorsTest() {
   };
 
   return (
-    <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      style={{
+        padding: '40px',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
       <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '32px', color: '#1f2937' }}>
         ValidationErrors Component Tests
       </h1>
 
       {/* Test 1: Field-specific errors */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 1: Field-Specific Errors
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -71,7 +80,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 2: General form errors */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 2: General Form Errors
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -82,7 +93,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 3: Combined errors */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 3: Combined Field and General Errors
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -99,7 +112,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 4: ValidationError instances */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 4: ValidationError Instances
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -110,7 +125,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 5: Compact mode */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 5: Compact Mode
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -127,16 +144,16 @@ export function ValidationErrorsTest() {
 
       {/* Test 6: Without icons */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 6: Without Icons
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
           Displays errors without the error icons.
         </p>
         <ValidationErrors
-          fieldErrors={[
-            { field: 'organization', message: 'Organization name is required.' },
-          ]}
+          fieldErrors={[{ field: 'organization', message: 'Organization name is required.' }]}
           generalErrors={['Please complete all sections before proceeding.']}
           showIcon={false}
         />
@@ -144,7 +161,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 7: No errors (should render nothing) */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 7: No Errors
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -160,7 +179,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 8: Real-world form example */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 8: Real-World Form Example
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
@@ -168,7 +189,7 @@ export function ValidationErrorsTest() {
         </p>
         <div style={{ maxWidth: '600px' }}>
           <form
-            onSubmit={(e) => {
+            onSubmit={e => {
               e.preventDefault();
               alert('Form submitted!');
             }}
@@ -179,7 +200,14 @@ export function ValidationErrorsTest() {
               borderRadius: '12px',
             }}
           >
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '16px', color: '#1f2937' }}>
+            <h3
+              style={{
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                marginBottom: '16px',
+                color: '#1f2937',
+              }}
+            >
               User Registration Form
             </h3>
 
@@ -195,7 +223,15 @@ export function ValidationErrorsTest() {
 
             {/* Form Fields */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px', color: '#374151' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  color: '#374151',
+                }}
+              >
                 Full Name <span style={{ color: '#dc2626' }}>*</span>
               </label>
               <input
@@ -212,7 +248,15 @@ export function ValidationErrorsTest() {
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px', color: '#374151' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  color: '#374151',
+                }}
+              >
                 Email <span style={{ color: '#dc2626' }}>*</span>
               </label>
               <input
@@ -230,7 +274,15 @@ export function ValidationErrorsTest() {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px', color: '#374151' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  color: '#374151',
+                }}
+              >
                 Role <span style={{ color: '#dc2626' }}>*</span>
               </label>
               <select
@@ -270,35 +322,44 @@ export function ValidationErrorsTest() {
 
       {/* Test 9: Responsive design */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 9: Responsive Design
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
-          The component should work well on different screen sizes. Try resizing your browser window.
+          The component should work well on different screen sizes. Try resizing your browser
+          window.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '16px',
+          }}
+        >
           <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px', color: '#4b5563' }}>
+            <h4
+              style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px', color: '#4b5563' }}
+            >
               Mobile View (300px)
             </h4>
             <div style={{ maxWidth: '300px' }}>
               <ValidationErrors
-                fieldErrors={[
-                  { field: 'mobile_number', message: 'Invalid mobile number format.' },
-                ]}
+                fieldErrors={[{ field: 'mobile_number', message: 'Invalid mobile number format.' }]}
                 generalErrors={['Network error. Please check your connection.']}
               />
             </div>
           </div>
           <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px', color: '#4b5563' }}>
+            <h4
+              style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px', color: '#4b5563' }}
+            >
               Tablet View (600px)
             </h4>
             <div style={{ maxWidth: '600px' }}>
               <ValidationErrors
-                fieldErrors={[
-                  { field: 'address', message: 'Address is required for delivery.' },
-                ]}
+                fieldErrors={[{ field: 'address', message: 'Address is required for delivery.' }]}
               />
             </div>
           </div>
@@ -307,7 +368,9 @@ export function ValidationErrorsTest() {
 
       {/* Test 10: Custom className */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}>
+        <h2
+          style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: '#374151' }}
+        >
           Test 10: Custom ClassName
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>

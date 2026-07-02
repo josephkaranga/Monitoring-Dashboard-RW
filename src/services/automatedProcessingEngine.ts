@@ -50,7 +50,10 @@ export class AutomatedProcessingEngine {
    * (migration 017) has already applied the tool-weighted progress update as
    * part of the insert/update, so this only logs the outcome.
    */
-  async recordSubmission(report: ReportSubmission, orgConfig: OrganizationConfig): Promise<ProcessingResult> {
+  async recordSubmission(
+    report: ReportSubmission,
+    orgConfig: OrganizationConfig
+  ): Promise<ProcessingResult> {
     await this.logSubmission(report, orgConfig);
 
     if (report.status !== 'approved') {
@@ -87,7 +90,10 @@ export class AutomatedProcessingEngine {
   /**
    * Record the receipt of a report submission for audit purposes.
    */
-  private async logSubmission(report: ReportSubmission, orgConfig: OrganizationConfig): Promise<void> {
+  private async logSubmission(
+    report: ReportSubmission,
+    orgConfig: OrganizationConfig
+  ): Promise<void> {
     await supabase.from('audit_log').insert({
       user_id: report.submittedBy,
       action_type: 'submit',

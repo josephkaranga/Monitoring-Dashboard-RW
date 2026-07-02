@@ -20,7 +20,7 @@ import {
 
 /**
  * RBISPage - Comprehensive RBIS monitoring dashboard
- * 
+ *
  * Features:
  * - Live RBIS connection management
  * - Real-time biodiversity metrics from GBIF
@@ -33,21 +33,37 @@ import {
 export default function RBISPage() {
   // Hooks for data fetching
   const { connection, loading: connectionLoading, connect, disconnect } = useRBISConnection();
-  const { metrics, recentOccurrences, loading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useRBISMetrics();
-  const { goals, loading: goalsLoading, error: goalsError, refetch: refetchGoals } = useIndicatorsMatrix();
-  const { dataStreams, loading: streamsLoading, error: streamsError, refetch: refetchStreams } = useRBISDataStreams();
+  const {
+    metrics,
+    recentOccurrences,
+    loading: metricsLoading,
+    error: metricsError,
+    refetch: refetchMetrics,
+  } = useRBISMetrics();
+  const {
+    goals,
+    loading: goalsLoading,
+    error: goalsError,
+    refetch: refetchGoals,
+  } = useIndicatorsMatrix();
+  const {
+    dataStreams,
+    loading: streamsLoading,
+    error: streamsError,
+    refetch: refetchStreams,
+  } = useRBISDataStreams();
 
   /**
    * Scroll to a specific target in the indicators matrix
    * Uses data-target-id attribute to find the target element
    * Auto-expands the goal and target sections and highlights the target
-   * 
+   *
    * @param targetId - ID of the target to scroll to
    */
   const scrollToTarget = useCallback((targetId: number) => {
     // Find target element by data attribute
     const targetElement = document.querySelector(`[data-target-id="${targetId}"]`) as HTMLElement;
-    
+
     if (targetElement) {
       // Smooth scroll to target
       targetElement.scrollIntoView({
@@ -59,7 +75,7 @@ export default function RBISPage() {
       const originalBackground = targetElement.style.backgroundColor;
       targetElement.style.transition = 'background-color 0.3s ease';
       targetElement.style.backgroundColor = '#fef3c7'; // Yellow highlight
-      
+
       // Remove highlight after 2 seconds
       setTimeout(() => {
         targetElement.style.backgroundColor = originalBackground;
@@ -73,11 +89,19 @@ export default function RBISPage() {
     <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       {/* Page Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-1)', margin: '0 0 8px 0' }}>
+        <h1
+          style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: 'var(--text-1)',
+            margin: '0 0 8px 0',
+          }}
+        >
           RBIS Comprehensive Dashboard
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
-          Real-time monitoring of Rwanda's biodiversity indicators, targets, and data streams through the Rwanda Biodiversity Information System (RBIS) and GBIF integration.
+          Real-time monitoring of Rwanda's biodiversity indicators, targets, and data streams
+          through the Rwanda Biodiversity Information System (RBIS) and GBIF integration.
         </p>
       </div>
 

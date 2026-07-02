@@ -8,7 +8,13 @@ interface Props {
   showDot?: boolean;
 }
 
-export function TrendSparkline({ data, width = 60, height = 24, color = '#0284c7', showDot = true }: Props) {
+export function TrendSparkline({
+  data,
+  width = 60,
+  height = 24,
+  color = '#0284c7',
+  showDot = true,
+}: Props) {
   const path = useMemo(() => {
     if (data.length < 2) return '';
     const min = Math.min(...data);
@@ -51,14 +57,23 @@ export function TrendSparkline({ data, width = 60, height = 24, color = '#0284c7
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
       <svg width={width} height={height} style={{ overflow: 'visible' }}>
-        <path d={path} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
-          style={{ opacity: 0.7 }} />
+        <path
+          d={path}
+          fill="none"
+          stroke={color}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ opacity: 0.7 }}
+        />
         {showDot && (
           <circle cx={lastX} cy={lastY} r={2.5} fill={trendColor} stroke="#fff" strokeWidth={1} />
         )}
       </svg>
-      <i className={`fa-solid fa-caret-${trend}`}
-        style={{ fontSize: '0.65rem', color: trendColor }} />
+      <i
+        className={`fa-solid fa-caret-${trend}`}
+        style={{ fontSize: '0.65rem', color: trendColor }}
+      />
     </div>
   );
 }

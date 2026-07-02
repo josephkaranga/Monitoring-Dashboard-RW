@@ -15,7 +15,7 @@ import type {
 /**
  * Filter goals by search term
  * Searches across indicator titles, numbers, target titles, and descriptions
- * 
+ *
  * @param goals - Array of GBF goals to filter
  * @param searchTerm - Search term to match against
  * @returns Filtered goals with only matching targets and indicators
@@ -29,13 +29,13 @@ export function filterBySearch(goals: GBFGoal[], searchTerm: string): GBFGoal[] 
   const term = searchTerm.toLowerCase().trim();
 
   return goals
-    .map((goal) => ({
+    .map(goal => ({
       ...goal,
       targets: goal.targets
-        .map((target) => ({
+        .map(target => ({
           ...target,
           indicators: target.indicators.filter(
-            (indicator) =>
+            indicator =>
               indicator.title.toLowerCase().includes(term) ||
               indicator.number.toLowerCase().includes(term) ||
               indicator.definition.toLowerCase().includes(term) ||
@@ -43,14 +43,14 @@ export function filterBySearch(goals: GBFGoal[], searchTerm: string): GBFGoal[] 
               target.description.toLowerCase().includes(term)
           ),
         }))
-        .filter((target) => target.indicators.length > 0),
+        .filter(target => target.indicators.length > 0),
     }))
-    .filter((goal) => goal.targets.length > 0);
+    .filter(goal => goal.targets.length > 0);
 }
 
 /**
  * Filter goals by GBF goal ID
- * 
+ *
  * @param goals - Array of GBF goals to filter
  * @param goalFilter - Goal ID to filter by ('all' returns all goals)
  * @returns Filtered goals matching the goal ID
@@ -61,43 +61,38 @@ export function filterByGoal(goals: GBFGoal[], goalFilter: GBFGoalFilter): GBFGo
     return goals;
   }
 
-  return goals.filter((goal) => goal.id === goalFilter);
+  return goals.filter(goal => goal.id === goalFilter);
 }
 
 /**
  * Filter indicators by status
- * 
+ *
  * @param goals - Array of GBF goals to filter
  * @param statusFilter - Status to filter by ('all' returns all statuses)
  * @returns Filtered goals with only matching indicators
  */
-export function filterByStatus(
-  goals: GBFGoal[],
-  statusFilter: IndicatorStatus | 'all'
-): GBFGoal[] {
+export function filterByStatus(goals: GBFGoal[], statusFilter: IndicatorStatus | 'all'): GBFGoal[] {
   // Early return for 'all' filter
   if (statusFilter === 'all') {
     return goals;
   }
 
   return goals
-    .map((goal) => ({
+    .map(goal => ({
       ...goal,
       targets: goal.targets
-        .map((target) => ({
+        .map(target => ({
           ...target,
-          indicators: target.indicators.filter(
-            (indicator) => indicator.status === statusFilter
-          ),
+          indicators: target.indicators.filter(indicator => indicator.status === statusFilter),
         }))
-        .filter((target) => target.indicators.length > 0),
+        .filter(target => target.indicators.length > 0),
     }))
-    .filter((goal) => goal.targets.length > 0);
+    .filter(goal => goal.targets.length > 0);
 }
 
 /**
  * Filter indicators by RBIS linkage status
- * 
+ *
  * @param goals - Array of GBF goals to filter
  * @param linkageFilter - Linkage status to filter by ('all' returns all statuses)
  * @returns Filtered goals with only matching indicators
@@ -112,24 +107,24 @@ export function filterByLinkage(
   }
 
   return goals
-    .map((goal) => ({
+    .map(goal => ({
       ...goal,
       targets: goal.targets
-        .map((target) => ({
+        .map(target => ({
           ...target,
           indicators: target.indicators.filter(
-            (indicator) => indicator.rbisLinkage.status === linkageFilter
+            indicator => indicator.rbisLinkage.status === linkageFilter
           ),
         }))
-        .filter((target) => target.indicators.length > 0),
+        .filter(target => target.indicators.length > 0),
     }))
-    .filter((goal) => goal.targets.length > 0);
+    .filter(goal => goal.targets.length > 0);
 }
 
 /**
  * Apply all filters to goals
  * Combines search, goal, status, and linkage filters
- * 
+ *
  * @param goals - Array of GBF goals to filter
  * @param filters - Filter criteria to apply
  * @returns Filtered goals matching all criteria
@@ -162,7 +157,7 @@ export function applyFilters(goals: GBFGoal[], filters: SearchFilters): GBFGoal[
 
 /**
  * Filter goals (simplified version used by IndicatorsMatrix)
- * 
+ *
  * @param goals - Array of GBF goals to filter
  * @param filters - Filter criteria with searchTerm and goalFilter
  * @returns Filtered goals

@@ -16,7 +16,7 @@ export enum ToolId {
   T04 = 'T04', // Community Biodiversity Monitoring
   T05 = 'T05', // Biodiversity Finance Tracking
   T06 = 'T06', // Private Sector Compliance
-  T07 = 'T07'  // Research & Academic Contribution
+  T07 = 'T07', // Research & Academic Contribution
 }
 
 /**
@@ -27,7 +27,7 @@ export enum ComplianceState {
   PARTIAL_COMPLIANT = 'partial_compliant',
   NON_COMPLIANT = 'non_compliant',
   PENDING_REVIEW = 'pending_review',
-  NOT_APPLICABLE = 'not_applicable'
+  NOT_APPLICABLE = 'not_applicable',
 }
 
 /**
@@ -38,7 +38,7 @@ export enum UpdateStatus {
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   FAILED = 'failed',
-  RETRYING = 'retrying'
+  RETRYING = 'retrying',
 }
 
 // ── CORE INTERFACES ──────────────────────────────────────────
@@ -226,7 +226,8 @@ export interface ProcessingResult {
  */
 export interface UpdateEvent {
   /** Type of update event */
-  type: 'progress_updated' | 'eia_compliance_updated' | 'processing_started' | 'processing_completed';
+  type:
+    'progress_updated' | 'eia_compliance_updated' | 'processing_started' | 'processing_completed';
   /** Target ID affected by the update */
   targetId: number;
   /** New values after the update */
@@ -263,12 +264,12 @@ export interface BatchUpdate {
  */
 export const TOOL_WEIGHTS: Record<ToolId, number> = {
   [ToolId.T01]: 0.25, // National Institutional Reporting
-  [ToolId.T02]: 0.20, // District Biodiversity Monitoring  
+  [ToolId.T02]: 0.2, // District Biodiversity Monitoring
   [ToolId.T03]: 0.15, // Protected Area Monitoring
   [ToolId.T04]: 0.15, // Community Biodiversity Monitoring
-  [ToolId.T05]: 0.10, // Biodiversity Finance Tracking
-  [ToolId.T06]: 0.10, // Private Sector Compliance
-  [ToolId.T07]: 0.05  // Research & Academic Contribution
+  [ToolId.T05]: 0.1, // Biodiversity Finance Tracking
+  [ToolId.T06]: 0.1, // Private Sector Compliance
+  [ToolId.T07]: 0.05, // Research & Academic Contribution
 } as const;
 
 /**
@@ -281,7 +282,7 @@ export const TOOL_DESCRIPTIONS: Record<ToolId, string> = {
   [ToolId.T04]: 'Community Biodiversity Monitoring',
   [ToolId.T05]: 'Biodiversity Finance Tracking',
   [ToolId.T06]: 'Private Sector Compliance',
-  [ToolId.T07]: 'Research & Academic Contribution'
+  [ToolId.T07]: 'Research & Academic Contribution',
 } as const;
 
 /**

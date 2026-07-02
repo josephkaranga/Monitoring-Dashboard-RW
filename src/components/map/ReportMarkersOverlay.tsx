@@ -1,10 +1,18 @@
 import React, { useMemo } from 'react';
+import type { Polygon } from 'geojson';
 import type { ToolkitReport, District } from '../../types/index';
+
+interface GeoFeatureCollection {
+  features: Array<{
+    properties: Record<string, unknown> | null;
+    geometry: { type: string; coordinates: unknown };
+  }>;
+}
 
 interface ReportMarkersOverlayProps {
   reports: ToolkitReport[];
   districts: District[];
-  geoData: GeoJSON.FeatureCollection | null;
+  geoData: GeoFeatureCollection | null;
   onReportClick: (report: ToolkitReport) => void;
   onReportHover: (report: ToolkitReport | null) => void;
 }
@@ -32,12 +40,10 @@ const TOOL_ICONS: Record<string, string> = {
 function getDistrictCentroid(
   districtName: string,
   districts: District[],
-  geoData: GeoJSON.FeatureCollection | null
+  geoData: GeoFeatureCollection | null
 ): { lon: number; lat: number } | null {
   // Try database coordinates first
-  const dbDistrict = districts.find(
-    d => d.name.toLowerCase() === districtName.toLowerCase()
-  );
+  const dbDistrict = districts.find(d => d.name.toLowerCase() === districtName.toLowerCase());
   if (dbDistrict?.longitude && dbDistrict?.latitude) {
     return { lon: dbDistrict.longitude, lat: dbDistrict.latitude };
   }
@@ -45,12 +51,12 @@ function getDistrictCentroid(
   // Fall back to GeoJSON centroid
   if (!geoData) return null;
   const feature = geoData.features.find(f => {
-    const name = (f.properties?.name || f.properties?.ADM2_EN || '').toLowerCase();
+    const name = String(f.properties?.name || f.properties?.ADM2_EN || '').toLowerCase();
     return name === districtName.toLowerCase();
   });
   if (!feature || feature.geometry.type !== 'Polygon') return null;
 
-  const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0];
+  const coords = (feature.geometry as Polygon).coordinates[0];
   const lon = coords.reduce((s, c) => s + c[0], 0) / coords.length;
   const lat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
   return { lon, lat };
@@ -75,10 +81,11 @@ export const ReportMarkersOverlay = React.memo(function ReportMarkersOverlay({
     const byDistrict = new Map<string, PlacedReport[]>();
 
     for (const report of reports) {
-      const districtName = report.district
-        || (report.form_data?.district as string)
-        || (report.form_data?.area_name as string)
-        || '';
+      const districtName =
+        report.district ||
+        (report.form_data?.district as string) ||
+        (report.form_data?.area_name as string) ||
+        '';
       if (!districtName) continue;
 
       const center = getDistrictCentroid(districtName, districts, geoData);
@@ -91,7 +98,7 @@ export const ReportMarkersOverlay = React.memo(function ReportMarkersOverlay({
       // Spiral offset for multiple reports at the same district
       const i = group.length;
       const angle = i * 1.2;
-      const radius = i === 0 ? 0 : 0.02 + (i * 0.008);
+      const radius = i === 0 ? 0 : 0.02 + i * 0.008;
       const offsetLon = Math.cos(angle) * radius;
       const offsetLat = Math.sin(angle) * radius;
 
@@ -116,8 +123,12 @@ export const ReportMarkersOverlay = React.memo(function ReportMarkersOverlay({
         const svgY = -lat;
 
         return (
-          <g key={report.id}
-            onClick={(e) => { e.stopPropagation(); onReportClick(report); }}
+          <g
+            key={report.id}
+            onClick={e => {
+              e.stopPropagation();
+              onReportClick(report);
+            }}
             onMouseEnter={() => onReportHover(report)}
             onMouseLeave={() => onReportHover(null)}
             style={{ cursor: 'pointer' }}
@@ -125,17 +136,41 @@ export const ReportMarkersOverlay = React.memo(function ReportMarkersOverlay({
             {/* Drop shadow */}
             <circle cx={lon} cy={svgY + 0.004} r={0.018} fill="rgba(0,0,0,0.15)" />
             {/* Marker background */}
-            <circle cx={lon} cy={svgY} r={0.018}
-              fill={color} fillOpacity={0.9}
-              stroke="#fff" strokeWidth={0.005}
+            <circle
+              cx={lon}
+              cy={svgY}
+              r={0.018}
+              fill={color}
+              fillOpacity={0.9}
+              stroke="#fff"
+              strokeWidth={0.005}
               style={{ transition: 'r 0.15s, fill-opacity 0.15s' }}
             />
             {/* Pulse ring for pending reports */}
             {report.status === 'pending' && (
-              <circle cx={lon} cy={svgY} r={0.025}
-                fill="none" stroke={color} strokeWidth={0.003} strokeOpacity={0.4}>
-                <animate attributeName="r" from="0.018" to="0.035" dur="1.5s" repeatCount="indefinite" />
-                <animate attributeName="stroke-opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
+              <circle
+                cx={lon}
+                cy={svgY}
+                r={0.025}
+                fill="none"
+                stroke={color}
+                strokeWidth={0.003}
+                strokeOpacity={0.4}
+              >
+                <animate
+                  attributeName="r"
+                  from="0.018"
+                  to="0.035"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="stroke-opacity"
+                  from="0.5"
+                  to="0"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
               </circle>
             )}
             <title>
@@ -144,7 +179,8 @@ export const ReportMarkersOverlay = React.memo(function ReportMarkersOverlay({
               {report.period && `\nPeriod: ${report.period}`}
               {'\n'}Status: {report.status}
               {'\n'}Submitted: {new Date(report.submitted_at).toLocaleDateString()}
-              {report.submitted_by_profile?.full_name && `\nBy: ${report.submitted_by_profile.full_name}`}
+              {report.submitted_by_profile?.full_name &&
+                `\nBy: ${report.submitted_by_profile.full_name}`}
             </title>
           </g>
         );

@@ -32,28 +32,22 @@ export function PanelsExample({ districts }: PanelsExampleProps) {
     loading: gbifLoading,
     lastUpdated,
     totalCount,
-    refresh
+    refresh,
   } = useGBIFOccurrences({
     country: 'RW',
     limit: 5000,
-    autoRefresh: true
+    autoRefresh: true,
   });
 
   // Calculate biodiversity data
-  const {
-    data: biodiversityData,
-    loading: biodivLoading
-  } = useBiodiversityData({
+  const { data: biodiversityData, loading: biodivLoading } = useBiodiversityData({
     districts,
     occurrences,
-    loading: gbifLoading
+    loading: gbifLoading,
   });
 
   // Load protected areas
-  const {
-    areas: protectedAreas,
-    loading: areasLoading
-  } = useProtectedAreas();
+  const { areas: protectedAreas, loading: areasLoading } = useProtectedAreas();
 
   // Identify hotspots
   const hotspots = React.useMemo(() => {
@@ -90,17 +84,19 @@ export function PanelsExample({ districts }: PanelsExampleProps) {
       </div>
 
       {/* Main grid: 2 columns */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: 24,
-        marginBottom: 24
-      }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: 24,
+          marginBottom: 24,
+        }}
+      >
         {/* Biodiversity Index Panel */}
         <BiodiversityIndexPanel
           biodiversityData={biodiversityData}
           loading={biodivLoading}
-          onDistrictClick={(districtId) => {
+          onDistrictClick={districtId => {
             setSelectedDistrict(districtId);
             console.log('District clicked:', districtId);
           }}
@@ -110,7 +106,7 @@ export function PanelsExample({ districts }: PanelsExampleProps) {
         <SpeciesByKingdomPanel
           occurrences={filteredOccurrences}
           loading={gbifLoading}
-          onKingdomClick={(kingdom) => {
+          onKingdomClick={kingdom => {
             setSelectedKingdom(kingdom);
             console.log('Kingdom filter:', kingdom);
           }}
@@ -119,16 +115,18 @@ export function PanelsExample({ districts }: PanelsExampleProps) {
       </div>
 
       {/* Bottom row: Hotspots and Protected Areas */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: 24
-      }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: 24,
+        }}
+      >
         {/* Hotspots List Panel */}
         <HotspotsListPanel
           hotspots={hotspots}
           loading={biodivLoading}
-          onHotspotClick={(districtId) => {
+          onHotspotClick={districtId => {
             setSelectedDistrict(districtId);
             console.log('Hotspot clicked:', districtId);
           }}
@@ -138,7 +136,7 @@ export function PanelsExample({ districts }: PanelsExampleProps) {
         <ProtectedAreasListPanel
           areas={protectedAreas?.features || []}
           loading={areasLoading}
-          onAreaClick={(areaName) => {
+          onAreaClick={areaName => {
             console.log('Protected area clicked:', areaName);
           }}
         />
@@ -146,26 +144,31 @@ export function PanelsExample({ districts }: PanelsExampleProps) {
 
       {/* Debug info */}
       {selectedDistrict && (
-        <div style={{
-          marginTop: 24,
-          padding: 16,
-          background: 'var(--surface-2)',
-          borderRadius: 8,
-          fontSize: '0.8rem'
-        }}>
+        <div
+          style={{
+            marginTop: 24,
+            padding: 16,
+            background: 'var(--surface-2)',
+            borderRadius: 8,
+            fontSize: '0.8rem',
+          }}
+        >
           <strong>Selected District ID:</strong> {selectedDistrict}
         </div>
       )}
 
       {selectedKingdom && (
-        <div style={{
-          marginTop: 12,
-          padding: 16,
-          background: 'var(--surface-2)',
-          borderRadius: 8,
-          fontSize: '0.8rem'
-        }}>
-          <strong>Kingdom Filter:</strong> {selectedKingdom} ({filteredOccurrences.length} occurrences)
+        <div
+          style={{
+            marginTop: 12,
+            padding: 16,
+            background: 'var(--surface-2)',
+            borderRadius: 8,
+            fontSize: '0.8rem',
+          }}
+        >
+          <strong>Kingdom Filter:</strong> {selectedKingdom} ({filteredOccurrences.length}{' '}
+          occurrences)
         </div>
       )}
     </div>

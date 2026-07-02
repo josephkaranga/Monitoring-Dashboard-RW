@@ -25,7 +25,7 @@ interface UseBiodiversityDataReturn {
 export function useBiodiversityData({
   districts,
   occurrences,
-  loading: gbifLoading
+  loading: gbifLoading,
 }: UseBiodiversityDataProps): UseBiodiversityDataReturn {
   const [data, setData] = useState<Map<number, BiodiversityData>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ export function useBiodiversityData({
 
       // Calculate biodiversity metrics for all districts
       const biodivData = calculateBiodiversityMetrics(occurrences, districts);
-      
+
       setData(biodivData);
       setLastUpdated(new Date());
       setLoading(false);

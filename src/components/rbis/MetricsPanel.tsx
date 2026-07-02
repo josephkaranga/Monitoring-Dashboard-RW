@@ -23,7 +23,7 @@ interface MetricsPanelProps {
 
 /**
  * MetricsPanel displays real-time RBIS metrics and recent occurrences
- * 
+ *
  * @example
  * ```tsx
  * <MetricsPanel
@@ -35,7 +35,13 @@ interface MetricsPanelProps {
  * />
  * ```
  */
-export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRefetch }: MetricsPanelProps) {
+export function MetricsPanel({
+  metrics,
+  recentOccurrences,
+  loading,
+  error,
+  onRefetch,
+}: MetricsPanelProps) {
   if (loading && !metrics) {
     return (
       <div
@@ -64,8 +70,18 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
         }}
       >
         <div style={{ textAlign: 'center', color: 'var(--text-3)' }}>
-          <i className="fa-solid fa-circle-exclamation" style={{ fontSize: '2rem', color: '#ef4444', marginBottom: 12 }} />
-          <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-2)', margin: '0 0 8px 0' }}>
+          <i
+            className="fa-solid fa-circle-exclamation"
+            style={{ fontSize: '2rem', color: '#ef4444', marginBottom: 12 }}
+          />
+          <p
+            style={{
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: 'var(--text-2)',
+              margin: '0 0 8px 0',
+            }}
+          >
             Failed to load metrics
           </p>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', margin: '0 0 16px 0' }}>
@@ -138,7 +154,14 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 20,
+        }}
+      >
         <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
           Real-Time Metrics
         </h3>
@@ -152,7 +175,13 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
               animation: 'pulse 2s infinite',
             }}
           />
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+          <span
+            style={{
+              fontSize: '0.7rem',
+              color: 'var(--text-3)',
+              fontFamily: "'DM Mono', monospace",
+            }}
+          >
             Auto-refresh: 30s
           </span>
         </div>
@@ -177,8 +206,23 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
               border: `1px solid ${metric.color}20`,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--text-3)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 {metric.label}
               </span>
               <div
@@ -192,10 +236,20 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
                   justifyContent: 'center',
                 }}
               >
-                <i className={`fa-solid ${metric.icon}`} style={{ fontSize: '0.9rem', color: metric.color }} />
+                <i
+                  className={`fa-solid ${metric.icon}`}
+                  style={{ fontSize: '0.9rem', color: metric.color }}
+                />
               </div>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 700, color: metric.color, fontFamily: "'DM Mono', monospace" }}>
+            <div
+              style={{
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                color: metric.color,
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
               {metric.value}
             </div>
           </div>
@@ -204,16 +258,32 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
 
       {/* Recent occurrences */}
       <div>
-        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-2)', margin: '0 0 12px 0' }}>
+        <h4
+          style={{
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            color: 'var(--text-2)',
+            margin: '0 0 12px 0',
+          }}
+        >
           Recent Occurrences
         </h4>
         {recentOccurrences.length === 0 ? (
-          <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem', background: 'var(--surface-2)', borderRadius: 8 }}>
+          <div
+            style={{
+              padding: 20,
+              textAlign: 'center',
+              color: 'var(--text-3)',
+              fontSize: '0.8rem',
+              background: 'var(--surface-2)',
+              borderRadius: 8,
+            }}
+          >
             No recent occurrences
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {recentOccurrences.map((occurrence) => (
+            {recentOccurrences.map(occurrence => (
               <div
                 key={occurrence.id}
                 style={{
@@ -226,11 +296,11 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
                   border: '1px solid var(--border)',
                   transition: 'all 0.2s',
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={e => {
                   e.currentTarget.style.background = 'var(--surface-3)';
                   e.currentTarget.style.borderColor = 'var(--sky-dim)';
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={e => {
                   e.currentTarget.style.background = 'var(--surface-2)';
                   e.currentTarget.style.borderColor = 'var(--border)';
                 }}
@@ -247,7 +317,10 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
                     flexShrink: 0,
                   }}
                 >
-                  <i className="fa-solid fa-leaf" style={{ fontSize: '0.9rem', color: '#0ea5e9' }} />
+                  <i
+                    className="fa-solid fa-leaf"
+                    style={{ fontSize: '0.9rem', color: '#0ea5e9' }}
+                  />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p
@@ -265,7 +338,10 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
-                      <i className="fa-solid fa-location-dot" style={{ marginRight: 4, fontSize: '0.65rem' }} />
+                      <i
+                        className="fa-solid fa-location-dot"
+                        style={{ marginRight: 4, fontSize: '0.65rem' }}
+                      />
                       {occurrence.location}
                     </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>•</span>
@@ -281,8 +357,17 @@ export function MetricsPanel({ metrics, recentOccurrences, loading, error, onRef
       </div>
 
       {/* Last update */}
-      <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-4)', fontFamily: "'DM Mono', monospace" }}>
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: '1px solid var(--border)',
+          textAlign: 'center',
+        }}
+      >
+        <span
+          style={{ fontSize: '0.7rem', color: 'var(--text-4)', fontFamily: "'DM Mono', monospace" }}
+        >
           Last updated: {new Date(metrics.lastDataUpdate).toLocaleString()}
         </span>
       </div>

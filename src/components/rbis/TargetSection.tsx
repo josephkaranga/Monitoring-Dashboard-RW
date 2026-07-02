@@ -49,12 +49,12 @@ export function TargetSection({ target, expanded, onToggle, onTargetClick }: Tar
           transition: 'all 0.2s',
           textAlign: 'left',
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={e => {
           if (!expanded) {
             e.currentTarget.style.background = 'var(--surface-2)';
           }
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={e => {
           if (!expanded) {
             e.currentTarget.style.background = 'transparent';
           }
@@ -197,7 +197,7 @@ export function TargetSection({ target, expanded, onToggle, onTargetClick }: Tar
               No indicators for this target
             </div>
           ) : (
-            target.indicators.map((indicator) => (
+            target.indicators.map(indicator => (
               <IndicatorRow
                 key={indicator.id}
                 indicator={indicator}

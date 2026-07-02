@@ -35,7 +35,10 @@ const { mockFrom, state } = vi.hoisted(() => {
       select: () => ({
         eq: (column: string, value: unknown) => ({
           maybeSingle: () =>
-            Promise.resolve({ data: state.rows.find((r) => r[column] === value) ?? null, error: null }),
+            Promise.resolve({
+              data: state.rows.find(r => r[column] === value) ?? null,
+              error: null,
+            }),
         }),
       }),
       insert: (row: Record<string, unknown>) => ({
@@ -63,7 +66,7 @@ const { mockFrom, state } = vi.hoisted(() => {
               if (state.updateError) {
                 return Promise.resolve({ data: null, error: state.updateError });
               }
-              const row = state.rows.find((r) => r[column] === value);
+              const row = state.rows.find(r => r[column] === value);
               if (!row) {
                 return Promise.resolve({ data: null, error: { message: 'not found' } });
               }
@@ -168,8 +171,8 @@ describe('OrganizationConfigService', () => {
   it('throws when updating a configuration fails', async () => {
     const created = await service.createConfig('Acme Org');
     state.updateError = { message: 'update failed' };
-    await expect(service.updateConfig(created.organizationId, { automaticUpdatesEnabled: false })).rejects.toThrow(
-      'update failed'
-    );
+    await expect(
+      service.updateConfig(created.organizationId, { automaticUpdatesEnabled: false })
+    ).rejects.toThrow('update failed');
   });
 });

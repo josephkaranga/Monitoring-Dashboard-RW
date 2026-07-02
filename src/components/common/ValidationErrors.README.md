@@ -21,11 +21,13 @@ The `ValidationErrors` component provides a standardized way to display validati
 ## Installation
 
 The component is located at:
+
 ```
 src/components/common/ValidationErrors.tsx
 ```
 
 Import it in your component:
+
 ```typescript
 import { ValidationErrors } from '@/components/common/ValidationErrors';
 ```
@@ -40,7 +42,7 @@ import { ValidationErrors } from '@/components/common/ValidationErrors';
 function MyForm() {
   const [errors, setErrors] = useState([
     { field: 'email', message: 'Invalid email format' },
-    { field: 'year', message: 'Year must be between 2020 and 2030' }
+    { field: 'year', message: 'Year must be between 2020 and 2030' },
   ]);
 
   return (
@@ -58,7 +60,7 @@ function MyForm() {
 <ValidationErrors
   generalErrors={[
     'Please fill in all required fields',
-    'Unable to save changes. Please try again.'
+    'Unable to save changes. Please try again.',
   ]}
 />
 ```
@@ -67,9 +69,7 @@ function MyForm() {
 
 ```tsx
 <ValidationErrors
-  fieldErrors={[
-    { field: 'password', message: 'Password must be at least 8 characters' }
-  ]}
+  fieldErrors={[{ field: 'password', message: 'Password must be at least 8 characters' }]}
   generalErrors={['Form submission failed']}
 />
 ```
@@ -86,20 +86,20 @@ const validationError = new ValidationError(
   ErrorCode.VALIDATION_INVALID_INPUT
 );
 
-<ValidationErrors errors={[validationError]} />
+<ValidationErrors errors={[validationError]} />;
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `fieldErrors` | `FieldError[]` | `[]` | Array of field-specific errors |
-| `generalErrors` | `string[]` | `[]` | Array of general form errors |
-| `errors` | `ValidationError[]` | `[]` | Array of ValidationError instances |
-| `className` | `string` | `''` | Custom CSS class for styling |
-| `showIcon` | `boolean` | `true` | Show error icons |
-| `compact` | `boolean` | `false` | Use compact mode (smaller padding/font) |
-| `onDismiss` | `(index: number, type: 'field' \| 'general') => void` | `undefined` | Callback when error is dismissed |
+| Prop            | Type                                                  | Default     | Description                             |
+| --------------- | ----------------------------------------------------- | ----------- | --------------------------------------- |
+| `fieldErrors`   | `FieldError[]`                                        | `[]`        | Array of field-specific errors          |
+| `generalErrors` | `string[]`                                            | `[]`        | Array of general form errors            |
+| `errors`        | `ValidationError[]`                                   | `[]`        | Array of ValidationError instances      |
+| `className`     | `string`                                              | `''`        | Custom CSS class for styling            |
+| `showIcon`      | `boolean`                                             | `true`      | Show error icons                        |
+| `compact`       | `boolean`                                             | `false`     | Use compact mode (smaller padding/font) |
+| `onDismiss`     | `(index: number, type: 'field' \| 'general') => void` | `undefined` | Callback when error is dismissed        |
 
 ## Types
 
@@ -107,9 +107,9 @@ const validationError = new ValidationError(
 
 ```typescript
 interface FieldError {
-  field: string;        // Field name (e.g., 'email', 'year')
-  message: string;      // Error message to display
-  value?: unknown;      // Optional: the invalid value (shown in dev mode)
+  field: string; // Field name (e.g., 'email', 'year')
+  message: string; // Error message to display
+  value?: unknown; // Optional: the invalid value (shown in dev mode)
 }
 ```
 
@@ -119,9 +119,7 @@ interface FieldError {
 
 ```tsx
 function MyForm() {
-  const [errors, setErrors] = useState([
-    { field: 'email', message: 'Invalid email' }
-  ]);
+  const [errors, setErrors] = useState([{ field: 'email', message: 'Invalid email' }]);
 
   const handleDismiss = (index: number, type: 'field' | 'general') => {
     if (type === 'field') {
@@ -129,12 +127,7 @@ function MyForm() {
     }
   };
 
-  return (
-    <ValidationErrors
-      fieldErrors={errors}
-      onDismiss={handleDismiss}
-    />
-  );
+  return <ValidationErrors fieldErrors={errors} onDismiss={handleDismiss} />;
 }
 ```
 
@@ -143,28 +136,19 @@ function MyForm() {
 Use compact mode for inline validation or when space is limited:
 
 ```tsx
-<ValidationErrors
-  fieldErrors={errors}
-  compact
-/>
+<ValidationErrors fieldErrors={errors} compact />
 ```
 
 ### Without Icons
 
 ```tsx
-<ValidationErrors
-  fieldErrors={errors}
-  showIcon={false}
-/>
+<ValidationErrors fieldErrors={errors} showIcon={false} />
 ```
 
 ### Custom Styling
 
 ```tsx
-<ValidationErrors
-  fieldErrors={errors}
-  className="my-custom-errors"
-/>
+<ValidationErrors fieldErrors={errors} className="my-custom-errors" />
 ```
 
 ## Integration with Error Handling Utilities
@@ -175,11 +159,7 @@ The component integrates seamlessly with the error handling utilities from `src/
 import { ValidationError, ErrorCode, createValidationError } from '@/utils/errorHandling';
 
 // Create validation errors
-const emailError = createValidationError(
-  'email',
-  'Invalid email format',
-  'invalid@email'
-);
+const emailError = createValidationError('email', 'Invalid email format', 'invalid@email');
 
 const yearError = new ValidationError(
   'Year out of range',
@@ -189,7 +169,7 @@ const yearError = new ValidationError(
 );
 
 // Display them
-<ValidationErrors errors={[emailError, yearError]} />
+<ValidationErrors errors={[emailError, yearError]} />;
 ```
 
 ## Real-World Examples
@@ -204,20 +184,20 @@ function LoginForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors: FieldError[] = [];
 
     if (!email) {
       validationErrors.push({
         field: 'email',
-        message: 'Email is required.'
+        message: 'Email is required.',
       });
     }
 
     if (!password || password.length < 8) {
       validationErrors.push({
         field: 'password',
-        message: 'Password must be at least 8 characters.'
+        message: 'Password must be at least 8 characters.',
       });
     }
 
@@ -235,19 +215,11 @@ function LoginForm() {
           <ValidationErrors fieldErrors={errors} />
         </div>
       )}
-      
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      
+
+      <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
+
+      <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+
       <button type="submit">Login</button>
     </form>
   );
@@ -261,21 +233,21 @@ function ReportForm() {
   const [formData, setFormData] = useState({
     year: '',
     district: '',
-    value: ''
+    value: '',
   });
   const [errors, setErrors] = useState<FieldError[]>([]);
   const [generalErrors, setGeneralErrors] = useState<string[]>([]);
 
   const validateForm = () => {
     const validationErrors: FieldError[] = [];
-    
+
     // Validate year
     const yearNum = parseInt(formData.year);
     if (yearNum < 2020 || yearNum > 2030) {
       validationErrors.push({
         field: 'year',
         message: 'Year must be between 2020 and 2030.',
-        value: formData.year
+        value: formData.year,
       });
     }
 
@@ -283,7 +255,7 @@ function ReportForm() {
     if (!formData.district) {
       validationErrors.push({
         field: 'district',
-        message: 'District is required.'
+        message: 'District is required.',
       });
     }
 
@@ -292,12 +264,12 @@ function ReportForm() {
       validationErrors.push({
         field: 'value',
         message: 'Value must be a valid number.',
-        value: formData.value
+        value: formData.value,
       });
     }
 
     setErrors(validationErrors);
-    
+
     // Add general error if multiple fields are missing
     if (validationErrors.length >= 3) {
       setGeneralErrors(['Please fill in all required fields.']);
@@ -317,13 +289,10 @@ function ReportForm() {
     <form onSubmit={handleSubmit}>
       {(errors.length > 0 || generalErrors.length > 0) && (
         <div style={{ marginBottom: '20px' }}>
-          <ValidationErrors
-            fieldErrors={errors}
-            generalErrors={generalErrors}
-          />
+          <ValidationErrors fieldErrors={errors} generalErrors={generalErrors} />
         </div>
       )}
-      
+
       {/* Form fields */}
     </form>
   );
@@ -344,6 +313,7 @@ The component uses inline styles for consistency and follows the application's d
 ### Responsive Behavior
 
 The component is fully responsive and works well on all screen sizes:
+
 - Mobile (< 640px): Full width with appropriate padding
 - Tablet (640px - 1024px): Optimized spacing
 - Desktop (> 1024px): Maximum width with centered content
@@ -363,6 +333,7 @@ The component follows accessibility best practices:
 ## Browser Support
 
 The component works in all modern browsers:
+
 - Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
@@ -408,15 +379,15 @@ import { ValidationErrorsDemo } from '@/components/common/ValidationErrors.examp
 If you're migrating from custom error display code:
 
 ### Before
+
 ```tsx
-{errors.map(error => (
-  <div className="error-message">
-    {error.message}
-  </div>
-))}
+{
+  errors.map(error => <div className="error-message">{error.message}</div>);
+}
 ```
 
 ### After
+
 ```tsx
 <ValidationErrors fieldErrors={errors} />
 ```
@@ -424,6 +395,7 @@ If you're migrating from custom error display code:
 ## Support
 
 For issues or questions:
+
 1. Check the examples in `ValidationErrors.example.tsx`
 2. Review the test cases in `ValidationErrors.test.tsx`
 3. Consult the error handling utilities documentation
@@ -432,6 +404,7 @@ For issues or questions:
 ## Changelog
 
 ### Version 1.0.0 (Task 14.2)
+
 - Initial release
 - Field-specific and general error support
 - Integration with error handling utilities

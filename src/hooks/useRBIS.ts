@@ -31,13 +31,13 @@ import type {
 /**
  * Hook for managing RBIS connection state
  * Provides connect/disconnect functions and tracks connection status
- * 
+ *
  * @returns Connection state, loading flag, and connect/disconnect functions
- * 
+ *
  * @example
  * ```tsx
  * const { connection, loading, connect, disconnect } = useRBISConnection();
- * 
+ *
  * return (
  *   <button onClick={connection.status === 'connected' ? disconnect : connect}>
  *     {connection.status === 'connected' ? 'Disconnect' : 'Connect'}
@@ -58,16 +58,16 @@ export function useRBISConnection() {
   // Load initial connection status
   useEffect(() => {
     mountedRef.current = true;
-    
+
     const loadStatus = async () => {
       const status = await getConnectionStatus();
       if (mountedRef.current) {
         setConnection(status);
       }
     };
-    
+
     loadStatus();
-    
+
     return () => {
       mountedRef.current = false;
     };
@@ -76,7 +76,7 @@ export function useRBISConnection() {
   const connect = useCallback(async () => {
     setLoading(true);
     setConnection(prev => ({ ...prev, status: 'connecting', error: null }));
-    
+
     try {
       const result = await connectToRBIS();
       if (mountedRef.current) {
@@ -121,18 +121,18 @@ export function useRBISConnection() {
 /**
  * Hook for fetching RBIS metrics and recent occurrences
  * Supports auto-refresh with configurable interval
- * 
+ *
  * @param autoRefresh - Enable automatic refresh (default: true)
  * @param refreshInterval - Refresh interval in milliseconds (default: 30000 = 30 seconds)
  * @returns Metrics data, recent occurrences, loading state, error, and refetch function
- * 
+ *
  * @example
  * ```tsx
  * const { metrics, recentOccurrences, loading, error, refetch } = useRBISMetrics();
- * 
+ *
  * if (loading) return <LoadingSpinner />;
  * if (error) return <ErrorDisplay message={error} onRetry={refetch} />;
- * 
+ *
  * return (
  *   <div>
  *     <p>Total Occurrences: {metrics?.totalOccurrences}</p>
@@ -151,13 +151,13 @@ export function useRBISMetrics(autoRefresh = true, refreshInterval = 30000) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const [metricsData, occurrences] = await Promise.all([
         fetchRBISMetrics(),
         fetchRecentOccurrences(5),
       ]);
-      
+
       if (mountedRef.current) {
         setMetrics(metricsData);
         setRecentOccurrences(occurrences);
@@ -197,16 +197,16 @@ export function useRBISMetrics(autoRefresh = true, refreshInterval = 30000) {
 /**
  * Hook for fetching GBF goals with targets and indicators
  * Provides the complete indicators-targets-RBIS matrix data
- * 
+ *
  * @returns Goals data with nested targets and indicators, loading state, error, and refetch function
- * 
+ *
  * @example
  * ```tsx
  * const { goals, loading, error, refetch } = useIndicatorsMatrix();
- * 
+ *
  * if (loading) return <LoadingSpinner />;
  * if (error) return <ErrorDisplay message={error} onRetry={refetch} />;
- * 
+ *
  * return (
  *   <div>
  *     {goals.map(goal => (
@@ -225,7 +225,7 @@ export function useIndicatorsMatrix() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await fetchGBFGoals();
       if (mountedRef.current) {
@@ -258,18 +258,18 @@ export function useIndicatorsMatrix() {
 /**
  * Hook for fetching RBIS data streams (signal feed)
  * Supports auto-refresh with configurable interval
- * 
+ *
  * @param autoRefresh - Enable automatic refresh (default: true)
  * @param refreshInterval - Refresh interval in milliseconds (default: 60000 = 60 seconds)
  * @returns Data streams, loading state, error, and refetch function
- * 
+ *
  * @example
  * ```tsx
  * const { dataStreams, loading, error, refetch } = useRBISDataStreams();
- * 
+ *
  * if (loading) return <LoadingSpinner />;
  * if (error) return <ErrorDisplay message={error} onRetry={refetch} />;
- * 
+ *
  * return (
  *   <div>
  *     {dataStreams.map(stream => (
@@ -288,7 +288,7 @@ export function useRBISDataStreams(autoRefresh = true, refreshInterval = 60000) 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await fetchRBISDataStreams();
       if (mountedRef.current) {
@@ -335,16 +335,16 @@ export const useRBISSignalFeed = useRBISDataStreams;
 /**
  * Hook for fetching RBIS dashboard summary statistics
  * Provides aggregated metrics across all goals, targets, indicators, and data streams
- * 
+ *
  * @returns Summary data, loading state, error, and refetch function
- * 
+ *
  * @example
  * ```tsx
  * const { summary, loading, error, refetch } = useRBISDashboardSummary();
- * 
+ *
  * if (loading) return <LoadingSpinner />;
  * if (error) return <ErrorDisplay message={error} onRetry={refetch} />;
- * 
+ *
  * return (
  *   <div>
  *     <p>Total Indicators: {summary?.totalIndicators}</p>
@@ -363,7 +363,7 @@ export function useRBISDashboardSummary() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await fetchRBISDashboardSummary();
       if (mountedRef.current) {

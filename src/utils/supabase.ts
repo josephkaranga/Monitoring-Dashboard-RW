@@ -59,18 +59,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export type Database = {
   public: {
     Tables: {
-      profiles:                 { Row: import('../types/index').UserProfile };
-      indicators:               { Row: import('../types/index').Indicator };
-      nbsap_targets:            { Row: import('../types/index').NBSAPTarget };
-      toolkit_reports:          { Row: import('../types/index').ToolkitReport };
-      districts:                { Row: import('../types/index').District };
-      provinces:                { Row: import('../types/index').Province };
-      risks:                    { Row: import('../types/index').Risk };
-      compliance_records:       { Row: import('../types/index').ComplianceRecord };
-      notifications:            { Row: import('../types/index').Notification };
+      profiles: { Row: import('../types/index').UserProfile };
+      indicators: { Row: import('../types/index').Indicator };
+      nbsap_targets: { Row: import('../types/index').NBSAPTarget };
+      toolkit_reports: { Row: import('../types/index').ToolkitReport };
+      districts: { Row: import('../types/index').District };
+      provinces: { Row: import('../types/index').Province };
+      risks: { Row: import('../types/index').Risk };
+      compliance_records: { Row: import('../types/index').ComplianceRecord };
+      notifications: { Row: import('../types/index').Notification };
       notification_preferences: { Row: import('../types/index').NotificationPreferences };
-      audit_log:                { Row: import('../types/index').AuditEntry };
-      user_settings:            { Row: import('../types/index').UserSettings };
+      audit_log: { Row: import('../types/index').AuditEntry };
+      user_settings: { Row: import('../types/index').UserSettings };
     };
   };
 };

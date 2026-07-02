@@ -1,6 +1,6 @@
 /**
  * DatePicker Component Demo
- * 
+ *
  * This file demonstrates the DatePicker component in action.
  * It can be imported and used in any page to test the component.
  */
@@ -18,8 +18,8 @@ export function DatePickerDemo() {
       <div>
         <h1 className="text-2xl font-bold mb-4">DatePicker Component Demo</h1>
         <p className="text-gray-600 mb-6">
-          This component enforces the NBSAP reporting period (2020-2030) and provides
-          built-in validation.
+          This component enforces the NBSAP reporting period (2020-2030) and provides built-in
+          validation.
         </p>
       </div>
 
@@ -91,8 +91,12 @@ export function DatePickerDemo() {
           label="Test Date Validation"
         />
         <div className="mt-4 text-sm text-gray-600">
-          <p><strong>Valid range:</strong> 2020-01-01 to 2030-12-31</p>
-          <p className="mt-1"><strong>Try these:</strong></p>
+          <p>
+            <strong>Valid range:</strong> 2020-01-01 to 2030-12-31
+          </p>
+          <p className="mt-1">
+            <strong>Try these:</strong>
+          </p>
           <ul className="list-disc list-inside ml-2 mt-1">
             <li>2020-01-01 (minimum boundary - valid)</li>
             <li>2030-12-31 (maximum boundary - valid)</li>

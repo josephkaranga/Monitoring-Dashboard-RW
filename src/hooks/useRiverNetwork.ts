@@ -42,7 +42,7 @@ export function useRiverNetwork(options: UseRiverNetworkOptions = {}): UseRiverN
         setError(null);
 
         const response = await fetch('/rwanda-rivers.geojson');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to load river network: ${response.statusText}`);
         }

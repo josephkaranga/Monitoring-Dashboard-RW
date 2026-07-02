@@ -5,7 +5,11 @@ import { automatedProcessingEngine } from './automatedProcessingEngine';
 import { writeAuditEntry } from './dataService';
 import { eventBus } from './eventBus';
 import { getToolWeight, getToolDescription, ToolId } from '../types/automaticReporting';
-import type { OrganizationConfig, ProcessingResult, ReportSubmission } from '../types/automaticReporting';
+import type {
+  OrganizationConfig,
+  ProcessingResult,
+  ReportSubmission,
+} from '../types/automaticReporting';
 import type {
   ToolkitReport,
   ReportType,
@@ -80,25 +84,25 @@ export async function submitReport(
     nbsapTargetId,
     requireVerification,
     attachmentCount: attachments.length,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return { data: null, error: 'Not authenticated' };
 
   const userId = sessionData.session.user.id;
-  
+
   // Log target and indicator associations for debugging
   const indicatorId = formData.indicator ? parseInt(formData.indicator as string, 10) : null;
   const stakeholderId = formData.stakeholder || null;
-  
+
   console.log('🎯 [submitReport] Target and Indicator associations:', {
     nbsapTargetId: nbsapTargetId || 'None selected',
-    indicatorId: indicatorId || 'None selected', 
+    indicatorId: indicatorId || 'None selected',
     stakeholderId: stakeholderId || 'None selected',
     targetInfo: formData.target_info || null,
     indicatorInfo: formData.indicator_info || null,
-    stakeholderInfo: formData.stakeholder_info || null
+    stakeholderInfo: formData.stakeholder_info || null,
   });
 
   // Upload attachments to Storage first
@@ -159,18 +163,20 @@ export async function submitReport(
     hasIndicatorAssociation: !!indicatorId,
     pipelineState: requireVerification ? 'awaiting_verification' : 'direct_approval',
     dataFlowComplete: !!(nbsapTargetId && indicatorId && stakeholderId),
-    attachmentCount: uploadedAttachments.length
+    attachmentCount: uploadedAttachments.length,
   });
 
   const { data, error } = await supabase
     .from('toolkit_reports')
     .insert(reportData)
-    .select(`
+    .select(
+      `
       *,
       submitted_by_profile:profiles!toolkit_reports_submitted_by_fkey(
         id, full_name, email, role, organization
       )
-    `)
+    `
+    )
     .single();
 
   if (error) {
@@ -179,28 +185,31 @@ export async function submitReport(
       toolId,
       nbsapTargetId,
       indicatorId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return { data: null, error: error.message };
   }
 
   // Log successful submission with target and indicator associations
-  console.log('✅ [submitReport] Report submitted successfully with target and indicator associations:', {
-    reportId: data.id,
-    toolId: data.tool_id,
-    status: data.status,
-    nbsapTargetId: data.nbsap_target_id,
-    indicatorId: indicatorId,
-    stakeholderId: stakeholderId,
-    pipelineStatus: data.status === 'pending' ? 'queued_for_verification' : 'approved_direct',
-    submissionTime: data.submitted_at,
-    dataFlowIntegrityCheck: {
-      targetLinked: !!data.nbsap_target_id,
-      indicatorDataPresent: !!indicatorId,
-      stakeholderMapped: !!stakeholderId,
-      formDataComplete: Object.keys(formData).length > 0
+  console.log(
+    '✅ [submitReport] Report submitted successfully with target and indicator associations:',
+    {
+      reportId: data.id,
+      toolId: data.tool_id,
+      status: data.status,
+      nbsapTargetId: data.nbsap_target_id,
+      indicatorId: indicatorId,
+      stakeholderId: stakeholderId,
+      pipelineStatus: data.status === 'pending' ? 'queued_for_verification' : 'approved_direct',
+      submissionTime: data.submitted_at,
+      dataFlowIntegrityCheck: {
+        targetLinked: !!data.nbsap_target_id,
+        indicatorDataPresent: !!indicatorId,
+        stakeholderMapped: !!stakeholderId,
+        formDataComplete: Object.keys(formData).length > 0,
+      },
     }
-  });
+  );
 
   return { data: data as ToolkitReport, error: null };
 }
@@ -237,20 +246,12 @@ export async function processReportAutomatic(
 export async function fetchReports(
   filters: ReportFilters = {}
 ): Promise<PaginatedResponse<ToolkitReport>> {
-  const {
-    toolId,
-    status,
-    period,
-    district,
-    page = 1,
-    pageSize = 20,
-    fromDate,
-    toDate,
-  } = filters;
+  const { toolId, status, period, district, page = 1, pageSize = 20, fromDate, toDate } = filters;
 
   let query = supabase
     .from('toolkit_reports')
-    .select(`
+    .select(
+      `
       *,
       submitted_by_profile:profiles!toolkit_reports_submitted_by_fkey(
         id, full_name, email, role, organization
@@ -258,7 +259,9 @@ export async function fetchReports(
       nbsap_target:nbsap_targets(
         id, title, progress, goal
       )
-    `, { count: 'exact' })
+    `,
+      { count: 'exact' }
+    )
     .order('submitted_at', { ascending: false });
 
   if (toolId && toolId !== 'ALL') query = query.eq('tool_id', toolId);
@@ -313,13 +316,14 @@ export async function verifyReport(
   if (error) return { data: null, error: error.message };
   // Invalidate stats cache — pending count changes when a report is verified
   _statsCache = { data: null, ts: 0 };
+  // Rejection notification to the submitter is handled by a DB trigger
+  // (notify_on_report_rejection, migration 024) so it fires regardless
+  // of which role performs the rejection and isn't subject to client RLS.
   return { data: data as ToolkitReport, error: null };
 }
 
 // ── DELETE REPORT ────────────────────────────────────────────
-export async function deleteReport(
-  reportId: string
-): Promise<ApiResponse<null>> {
+export async function deleteReport(reportId: string): Promise<ApiResponse<null>> {
   // Fetch the report first so we can log what was deleted
   const { data: report } = await supabase
     .from('toolkit_reports')
@@ -327,10 +331,7 @@ export async function deleteReport(
     .eq('id', reportId)
     .maybeSingle();
 
-  const { error } = await supabase
-    .from('toolkit_reports')
-    .delete()
-    .eq('id', reportId);
+  const { error } = await supabase.from('toolkit_reports').delete().eq('id', reportId);
 
   if (error) return { data: null, error: error.message };
 
@@ -373,26 +374,51 @@ export async function clearAllReports(): Promise<ApiResponse<null>> {
 let _statsCache: { data: ReturnType<typeof buildStats> | null; ts: number } = { data: null, ts: 0 };
 const STATS_TTL = 60_000; // 60 seconds — increased from 30s
 
-function buildStats(reports: any[], indicators: any[], districts: any[], compliance: any[], targetCount: number) {
+function buildStats(
+  reports: any[],
+  indicators: any[],
+  districts: any[],
+  compliance: any[],
+  targetCount: number
+) {
   const approved = reports.filter(r => r.status === 'approved' || !r.status);
   const pending = reports.filter(r => r.status === 'pending');
   const reportsByTool = {} as Record<string, number>;
-  reports.forEach(r => { reportsByTool[r.tool_id] = (reportsByTool[r.tool_id] || 0) + 1; });
+  reports.forEach(r => {
+    reportsByTool[r.tool_id] = (reportsByTool[r.tool_id] || 0) + 1;
+  });
   const t02 = approved.filter(r => r.tool_id === 'T02');
-  const forestHa = t02.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.forest_ha) || 0), 0);
-  const wetlandHa = t02.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.wetland_ha) || 0), 0);
+  const forestHa = t02.reduce(
+    (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.forest_ha) || 0),
+    0
+  );
+  const wetlandHa = t02.reduce(
+    (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.wetland_ha) || 0),
+    0
+  );
   const t04 = approved.filter(r => r.tool_id === 'T04');
-  const hwcIncidents = t04.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.hwc_incidents) || 0), 0);
+  const hwcIncidents = t04.reduce(
+    (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.hwc_incidents) || 0),
+    0
+  );
   const t05 = approved.filter(r => r.tool_id === 'T05');
-  const financeAllocated = t05.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_allocated) || 0), 0);
-  const financeDisbursed = t05.reduce((a, r) => a + (Number((r.form_data as Record<string,unknown>)?.budget_disbursed) || 0), 0);
+  const financeAllocated = t05.reduce(
+    (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.budget_allocated) || 0),
+    0
+  );
+  const financeDisbursed = t05.reduce(
+    (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.budget_disbursed) || 0),
+    0
+  );
   const totalDistricts = Math.max(districts.length, 30); // Rwanda has 30 districts
   const submittedDistricts = districts.filter(d => d.status === 'submitted').length;
   const missingDistricts = districts.filter(d => d.status === 'missing').length;
   const onTrack = indicators.filter(i => i.status === 'on-track').length;
   const atRisk = indicators.filter(i => i.status === 'at-risk').length;
   const behind = indicators.filter(i => i.status === 'behind').length;
-  const avgProgress = indicators.length ? Math.round(indicators.reduce((a, i) => a + i.progress, 0) / indicators.length) : 0;
+  const avgProgress = indicators.length
+    ? Math.round(indicators.reduce((a, i) => a + i.progress, 0) / indicators.length)
+    : 0;
   // Per-tier indicator counts for dashboard
   const headlineCount = indicators.filter(i => i.tier === 'headline').length;
   const componentCount = indicators.filter(i => i.tier === 'component').length;
@@ -407,8 +433,13 @@ function buildStats(reports: any[], indicators: any[], districts: any[], complia
     atRiskIndicators: atRisk,
     behindIndicators: behind,
     avgProgress,
-    forestHa, wetlandHa, hwcIncidents, financeAllocated, financeDisbursed,
-    reportsByTool, pendingVerifications: pending.length,
+    forestHa,
+    wetlandHa,
+    hwcIncidents,
+    financeAllocated,
+    financeDisbursed,
+    reportsByTool,
+    pendingVerifications: pending.length,
     headlineIndicators: headlineCount,
     componentIndicators: componentCount,
     binaryIndicators: binaryCount,
@@ -420,26 +451,19 @@ export async function getDashboardStats() {
   if (_statsCache.data && Date.now() - _statsCache.ts < STATS_TTL) {
     return _statsCache.data;
   }
-  const [reportsRes, indicatorsRes, districtsRes, complianceRes, targetsRes] =
-    await Promise.all([
-      supabase
-        .from('toolkit_reports')
-        .select('tool_id, status, form_data')
-        .order('submitted_at', { ascending: false }),
-      supabase
-        .from('indicators')
-        .select('status, progress, tier'),
-      supabase
-        .from('districts')
-        .select('status, compliance'),
-      supabase
-        .from('compliance_records')
-        .select('id, severity, is_resolved')
-        .eq('is_resolved', false),
-      supabase
-        .from('nbsap_targets')
-        .select('id', { count: 'exact', head: true }),
-    ]);
+  const [reportsRes, indicatorsRes, districtsRes, complianceRes, targetsRes] = await Promise.all([
+    supabase
+      .from('toolkit_reports')
+      .select('tool_id, status, form_data')
+      .order('submitted_at', { ascending: false }),
+    supabase.from('indicators').select('status, progress, tier'),
+    supabase.from('districts').select('status, compliance'),
+    supabase
+      .from('compliance_records')
+      .select('id, severity, is_resolved')
+      .eq('is_resolved', false),
+    supabase.from('nbsap_targets').select('id', { count: 'exact', head: true }),
+  ]);
 
   const reports = reportsRes.data || [];
   const indicators = indicatorsRes.data || [];
@@ -457,23 +481,23 @@ export function exportReportsToCSV(reports: ToolkitReport[]): string {
   if (!reports.length) return '';
 
   const skip = ['form_data', 'attachments'];
-  const keys = Object.keys(reports[0]).filter((k) => !skip.includes(k));
+  const keys = Object.keys(reports[0]).filter(k => !skip.includes(k));
 
   // Add flattened form fields
   const allFormKeys = new Set<string>();
-  reports.forEach((r) => {
-    Object.keys(r.form_data || {}).forEach((k) => allFormKeys.add(k));
+  reports.forEach(r => {
+    Object.keys(r.form_data || {}).forEach(k => allFormKeys.add(k));
   });
 
   const headers = [...keys, ...allFormKeys].join(',');
-  const rows = reports.map((r) => {
-    const baseValues = keys.map((k) => {
+  const rows = reports.map(r => {
+    const baseValues = keys.map(k => {
       const val = (r as unknown as Record<string, unknown>)[k];
       if (typeof val === 'object' && val !== null)
         return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
       return `"${String(val ?? '').replace(/"/g, '""')}"`;
     });
-    const formValues = [...allFormKeys].map((k) => {
+    const formValues = [...allFormKeys].map(k => {
       const val = (r.form_data || {})[k];
       return `"${formatFieldValue(val ?? '').replace(/"/g, '""')}"`;
     });
@@ -503,9 +527,7 @@ export async function importReportsFromJSON(
 ): Promise<ApiResponse<{ imported: number; skipped: number }>> {
   try {
     const parsed = JSON.parse(jsonString);
-    const records = Array.isArray(parsed)
-      ? parsed
-      : parsed.submissions || [];
+    const records = Array.isArray(parsed) ? parsed : parsed.submissions || [];
 
     if (!records.length) {
       return { data: null, error: 'No valid records in file' };
@@ -519,15 +541,10 @@ export async function importReportsFromJSON(
       .from('toolkit_reports')
       .select('submitted_at, tool_id');
 
-    const existingKeys = new Set(
-      (existing || []).map(
-        (r) => `${r.tool_id}_${r.submitted_at}`
-      )
-    );
+    const existingKeys = new Set((existing || []).map(r => `${r.tool_id}_${r.submitted_at}`));
 
     const newRecords = records.filter(
-      (r: ToolkitReport) =>
-        !existingKeys.has(`${r.tool_id}_${r.submitted_at}`)
+      (r: ToolkitReport) => !existingKeys.has(`${r.tool_id}_${r.submitted_at}`)
     );
 
     if (!newRecords.length) {
@@ -551,9 +568,7 @@ export async function importReportsFromJSON(
       submitted_at: r.submitted_at || new Date().toISOString(),
     }));
 
-    const { error } = await supabase
-      .from('toolkit_reports')
-      .insert(sanitized);
+    const { error } = await supabase.from('toolkit_reports').insert(sanitized);
 
     if (error) return { data: null, error: error.message };
 

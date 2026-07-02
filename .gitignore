@@ -45,6 +45,12 @@ lerna-debug.log*
 .branches/
 .temp/
 
+# Vercel
+.vercel/
+
+# Test coverage
+coverage/
+
 # Kiro AI assistant files
 .kiro/
 
@@ -56,3 +62,5 @@ lerna-debug.log*
 DOCUMENTATION.md
 IMPLEMENTATION_SUMMARY.md
 INTEGRATION_TEST_REPORT.md
+.vercel
+.env*

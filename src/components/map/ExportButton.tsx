@@ -9,11 +9,11 @@ interface ExportButtonProps {
 
 /**
  * ExportButton Component
- * 
+ *
  * Provides a dropdown menu for exporting map data in different formats:
  * - PNG: Export the current map visualization as an image
  * - CSV: Export the underlying district data as a spreadsheet
- * 
+ *
  * Features:
  * - Dropdown menu with export options
  * - Loading state during export generation
@@ -25,7 +25,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   onExportPNG,
   onExportCSV,
   disabled = false,
-  isMobile = false
+  isMobile = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -74,8 +74,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   };
 
   return (
-    <div 
-      ref={dropdownRef} 
+    <div
+      ref={dropdownRef}
       style={{ position: 'relative', display: 'inline-block' }}
       onKeyDown={handleKeyDown}
     >
@@ -99,7 +99,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
           minWidth: isMobile ? 44 : 'auto',
           minHeight: isMobile ? 44 : 'auto',
           opacity: disabled || isExporting ? 0.6 : 1,
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
         }}
       >
         {isExporting ? (
@@ -111,7 +111,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
           <>
             <i className="fa-solid fa-download" style={{ color: 'var(--sky-dim)' }} />
             <span>Export</span>
-            <i className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'}`} style={{ fontSize: '0.7rem' }} />
+            <i
+              className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'}`}
+              style={{ fontSize: '0.7rem' }}
+            />
           </>
         )}
       </button>
@@ -131,7 +134,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             boxShadow: 'var(--shadow-md)',
             zIndex: 1000,
             minWidth: isMobile ? 180 : 160,
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}
         >
           <button
@@ -151,10 +154,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
               gap: 10,
               textAlign: 'left',
               minHeight: isMobile ? 44 : 'auto',
-              transition: 'background 0.2s ease'
+              transition: 'background 0.2s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <i className="fa-solid fa-image" style={{ color: 'var(--sky-dim)', width: 16 }} />
             <div>
@@ -181,10 +184,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
               gap: 10,
               textAlign: 'left',
               minHeight: isMobile ? 44 : 'auto',
-              transition: 'background 0.2s ease'
+              transition: 'background 0.2s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <i className="fa-solid fa-table" style={{ color: 'var(--sky-dim)', width: 16 }} />
             <div>

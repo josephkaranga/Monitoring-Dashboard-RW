@@ -39,7 +39,10 @@ export function validateProgressValue(value: number): ValidationResult {
   if (!Number.isFinite(value)) {
     issues.push({ field: 'progress', message: `Progress value ${value} is not a finite number` });
   } else if (value < 0 || value > 100) {
-    issues.push({ field: 'progress', message: `Progress value ${value} is outside the 0-100 range` });
+    issues.push({
+      field: 'progress',
+      message: `Progress value ${value} is outside the 0-100 range`,
+    });
   }
 
   return result(issues);
@@ -70,7 +73,9 @@ export function validateToolWeightValue(weight: number): ValidationResult {
 /**
  * Validate that a full set of tool weights sums to 1.0.
  */
-export function validateToolWeightsSum(weights: Record<ToolId, number> = TOOL_WEIGHTS): ValidationResult {
+export function validateToolWeightsSum(
+  weights: Record<ToolId, number> = TOOL_WEIGHTS
+): ValidationResult {
   const issues: ValidationIssue[] = [];
 
   for (const [toolId, weight] of Object.entries(weights)) {
@@ -95,7 +100,9 @@ export function validateTargetProgressRow(row: TargetProgressRow): ValidationRes
   const issues: ValidationIssue[] = [];
 
   const progressCheck = validateProgressValue(row.progress);
-  issues.push(...progressCheck.issues.map((issue) => ({ ...issue, field: `target ${row.id} ${issue.field}` })));
+  issues.push(
+    ...progressCheck.issues.map(issue => ({ ...issue, field: `target ${row.id} ${issue.field}` }))
+  );
 
   if (row.auto_update_count != null && row.auto_update_count < 0) {
     issues.push({
@@ -124,7 +131,9 @@ export function validateProgressCalculation(calculation: ProgressCalculation): V
     });
   }
 
-  const expectedNewProgress = clampProgress(calculation.previousProgress + calculation.weightedContribution);
+  const expectedNewProgress = clampProgress(
+    calculation.previousProgress + calculation.weightedContribution
+  );
   if (Math.abs(calculation.newProgress - expectedNewProgress) > 1e-9) {
     issues.push({
       field: 'newProgress',
@@ -143,12 +152,18 @@ export function validateProgressCalculation(calculation: ProgressCalculation): V
  * integrity audits.
  */
 export async function auditTargetProgressIntegrity(): Promise<ValidationResult> {
-  const { data, error } = await supabase.from('nbsap_targets').select('id, progress, auto_update_count');
+  const { data, error } = await supabase
+    .from('nbsap_targets')
+    .select('id, progress, auto_update_count');
 
   if (error || !data) {
-    return result([{ field: 'nbsap_targets', message: error?.message || 'Unable to load targets' }]);
+    return result([
+      { field: 'nbsap_targets', message: error?.message || 'Unable to load targets' },
+    ]);
   }
 
-  const issues = (data as TargetProgressRow[]).flatMap((row) => validateTargetProgressRow(row).issues);
+  const issues = (data as TargetProgressRow[]).flatMap(
+    row => validateTargetProgressRow(row).issues
+  );
   return result(issues);
 }

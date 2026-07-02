@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useCallback,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { fetchUserSettings } from '../services/dataService';
@@ -69,7 +77,7 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
   if (!profile.is_active) {
     return {
       allowed: false,
-      message: 'Your account has been deactivated. Please contact an administrator.'
+      message: 'Your account has been deactivated. Please contact an administrator.',
     };
   }
 
@@ -79,7 +87,7 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
     if (profile.suspension_end_date) {
       const endDate = new Date(profile.suspension_end_date);
       const now = new Date();
-      
+
       if (endDate < now) {
         // Auto-reactivate expired suspension
         const { data: updatedProfile, error } = await supabase
@@ -88,7 +96,7 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
             suspended_at: null,
             suspended_by: null,
             suspension_reason: null,
-            suspension_end_date: null
+            suspension_end_date: null,
           })
           .eq('id', profile.id)
           .select()
@@ -98,7 +106,8 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
           console.error('Failed to auto-reactivate expired suspension:', error);
           return {
             allowed: false,
-            message: 'Your account suspension has expired, but auto-reactivation failed. Please contact an administrator.'
+            message:
+              'Your account suspension has expired, but auto-reactivation failed. Please contact an administrator.',
           };
         }
 
@@ -109,7 +118,7 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
             action_type: 'auto_reactivate_account',
             action: 'System auto-reactivated expired suspension',
             detail: `Suspension expired on ${endDate.toISOString()}. Account automatically reactivated.`,
-            role: 'system'
+            role: 'system',
           });
         } catch (auditError) {
           console.error('Failed to log auto-reactivation:', auditError);
@@ -118,19 +127,19 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
         return {
           allowed: true,
           suspensionCleared: true,
-          updatedProfile: updatedProfile as UserProfile
+          updatedProfile: updatedProfile as UserProfile,
         };
       }
     }
 
     // Suspension is still active
-    const endDateMsg = profile.suspension_end_date 
+    const endDateMsg = profile.suspension_end_date
       ? ` Your suspension will end on ${new Date(profile.suspension_end_date).toLocaleDateString()}.`
       : '';
-    
+
     return {
       allowed: false,
-      message: `Your account is currently suspended.${endDateMsg} Please contact an administrator.`
+      message: `Your account is currently suspended.${endDateMsg} Please contact an administrator.`,
     };
   }
 
@@ -161,13 +170,17 @@ function readSessionCache(userId: string): UserProfile | null {
 function writeSessionCache(userId: string, profile: UserProfile) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ userId, profile, ts: Date.now() }));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearSessionCache() {
   try {
     sessionStorage.removeItem(SESSION_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 // Reads Supabase's own internal state — the code-verifier value is
@@ -183,7 +196,9 @@ function isRecoveryPending(): boolean {
     if (params.get('type') === 'recovery') return true;
     // Implicit / hash-based flow fallback
     if (window.location.hash.includes('type=recovery')) return true;
-  } catch { /* incognito / storage disabled */ }
+  } catch {
+    /* incognito / storage disabled */
+  }
   return false;
 }
 
@@ -195,100 +210,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   // These refs prevent race conditions — never use state for these
-  const fetchingRef = useRef(false);   // true while loadUserData is running
+  const fetchingRef = useRef(false); // true while loadUserData is running
   const initializedRef = useRef(false); // true once INITIAL_SESSION has been handled
   const recoveryRef = useRef(isPasswordRecovery);
 
-  const loadUserData = useCallback(async (
-    userId: string,
-    session: import('@supabase/supabase-js').Session
-  ) => {
-    // Prevent duplicate concurrent fetches
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
+  const loadUserData = useCallback(
+    async (userId: string, session: import('@supabase/supabase-js').Session) => {
+      // Prevent duplicate concurrent fetches
+      if (fetchingRef.current) return;
+      fetchingRef.current = true;
 
-    try {
-      let profile: UserProfile | null = null;
+      try {
+        let profile: UserProfile | null = null;
 
-      // 1. In-memory cache
-      if (
-        profileCache &&
-        profileCache.userId === userId &&
-        Date.now() - profileCache.ts < PROFILE_CACHE_TTL
-      ) {
-        profile = profileCache.profile;
-      }
-
-      // 2. sessionStorage cache (instant on page refresh)
-      if (!profile) {
-        profile = readSessionCache(userId);
-        if (profile) {
-          profileCache = { userId, profile, ts: Date.now() };
+        // 1. In-memory cache
+        if (
+          profileCache &&
+          profileCache.userId === userId &&
+          Date.now() - profileCache.ts < PROFILE_CACHE_TTL
+        ) {
+          profile = profileCache.profile;
         }
-      }
 
-      // 3. Fetch from DB
-      if (!profile) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
+        // 2. sessionStorage cache (instant on page refresh)
+        if (!profile) {
+          profile = readSessionCache(userId);
+          if (profile) {
+            profileCache = { userId, profile, ts: Date.now() };
+          }
+        }
 
-        if (error || !data) {
-          console.error('Profile fetch error:', error);
-          if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
+        // 3. Fetch from DB
+        if (!profile) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+          if (error || !data) {
+            console.error('Profile fetch error:', error);
+            if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
+            return;
+          }
+          profile = data as UserProfile;
+          profileCache = { userId, profile, ts: Date.now() };
+          writeSessionCache(userId, profile);
+        }
+
+        if (!mountedRef.current) return;
+
+        // Check account status
+        const statusCheck = await checkAccountStatus(profile);
+        if (!statusCheck.allowed) {
+          await supabase.auth.signOut();
+          profileCache = null;
+          clearSessionCache();
+          if (mountedRef.current) {
+            dispatch({ type: 'CLEAR_SESSION' });
+            toast.error(
+              statusCheck.message || 'Account access denied. Please contact the administrator.',
+              { duration: 10000 }
+            );
+          }
           return;
         }
-        profile = data as UserProfile;
-        profileCache = { userId, profile, ts: Date.now() };
-        writeSessionCache(userId, profile);
-      }
 
-      if (!mountedRef.current) return;
-
-      // Check account status
-      const statusCheck = await checkAccountStatus(profile);
-      if (!statusCheck.allowed) {
-        await supabase.auth.signOut();
-        profileCache = null;
-        clearSessionCache();
-        if (mountedRef.current) {
-          dispatch({ type: 'CLEAR_SESSION' });
-          toast.error(
-            statusCheck.message || 'Account access denied. Please contact the administrator.',
-            { duration: 10000 }
-          );
+        // If suspension was auto-cleared, refresh the profile
+        if (statusCheck.suspensionCleared) {
+          profile = statusCheck.updatedProfile!;
+          profileCache = { userId, profile, ts: Date.now() };
+          writeSessionCache(userId, profile);
         }
-        return;
+
+        dispatch({ type: 'SET_SESSION', user: profile, session });
+
+        // Background tasks — don't block UI
+        Promise.all([
+          fetchUserSettings(userId).then(s => {
+            if (s && mountedRef.current) setSettings(s);
+          }),
+          supabase
+            .from('profiles')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', userId),
+        ]).catch(console.error);
+      } catch (err) {
+        console.error('loadUserData error:', err);
+        if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
+      } finally {
+        fetchingRef.current = false;
       }
-
-      // If suspension was auto-cleared, refresh the profile
-      if (statusCheck.suspensionCleared) {
-        profile = statusCheck.updatedProfile!;
-        profileCache = { userId, profile, ts: Date.now() };
-        writeSessionCache(userId, profile);
-      }
-
-      dispatch({ type: 'SET_SESSION', user: profile, session });
-
-      // Background tasks — don't block UI
-      Promise.all([
-        fetchUserSettings(userId).then(s => {
-          if (s && mountedRef.current) setSettings(s);
-        }),
-        supabase.from('profiles')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', userId),
-      ]).catch(console.error);
-
-    } catch (err) {
-      console.error('loadUserData error:', err);
-      if (mountedRef.current) dispatch({ type: 'CLEAR_SESSION' });
-    } finally {
-      fetchingRef.current = false;
-    }
-  }, []);
+    },
+    []
+  );
 
   const refreshProfile = useCallback(async () => {
     profileCache = null;
@@ -321,56 +336,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }, 6000);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mountedRef.current) return;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mountedRef.current) return;
 
-        if (event === 'INITIAL_SESSION') {
-          clearTimeout(safetyTimeout);
-          initializedRef.current = true;
+      if (event === 'INITIAL_SESSION') {
+        clearTimeout(safetyTimeout);
+        initializedRef.current = true;
 
-          if (recoveryRef.current) {
-            dispatch({ type: 'SET_LOADING', loading: false });
-            navigate('/auth?mode=set-password', { replace: true });
-          } else if (session?.user) {
-            await loadUserData(session.user.id, session);
-          } else {
-            dispatch({ type: 'CLEAR_SESSION' });
-          }
-
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          if (recoveryRef.current) return;
-          if (initializedRef.current) {
-            fetchingRef.current = false;
-            await loadUserData(session.user.id, session);
-          }
-
-        } else if (event === 'SIGNED_OUT') {
-          clearTimeout(safetyTimeout);
-          profileCache = null;
-          clearSessionCache();
+        if (recoveryRef.current) {
+          dispatch({ type: 'SET_LOADING', loading: false });
+          navigate('/auth?mode=set-password', { replace: true });
+        } else if (session?.user) {
+          await loadUserData(session.user.id, session);
+        } else {
           dispatch({ type: 'CLEAR_SESSION' });
-          setSettings(null);
-
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Silently ignore — session is still valid
-          if (initializedRef.current && !fetchingRef.current && state.user) {
-            // Already loaded, keep going
-          }
-
-        } else if (event === 'USER_UPDATED' && session?.user) {
-          profileCache = null;
-          clearSessionCache();
+        }
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        if (recoveryRef.current) return;
+        if (initializedRef.current) {
           fetchingRef.current = false;
           await loadUserData(session.user.id, session);
-
-        } else if (event === 'PASSWORD_RECOVERY') {
-          recoveryRef.current = true;
-          setIsPasswordRecovery(true);
-          navigate('/auth?mode=set-password', { replace: true });
         }
+      } else if (event === 'SIGNED_OUT') {
+        clearTimeout(safetyTimeout);
+        profileCache = null;
+        clearSessionCache();
+        dispatch({ type: 'CLEAR_SESSION' });
+        setSettings(null);
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Silently ignore — session is still valid
+        if (initializedRef.current && !fetchingRef.current && state.user) {
+          // Already loaded, keep going
+        }
+      } else if (event === 'USER_UPDATED' && session?.user) {
+        profileCache = null;
+        clearSessionCache();
+        fetchingRef.current = false;
+        await loadUserData(session.user.id, session);
+      } else if (event === 'PASSWORD_RECOVERY') {
+        recoveryRef.current = true;
+        setIsPasswordRecovery(true);
+        navigate('/auth?mode=set-password', { replace: true });
       }
-    );
+    });
 
     // ── Listen for Supabase 400 refresh token errors ──────────
     // When the refresh token is invalid/expired, Supabase emits an
@@ -401,7 +411,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadUserData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AuthContext.Provider value={{ ...state, settings, isPasswordRecovery, signOut: handleSignOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{ ...state, settings, isPasswordRecovery, signOut: handleSignOut, refreshProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -20,7 +20,10 @@ const { mockFrom, mockChannel, mockRemoveChannel, state } = vi.hoisted(() => {
   };
 
   function chainable(data: unknown, error: unknown) {
-    const result = Promise.resolve({ data, error }) as Promise<{ data: unknown; error: unknown }> & {
+    const result = Promise.resolve({ data, error }) as Promise<{
+      data: unknown;
+      error: unknown;
+    }> & {
       eq: () => ReturnType<typeof chainable>;
     };
     result.eq = () => chainable(data, error);

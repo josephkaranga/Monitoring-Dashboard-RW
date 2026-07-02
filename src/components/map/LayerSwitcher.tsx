@@ -19,16 +19,20 @@ const layerOptions: Array<{ id: MapLayer; label: string }> = [
 
 /**
  * LayerSwitcher Component
- * 
+ *
  * Provides a dropdown control for switching between different map visualization layers.
  * Supports 9 layer options including biodiversity metrics, compliance data, and conservation indicators.
- * 
+ *
  * Features:
  * - Keyboard navigation (Tab, Enter, Arrow keys)
  * - ARIA labels for accessibility
  * - Matches existing MapPage styling (dark theme)
  */
-export function LayerSwitcher({ activeLayer, onLayerChange, isMobile = false }: LayerSwitcherProps) {
+export function LayerSwitcher({
+  activeLayer,
+  onLayerChange,
+  isMobile = false,
+}: LayerSwitcherProps) {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onLayerChange(e.target.value as MapLayer);
   };
@@ -41,7 +45,9 @@ export function LayerSwitcher({ activeLayer, onLayerChange, isMobile = false }: 
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: isMobile ? '100%' : 'auto' }}>
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 8, width: isMobile ? '100%' : 'auto' }}
+    >
       <label
         htmlFor="layer-switcher"
         style={{
@@ -73,18 +79,18 @@ export function LayerSwitcher({ activeLayer, onLayerChange, isMobile = false }: 
           transition: 'border-color 0.2s, box-shadow 0.2s',
           flex: isMobile ? 1 : 'initial',
           minHeight: isMobile ? 44 : 'auto',
-          minWidth: isMobile ? 44 : 'auto'
+          minWidth: isMobile ? 44 : 'auto',
         }}
-        onFocus={(e) => {
+        onFocus={e => {
           e.currentTarget.style.borderColor = 'var(--sky-dim)';
           e.currentTarget.style.boxShadow = '0 0 0 2px rgba(14, 165, 233, 0.1)';
         }}
-        onBlur={(e) => {
+        onBlur={e => {
           e.currentTarget.style.borderColor = 'var(--border)';
           e.currentTarget.style.boxShadow = 'none';
         }}
       >
-        {layerOptions.map((layer) => (
+        {layerOptions.map(layer => (
           <option key={layer.id} value={layer.id}>
             {layer.label}
           </option>

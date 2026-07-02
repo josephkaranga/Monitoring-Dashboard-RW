@@ -25,7 +25,7 @@ interface SignalFeedProps {
 
 /**
  * SignalFeed displays live biodiversity data streams mapped to specific targets
- * 
+ *
  * @example
  * ```tsx
  * <SignalFeed
@@ -37,7 +37,13 @@ interface SignalFeedProps {
  * />
  * ```
  */
-export function SignalFeed({ dataStreams, loading, error, onTargetClick, onRefetch }: SignalFeedProps) {
+export function SignalFeed({
+  dataStreams,
+  loading,
+  error,
+  onTargetClick,
+  onRefetch,
+}: SignalFeedProps) {
   // Calculate summary statistics
   const activeStreams = dataStreams.filter(s => s.status === 'active').length;
   const totalOccurrences = dataStreams.reduce((sum, s) => sum + s.occurrenceCount, 0);
@@ -71,12 +77,7 @@ export function SignalFeed({ dataStreams, loading, error, onTargetClick, onRefet
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <ErrorDisplay
-          message={error}
-          onRetry={onRefetch}
-          type="error"
-          centered
-        />
+        <ErrorDisplay message={error} onRetry={onRefetch} type="error" centered />
       </div>
     );
   }
@@ -93,7 +94,14 @@ export function SignalFeed({ dataStreams, loading, error, onTargetClick, onRefet
     >
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          }}
+        >
           <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
             Live Signal Feed
           </h3>
@@ -107,7 +115,13 @@ export function SignalFeed({ dataStreams, loading, error, onTargetClick, onRefet
                 animation: 'pulse 2s infinite',
               }}
             />
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+            <span
+              style={{
+                fontSize: '0.7rem',
+                color: 'var(--text-3)',
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
               Auto-refresh: 60s
             </span>
           </div>
@@ -161,19 +175,18 @@ export function SignalFeed({ dataStreams, loading, error, onTargetClick, onRefet
             borderRadius: 10,
           }}
         >
-          <i className="fa-solid fa-inbox" style={{ fontSize: '2rem', color: 'var(--text-4)', marginBottom: 12 }} />
+          <i
+            className="fa-solid fa-inbox"
+            style={{ fontSize: '2rem', color: 'var(--text-4)', marginBottom: 12 }}
+          />
           <p style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>
             No data streams available
           </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {dataStreams.map((stream) => (
-            <DataStreamCard
-              key={stream.id}
-              dataStream={stream}
-              onTargetClick={onTargetClick}
-            />
+          {dataStreams.map(stream => (
+            <DataStreamCard key={stream.id} dataStream={stream} onTargetClick={onTargetClick} />
           ))}
         </div>
       )}

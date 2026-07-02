@@ -23,11 +23,14 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
 
 export const USER_ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   policy_monitoring: 'Read-only access to strategic dashboards and national progress summaries.',
-  lead_government_ministry_reporting: 'Upload and review sector-level indicator data via T01–T07 reporting modules.',
+  lead_government_ministry_reporting:
+    'Upload and review sector-level indicator data via T01–T07 reporting modules.',
   local_reporting: 'Enter and validate district-level biodiversity monitoring data.',
-  dashboard_management: 'Full system access: verification queue, audit log, user management, all exports.',
+  dashboard_management:
+    'Full system access: verification queue, audit log, user management, all exports.',
   programme_alignment: 'Analytical viewing access for programme alignment and donor reporting.',
-  public_viewer: 'External read-only access to view dashboards, reports, indicators, and maps without modification privileges.',
+  public_viewer:
+    'External read-only access to view dashboards, reports, indicators, and maps without modification privileges.',
 };
 
 export const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
@@ -117,10 +120,7 @@ export interface RolePermissions {
  * @param permission - The permission key to check
  * @returns true if the role has the permission, false otherwise
  */
-export function hasPermission(
-  role: UserRole,
-  permission: keyof RolePermissions
-): boolean {
+export function hasPermission(role: UserRole, permission: keyof RolePermissions): boolean {
   return USER_ROLE_PERMISSIONS[role][permission];
 }
 
@@ -175,7 +175,7 @@ export function getAccountStatus(profile: UserProfile): AccountStatusInfo {
     if (profile.suspension_end_date) {
       const endDate = new Date(profile.suspension_end_date);
       const now = new Date();
-      
+
       if (endDate < now) {
         return {
           status: 'suspended_expired',
@@ -183,7 +183,7 @@ export function getAccountStatus(profile: UserProfile): AccountStatusInfo {
           canLogin: true,
         };
       }
-      
+
       return {
         status: 'suspended',
         message: `This account is suspended until ${endDate.toLocaleDateString()}.`,
@@ -193,11 +193,12 @@ export function getAccountStatus(profile: UserProfile): AccountStatusInfo {
         suspensionEndDate: profile.suspension_end_date,
       };
     }
-    
+
     // Indefinite suspension
     return {
       status: 'suspended',
-      message: 'This account is suspended indefinitely. Contact an administrator for more information.',
+      message:
+        'This account is suspended indefinitely. Contact an administrator for more information.',
       canLogin: false,
       suspendedBy: profile.suspended_by || undefined,
       suspensionReason: profile.suspension_reason || undefined,
@@ -482,4 +483,3 @@ export interface AuthState {
 // ── AUTOMATIC REPORTING ──────────────────────────────────────
 
 export * from './automaticReporting';
-

@@ -11,7 +11,7 @@ interface GBIFOccurrencesOverlayProps {
 
 /**
  * GBIFOccurrencesOverlay Component
- * 
+ *
  * Renders GBIF occurrence data as circle markers on the map.
  * Features:
  * - Kingdom-based color coding (Animalia=blue, Plantae=green, Fungi=orange, etc.)
@@ -19,7 +19,7 @@ interface GBIFOccurrencesOverlayProps {
  * - Canvas fallback for >500 points for better performance
  * - Hover tooltips showing species information
  * - Loading and error states
- * 
+ *
  * Performance optimizations:
  * - Memoized clustering calculation
  * - Canvas rendering for large datasets (>500 points)
@@ -35,7 +35,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
   error = null,
 }: GBIFOccurrencesOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   // Determine if we should use Canvas (>500 occurrences)
   const useCanvas = occurrences.length > 500;
 
@@ -54,11 +54,14 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
 
     // Simple grid-based clustering for Canvas rendering
     const gridSize = 0.1; // degrees (~11km at equator)
-    const clusters = new Map<string, {
-      occurrences: GBIFOccurrence[];
-      latSum: number;
-      lonSum: number;
-    }>();
+    const clusters = new Map<
+      string,
+      {
+        occurrences: GBIFOccurrence[];
+        latSum: number;
+        lonSum: number;
+      }
+    >();
 
     occurrences.forEach(occ => {
       const gridX = Math.floor(occ.decimalLongitude / gridSize);
@@ -79,7 +82,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
       const count = cluster.occurrences.length;
       const kingdoms = [...new Set(cluster.occurrences.map(o => o.kingdom))];
       const species = [...new Set(cluster.occurrences.map(o => o.scientificName))];
-      
+
       return {
         latitude: cluster.latSum / count,
         longitude: cluster.lonSum / count,
@@ -104,7 +107,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
     const viewBoxWidth = 3.5;
     const viewBoxHeight = 2.8;
     const scale = 200; // pixels per degree
-    
+
     canvas.width = viewBoxWidth * scale;
     canvas.height = viewBoxHeight * scale;
 
@@ -115,9 +118,9 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
     displayData.forEach(point => {
       const x = (point.longitude - 28.8) * scale;
       const y = (-2.9 - point.latitude) * scale; // Offset from viewBox origin
-      
+
       const color = getKingdomColor(point.kingdom);
-      const radius = 0.015 + (Math.log(point.count) * 0.008);
+      const radius = 0.015 + Math.log(point.count) * 0.008;
       const radiusPx = radius * scale;
 
       ctx.beginPath();
@@ -153,13 +156,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
   if (error) {
     return (
       <g className="gbif-occurrences-overlay">
-        <text
-          x="30"
-          y="-1.5"
-          fontSize="0.08"
-          fill="#f43f5e"
-          fontFamily="'DM Sans', sans-serif"
-        >
+        <text x="30" y="-1.5" fontSize="0.08" fill="#f43f5e" fontFamily="'DM Sans', sans-serif">
           Error loading GBIF data
         </text>
       </g>
@@ -181,7 +178,7 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
             style={{
               width: '100%',
               height: '100%',
-              pointerEvents: 'none'
+              pointerEvents: 'none',
             }}
           />
         </foreignObject>
@@ -219,12 +216,12 @@ export const GBIFOccurrencesOverlay = React.memo(function GBIFOccurrencesOverlay
               cursor: 'pointer',
               transition: 'opacity 0.2s, r 0.2s',
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={e => {
               e.currentTarget.style.opacity = '1';
               e.currentTarget.setAttribute('r', String(radius * 1.3));
               onHover(point.occurrence);
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={e => {
               e.currentTarget.style.opacity = '0.7';
               e.currentTarget.setAttribute('r', String(radius));
               onHover(null);

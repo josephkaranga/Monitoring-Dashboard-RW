@@ -102,26 +102,58 @@ export function TestDataStreamCard() {
       </div>
 
       {/* Mock data display */}
-      <div style={{ marginTop: 48, padding: 20, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
-        <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 12 }}>
-          Mock Data Streams
-        </h3>
+      <div
+        style={{
+          marginTop: 48,
+          padding: 20,
+          background: '#fff',
+          borderRadius: 12,
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 12 }}>Mock Data Streams</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <h4 style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>Active Stream</h4>
-            <pre style={{ fontSize: '0.75rem', overflow: 'auto', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+            <pre
+              style={{
+                fontSize: '0.75rem',
+                overflow: 'auto',
+                background: '#f8fafc',
+                padding: 12,
+                borderRadius: 8,
+              }}
+            >
               {JSON.stringify(mockActiveStream, null, 2)}
             </pre>
           </div>
           <div>
-            <h4 style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>Inactive Stream</h4>
-            <pre style={{ fontSize: '0.75rem', overflow: 'auto', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+            <h4 style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>
+              Inactive Stream
+            </h4>
+            <pre
+              style={{
+                fontSize: '0.75rem',
+                overflow: 'auto',
+                background: '#f8fafc',
+                padding: 12,
+                borderRadius: 8,
+              }}
+            >
               {JSON.stringify(mockInactiveStream, null, 2)}
             </pre>
           </div>
           <div>
             <h4 style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: 8 }}>Error Stream</h4>
-            <pre style={{ fontSize: '0.75rem', overflow: 'auto', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+            <pre
+              style={{
+                fontSize: '0.75rem',
+                overflow: 'auto',
+                background: '#f8fafc',
+                padding: 12,
+                borderRadius: 8,
+              }}
+            >
               {JSON.stringify(mockErrorStream, null, 2)}
             </pre>
           </div>
@@ -132,4 +164,3 @@ export function TestDataStreamCard() {
 }
 
 export { mockActiveStream, mockInactiveStream, mockErrorStream };
-

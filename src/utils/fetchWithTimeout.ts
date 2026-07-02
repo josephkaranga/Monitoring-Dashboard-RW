@@ -7,13 +7,13 @@
 /**
  * Fetch with timeout
  * Makes an HTTP request with a configurable timeout
- * 
+ *
  * @param url - URL to fetch
  * @param options - Fetch options
  * @param timeout - Timeout in milliseconds (default: 30000 = 30 seconds)
  * @returns Promise resolving to Response
  * @throws Error if request times out or fails
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -68,13 +68,13 @@ export async function fetchWithTimeout(
 /**
  * Fetch JSON with timeout
  * Convenience function for fetching JSON data with timeout
- * 
+ *
  * @param url - URL to fetch
  * @param options - Fetch options
  * @param timeout - Timeout in milliseconds (default: 30000 = 30 seconds)
  * @returns Promise resolving to parsed JSON data
  * @throws Error if request times out, fails, or response is not JSON
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -123,13 +123,13 @@ export interface RetryConfig {
 /**
  * Fetch with retry and exponential backoff
  * Automatically retries failed requests with increasing delays
- * 
+ *
  * @param url - URL to fetch
  * @param options - Fetch options
  * @param config - Retry configuration
  * @returns Promise resolving to Response
  * @throws Error if all retry attempts fail
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -182,7 +182,7 @@ export async function fetchWithRetry(
       );
 
       // Wait before retrying
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));
 
       // Increase delay with exponential backoff
       delay = Math.min(delay * backoffMultiplier, maxDelay);
@@ -198,13 +198,13 @@ export async function fetchWithRetry(
 /**
  * Fetch JSON with retry and exponential backoff
  * Convenience function for fetching JSON data with retry logic
- * 
+ *
  * @param url - URL to fetch
  * @param options - Fetch options
  * @param config - Retry configuration
  * @returns Promise resolving to parsed JSON data
  * @throws Error if all retry attempts fail
- * 
+ *
  * @example
  * ```typescript
  * try {

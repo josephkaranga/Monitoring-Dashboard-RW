@@ -32,10 +32,10 @@ export interface ValidationResult {
 
 /**
  * Validates that a year falls within the acceptable reporting period (2020-2030)
- * 
+ *
  * @param year - The year to validate
  * @returns ValidationResult with valid flag and optional error message
- * 
+ *
  * @example
  * validateYear(2025) // { valid: true }
  * validateYear(2031) // { valid: false, error: "Year must be between 2020 and 2030" }
@@ -60,10 +60,10 @@ export function validateYear(year: number): ValidationResult {
 
 /**
  * Validates that a date falls within the acceptable reporting period (2020-01-01 to 2030-12-31)
- * 
+ *
  * @param date - The date to validate (Date object or ISO string)
  * @returns ValidationResult with valid flag and optional error message
- * 
+ *
  * @example
  * validateDate(new Date('2025-06-15')) // { valid: true }
  * validateDate('2031-01-01') // { valid: false, error: "Date must be between 2020-01-01 and 2030-12-31" }
@@ -100,9 +100,9 @@ export function validateDate(date: Date | string): ValidationResult {
 /**
  * Generates an array of years within the reporting period
  * Useful for populating year dropdown selectors
- * 
+ *
  * @returns Array of years from START_YEAR to END_YEAR (inclusive)
- * 
+ *
  * @example
  * getReportingYears() // [2020, 2021, 2022, ..., 2030]
  */
@@ -116,7 +116,7 @@ export function getReportingYears(): number[] {
 
 /**
  * Formats a date to ISO date string (YYYY-MM-DD)
- * 
+ *
  * @param date - The date to format
  * @returns ISO date string or empty string if invalid
  */

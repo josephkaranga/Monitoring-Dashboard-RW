@@ -1,6 +1,6 @@
 /**
  * DatePicker Component Usage Examples
- * 
+ *
  * This file demonstrates how to use the DatePicker component in various scenarios.
  */
 
@@ -14,14 +14,7 @@ import { DatePicker } from './DatePicker';
 export function BasicDatePickerExample() {
   const [date, setDate] = useState('');
 
-  return (
-    <DatePicker
-      value={date}
-      onChange={setDate}
-      label="Report Date"
-      required
-    />
-  );
+  return <DatePicker value={date} onChange={setDate} label="Report Date" required />;
 }
 
 /**
@@ -49,14 +42,7 @@ export function CustomDatePickerExample() {
 export function DisabledDatePickerExample() {
   const [date] = useState('2025-06-15');
 
-  return (
-    <DatePicker
-      value={date}
-      onChange={() => {}}
-      label="Submission Date"
-      disabled
-    />
-  );
+  return <DatePicker value={date} onChange={() => {}} label="Submission Date" disabled />;
 }
 
 /**
@@ -76,13 +62,7 @@ export function DateRangeExample() {
         label="Start Date"
         required
       />
-      <DatePicker
-        id="range-end"
-        value={endDate}
-        onChange={setEndDate}
-        label="End Date"
-        required
-      />
+      <DatePicker id="range-end" value={endDate} onChange={setEndDate} label="End Date" required />
     </div>
   );
 }
@@ -107,14 +87,14 @@ export function FormIntegrationExample() {
       <DatePicker
         id="report-date"
         value={formData.reportDate}
-        onChange={(date) => setFormData({ ...formData, reportDate: date })}
+        onChange={date => setFormData({ ...formData, reportDate: date })}
         label="Report Date"
         required
       />
       <DatePicker
         id="submission-date"
         value={formData.submissionDate}
-        onChange={(date) => setFormData({ ...formData, submissionDate: date })}
+        onChange={date => setFormData({ ...formData, submissionDate: date })}
         label="Submission Date"
         required
       />
@@ -135,12 +115,12 @@ export function ErrorHandlingExample() {
 
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
-    
+
     // Custom validation logic
     if (newDate) {
       const selectedDate = new Date(newDate);
       const today = new Date();
-      
+
       if (selectedDate > today) {
         setCustomError('Date cannot be in the future');
       } else {
@@ -157,9 +137,7 @@ export function ErrorHandlingExample() {
         label="Historical Report Date"
         required
       />
-      {customError && (
-        <p className="mt-1 text-sm text-red-600">{customError}</p>
-      )}
+      {customError && <p className="mt-1 text-sm text-red-600">{customError}</p>}
     </div>
   );
 }
@@ -171,12 +149,5 @@ export function ErrorHandlingExample() {
 export function NoErrorDisplayExample() {
   const [date, setDate] = useState('');
 
-  return (
-    <DatePicker
-      value={date}
-      onChange={setDate}
-      label="Report Date"
-      showError={false}
-    />
-  );
+  return <DatePicker value={date} onChange={setDate} label="Report Date" showError={false} />;
 }

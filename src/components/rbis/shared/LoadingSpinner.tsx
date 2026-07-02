@@ -17,7 +17,7 @@ interface LoadingSpinnerProps {
 
 /**
  * LoadingSpinner component displays animated loading indicator
- * 
+ *
  * @example
  * ```tsx
  * <LoadingSpinner />
@@ -25,7 +25,11 @@ interface LoadingSpinnerProps {
  * <LoadingSpinner size="large" centered />
  * ```
  */
-export function LoadingSpinner({ size = 'medium', message, centered = false }: LoadingSpinnerProps) {
+export function LoadingSpinner({
+  size = 'medium',
+  message,
+  centered = false,
+}: LoadingSpinnerProps) {
   const sizeConfig = {
     small: { spinnerSize: 20, borderWidth: 2, fontSize: '0.7rem' },
     medium: { spinnerSize: 32, borderWidth: 3, fontSize: '0.8rem' },

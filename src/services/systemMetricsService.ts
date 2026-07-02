@@ -1,6 +1,6 @@
 /**
  * System Metrics Service
- * 
+ *
  * Provides access to automatically updated system-wide metrics
  * calculated from all reporting tool submissions
  */
@@ -12,26 +12,26 @@ export interface SystemMetrics {
   totalForestHa: number;
   totalWetlandHa: number;
   restorationCommitmentsHa: number;
-  
+
   // Finance (in RWF)
   financeAllocatedRwf: number;
   financeDisbursedRwf: number;
   financeUtilizedRwf: number;
-  
-  // Environmental Incidents  
+
+  // Environmental Incidents
   totalHwcIncidents: number;
-  
+
   // EIA Compliance
   eiaFullCompliance: number;
   eiaPartialCompliance: number;
   eiaNonCompliance: number;
   eiaCompliancePercentage: number;
-  
+
   // Activity Metrics
   districtsActive: number;
   companiesReporting: number;
   protectedAreasMonitored: number;
-  
+
   // Metadata
   lastUpdated: string;
 }
@@ -82,13 +82,14 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
         districtsActive: 0,
         companiesReporting: 0,
         protectedAreasMonitored: 0,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
     }
 
     const row = data[0];
     const totalEia = row.eia_full_compliance + row.eia_partial_compliance + row.eia_non_compliance;
-    const eiaCompliancePercentage = totalEia > 0 ? Math.round((row.eia_full_compliance / totalEia) * 100) : 0;
+    const eiaCompliancePercentage =
+      totalEia > 0 ? Math.round((row.eia_full_compliance / totalEia) * 100) : 0;
 
     return {
       totalForestHa: parseFloat(row.forest_ha) || 0,
@@ -105,7 +106,7 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
       districtsActive: parseInt(row.districts_active) || 0,
       companiesReporting: parseInt(row.companies_active) || 0,
       protectedAreasMonitored: parseInt(row.protected_areas_monitored) || 0,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
   } catch (error) {
     console.error('Error in fetchSystemMetrics:', error);
@@ -118,16 +119,13 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
  */
 export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
   try {
-    const { data, error } = await supabase
-      .from('dashboard_metrics_live')
-      .select('*')
-      .single();
-    
+    const { data, error } = await supabase.from('dashboard_metrics_live').select('*').single();
+
     if (error) {
       console.error('Error fetching dashboard metrics:', error);
       throw new Error(`Failed to fetch dashboard metrics: ${error.message}`);
     }
-    
+
     if (!data) {
       // Return default values if no data
       return {
@@ -145,10 +143,10 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
         companiesReporting: 0,
         protectedAreasMonitored: 0,
         restorationCommitmentsHa: 0,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
     }
-    
+
     return {
       totalForestHa: parseFloat(data.total_forest_ha) || 0,
       totalWetlandHa: parseFloat(data.total_wetland_ha) || 0,
@@ -164,7 +162,7 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
       companiesReporting: parseInt(data.companies_reporting) || 0,
       protectedAreasMonitored: parseInt(data.protected_areas_monitored) || 0,
       restorationCommitmentsHa: parseFloat(data.restoration_commitments_ha) || 0,
-      lastUpdated: data.last_updated || new Date().toISOString()
+      lastUpdated: data.last_updated || new Date().toISOString(),
     };
   } catch (error) {
     console.error('Error in fetchDashboardMetrics:', error);
@@ -193,50 +191,58 @@ export async function recalculateSystemMetrics(): Promise<string> {
 /**
  * Get metrics for specific categories
  */
-export async function fetchCategoryMetrics(category: 'forest' | 'wetland' | 'finance' | 'hwc' | 'eia' | 'activity') {
+export async function fetchCategoryMetrics(
+  category: 'forest' | 'wetland' | 'finance' | 'hwc' | 'eia' | 'activity'
+) {
   const metrics = await fetchSystemMetrics();
-  
+
   switch (category) {
     case 'forest':
       return {
         totalForestHa: metrics.totalForestHa,
-        restorationCommitmentsHa: metrics.restorationCommitmentsHa
+        restorationCommitmentsHa: metrics.restorationCommitmentsHa,
       };
-    
+
     case 'wetland':
       return {
-        totalWetlandHa: metrics.totalWetlandHa
+        totalWetlandHa: metrics.totalWetlandHa,
       };
-    
+
     case 'finance':
       return {
         allocated: metrics.financeAllocatedRwf,
         disbursed: metrics.financeDisbursedRwf,
         utilized: metrics.financeUtilizedRwf,
-        allocationRate: metrics.financeAllocatedRwf > 0 ? (metrics.financeDisbursedRwf / metrics.financeAllocatedRwf) * 100 : 0,
-        utilizationRate: metrics.financeDisbursedRwf > 0 ? (metrics.financeUtilizedRwf / metrics.financeDisbursedRwf) * 100 : 0
+        allocationRate:
+          metrics.financeAllocatedRwf > 0
+            ? (metrics.financeDisbursedRwf / metrics.financeAllocatedRwf) * 100
+            : 0,
+        utilizationRate:
+          metrics.financeDisbursedRwf > 0
+            ? (metrics.financeUtilizedRwf / metrics.financeDisbursedRwf) * 100
+            : 0,
       };
-    
+
     case 'hwc':
       return {
-        totalIncidents: metrics.totalHwcIncidents
+        totalIncidents: metrics.totalHwcIncidents,
       };
-    
+
     case 'eia':
       return {
         fullCompliance: metrics.eiaFullCompliance,
         partialCompliance: metrics.eiaPartialCompliance,
         nonCompliance: metrics.eiaNonCompliance,
-        compliancePercentage: metrics.eiaCompliancePercentage
+        compliancePercentage: metrics.eiaCompliancePercentage,
       };
-    
+
     case 'activity':
       return {
         districtsActive: metrics.districtsActive,
         companiesReporting: metrics.companiesReporting,
-        protectedAreasMonitored: metrics.protectedAreasMonitored
+        protectedAreasMonitored: metrics.protectedAreasMonitored,
       };
-    
+
     default:
       return metrics;
   }
@@ -245,22 +251,25 @@ export async function fetchCategoryMetrics(category: 'forest' | 'wetland' | 'fin
 /**
  * Format metric values for display
  */
-export function formatMetricValue(value: number, type: 'currency' | 'percentage' | 'number' | 'hectares'): string {
+export function formatMetricValue(
+  value: number,
+  type: 'currency' | 'percentage' | 'number' | 'hectares'
+): string {
   switch (type) {
     case 'currency':
       return new Intl.NumberFormat('rw-RW', {
         style: 'currency',
         currency: 'RWF',
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
       }).format(value);
-    
+
     case 'percentage':
       return `${value.toFixed(1)}%`;
-    
+
     case 'hectares':
       return `${value.toLocaleString()} ha`;
-    
+
     case 'number':
     default:
       return value.toLocaleString();
@@ -274,6 +283,6 @@ export function metricsNeedUpdate(lastUpdated: string, maxAgeMinutes: number = 6
   const lastUpdateTime = new Date(lastUpdated);
   const now = new Date();
   const ageMinutes = (now.getTime() - lastUpdateTime.getTime()) / (1000 * 60);
-  
+
   return ageMinutes > maxAgeMinutes;
 }

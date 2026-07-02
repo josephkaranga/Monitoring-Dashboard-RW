@@ -77,7 +77,7 @@ import { useRBISSignalFeed } from './hooks/useRBIS';
 
 function RBISPage() {
   const { dataStreams, loading, error, refetch } = useRBISSignalFeed();
-  
+
   const handleTargetClick = (targetId: number) => {
     // Scroll to target in IndicatorsMatrix
     scrollToTarget(targetId);
@@ -112,18 +112,21 @@ The component follows the established RBIS dashboard design patterns:
 ## Status Indicators
 
 ### Active
+
 - **Color**: Green (#10b981)
 - **Background**: Light green (#d1fae5)
 - **Icon**: fa-circle-check
 - **Meaning**: Data stream is operational and providing data
 
 ### Inactive
+
 - **Color**: Gray (#6b7280)
 - **Background**: Light gray (#f3f4f6)
 - **Icon**: fa-circle-pause
 - **Meaning**: Data stream is not currently providing data
 
 ### Error
+
 - **Color**: Red (#ef4444)
 - **Background**: Light red (#fee2e2)
 - **Icon**: fa-circle-exclamation
@@ -133,6 +136,7 @@ The component follows the established RBIS dashboard design patterns:
 ## Target Click Behavior
 
 When a user clicks a target badge:
+
 1. The `onTargetClick` callback is triggered with the target ID
 2. The parent component (typically RBISPage) handles scrolling to the target in the IndicatorsMatrix
 3. The target section is highlighted and expanded
@@ -173,6 +177,7 @@ The component handles three types of errors:
 ## Testing
 
 A test file is provided at `SignalFeed.test.tsx` with:
+
 - Mock data streams
 - Test scenarios for all states (normal, loading, error, empty)
 - Visual test component for manual verification

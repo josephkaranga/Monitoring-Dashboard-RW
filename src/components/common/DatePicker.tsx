@@ -3,10 +3,10 @@ import { validateDate, formatDateISO } from '../../utils/validation';
 
 /**
  * DatePicker Component
- * 
+ *
  * A reusable date picker component for selecting dates within the NBSAP reporting period (2020-2030).
  * Enforces date range validation and provides consistent styling across the application.
- * 
+ *
  * Requirements: 7.3, 7.12
  * - Set min date to 2020-01-01
  * - Set max date to 2030-12-31
@@ -47,10 +47,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = event.target.value;
-    
+
     // Clear error when user changes the value
     setError(null);
-    
+
     // Validate the date if a value is provided
     if (newDate) {
       const validation = validateDate(newDate);
@@ -58,7 +58,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         setError(validation.error || 'Invalid date');
       }
     }
-    
+
     // Always call onChange to allow parent to handle the value
     onChange(newDate);
   };

@@ -1,6 +1,6 @@
 /**
  * MapControls Usage Example
- * 
+ *
  * This file demonstrates how to integrate the map control components
  * into the MapPage component. This is a reference implementation showing
  * proper state management and event handling.
@@ -16,18 +16,18 @@ import type { MapOverlay } from '../../types/overlays';
 
 /**
  * Example integration of map controls
- * 
+ *
  * Usage in MapPage.tsx:
- * 
+ *
  * ```tsx
  * import { LayerSwitcher, OverlayToggles, RefreshButton, MapLegend } from './components/map';
- * 
+ *
  * function MapPage() {
  *   const [activeLayer, setActiveLayer] = useState<MapLayer>('biodiversity');
  *   const [overlays, setOverlays] = useState([...]);
  *   const [gbifLoading, setGbifLoading] = useState(false);
  *   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
- *   
+ *
  *   const handleRefresh = async () => {
  *     setGbifLoading(true);
  *     try {
@@ -38,7 +38,7 @@ import type { MapOverlay } from '../../types/overlays';
  *       setGbifLoading(false);
  *     }
  *   };
- *   
+ *
  *   return (
  *     <div>
  *       <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
@@ -46,7 +46,7 @@ import type { MapOverlay } from '../../types/overlays';
  *         <OverlayToggles overlays={overlays} onToggle={handleOverlayToggle} />
  *         <RefreshButton onRefresh={handleRefresh} loading={gbifLoading} lastUpdated={lastUpdated} />
  *       </div>
- *       
+ *
  *       <div style={{ position: 'relative' }}>
  *         <svg>...</svg>
  *         <MapLegend activeLayer={activeLayer} position="bottom-right" />
@@ -61,11 +61,29 @@ export function MapControlsExample() {
   const [activeLayer, setActiveLayer] = useState<MapLayer>('biodiversity');
   const [gbifLoading, setGbifLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(new Date());
-  
+
   const [overlays, setOverlays] = useState([
-    { id: 'gbif' as MapOverlay, label: 'GBIF Occurrences', enabled: false, loading: false, error: null },
-    { id: 'protected-areas' as MapOverlay, label: 'Protected Area Borders', enabled: false, loading: false, error: null },
-    { id: 'rivers' as MapOverlay, label: 'River Network', enabled: false, loading: false, error: null },
+    {
+      id: 'gbif' as MapOverlay,
+      label: 'GBIF Occurrences',
+      enabled: false,
+      loading: false,
+      error: null,
+    },
+    {
+      id: 'protected-areas' as MapOverlay,
+      label: 'Protected Area Borders',
+      enabled: false,
+      loading: false,
+      error: null,
+    },
+    {
+      id: 'rivers' as MapOverlay,
+      label: 'River Network',
+      enabled: false,
+      loading: false,
+      error: null,
+    },
   ]);
 
   // Event handlers
@@ -78,9 +96,7 @@ export function MapControlsExample() {
     console.log('Overlay toggled:', overlayId);
     setOverlays(prev =>
       prev.map(overlay =>
-        overlay.id === overlayId
-          ? { ...overlay, enabled: !overlay.enabled }
-          : overlay
+        overlay.id === overlayId ? { ...overlay, enabled: !overlay.enabled } : overlay
       )
     );
   };
@@ -88,10 +104,10 @@ export function MapControlsExample() {
   const handleRefresh = async () => {
     console.log('Refreshing GBIF data...');
     setGbifLoading(true);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     setGbifLoading(false);
     setLastUpdated(new Date());
     console.log('GBIF data refreshed');
@@ -102,7 +118,7 @@ export function MapControlsExample() {
       <h1 style={{ marginBottom: 20, fontSize: '1.5rem', fontWeight: 700 }}>
         Map Controls Example
       </h1>
-      
+
       {/* Control Panel */}
       <div
         style={{
@@ -116,18 +132,12 @@ export function MapControlsExample() {
           marginBottom: 20,
         }}
       >
-        <LayerSwitcher
-          activeLayer={activeLayer}
-          onLayerChange={handleLayerChange}
-        />
-        
+        <LayerSwitcher activeLayer={activeLayer} onLayerChange={handleLayerChange} />
+
         <div style={{ borderLeft: '1px solid var(--border)', height: 60 }} />
-        
-        <OverlayToggles
-          overlays={overlays}
-          onToggle={handleOverlayToggle}
-        />
-        
+
+        <OverlayToggles overlays={overlays} onToggle={handleOverlayToggle} />
+
         <div style={{ marginLeft: 'auto' }}>
           <RefreshButton
             onRefresh={handleRefresh}
@@ -159,7 +169,7 @@ export function MapControlsExample() {
         >
           Map Canvas (SVG would render here)
         </div>
-        
+
         <MapLegend activeLayer={activeLayer} position="bottom-right" />
       </div>
 
@@ -177,7 +187,11 @@ export function MapControlsExample() {
         <div style={{ fontWeight: 700, marginBottom: 8 }}>Current State:</div>
         <div>Active Layer: {activeLayer}</div>
         <div>
-          Enabled Overlays: {overlays.filter(o => o.enabled).map(o => o.label).join(', ') || 'None'}
+          Enabled Overlays:{' '}
+          {overlays
+            .filter(o => o.enabled)
+            .map(o => o.label)
+            .join(', ') || 'None'}
         </div>
         <div>GBIF Loading: {gbifLoading ? 'Yes' : 'No'}</div>
         <div>Last Updated: {lastUpdated?.toLocaleString() || 'Never'}</div>

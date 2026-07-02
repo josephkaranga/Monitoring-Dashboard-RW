@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const GBIF = 'https://api.gbif.org/v1';
-const RW   = 'RW';
+const RW = 'RW';
 
 export interface GBIFStats {
   totalOccurrences: number;
@@ -42,37 +42,60 @@ async function gbif<T>(path: string): Promise<T> {
 }
 
 export function useGBIFStats() {
-  const [stats, setStats]   = useState<GBIFStats | null>(null);
+  const [stats, setStats] = useState<GBIFStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
-      const [total, mammals, birds, reptiles, amphibians, plants, fish, insects, fungi,
-             y2020, y2021, y2022, y2023, y2024, recent] = await Promise.all([
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&class=Mammalia&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&class=Aves&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&class=Reptilia&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&class=Amphibia&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&kingdom=Plantae&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&class=Actinopterygii&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&class=Insecta&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&kingdom=Fungi&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&year=2020&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&year=2021&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&year=2022&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&year=2023&limit=0`),
-        gbif<{count:number}>(`/occurrence/search?country=${RW}&year=2024&limit=0`),
-        gbif<{results:any[]}>(`/occurrence/search?country=${RW}&limit=6&hasCoordinate=true&hasGeospatialIssue=false&mediaType=StillImage`),
+      const [
+        total,
+        mammals,
+        birds,
+        reptiles,
+        amphibians,
+        plants,
+        fish,
+        insects,
+        fungi,
+        y2020,
+        y2021,
+        y2022,
+        y2023,
+        y2024,
+        recent,
+      ] = await Promise.all([
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&class=Mammalia&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&class=Aves&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&class=Reptilia&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&class=Amphibia&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&kingdom=Plantae&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&class=Actinopterygii&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&class=Insecta&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&kingdom=Fungi&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&year=2020&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&year=2021&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&year=2022&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&year=2023&limit=0`),
+        gbif<{ count: number }>(`/occurrence/search?country=${RW}&year=2024&limit=0`),
+        gbif<{ results: any[] }>(
+          `/occurrence/search?country=${RW}&limit=6&hasCoordinate=true&hasGeospatialIssue=false&mediaType=StillImage`
+        ),
       ]);
 
       setStats({
         totalOccurrences: total.count,
-        mammals: mammals.count, birds: birds.count, reptiles: reptiles.count,
-        amphibians: amphibians.count, plants: plants.count, fish: fish.count,
-        insects: insects.count, fungi: fungi.count,
+        mammals: mammals.count,
+        birds: birds.count,
+        reptiles: reptiles.count,
+        amphibians: amphibians.count,
+        plants: plants.count,
+        fish: fish.count,
+        insects: insects.count,
+        fungi: fungi.count,
         yearlyTrend: [
           { year: 2020, count: y2020.count },
           { year: 2021, count: y2021.count },
@@ -81,8 +104,12 @@ export function useGBIFStats() {
           { year: 2024, count: y2024.count },
         ],
         recentOccurrences: recent.results.map((r: any) => ({
-          key: r.key, scientificName: r.scientificName, kingdom: r.kingdom,
-          family: r.family, year: r.year, stateProvince: r.stateProvince,
+          key: r.key,
+          scientificName: r.scientificName,
+          kingdom: r.kingdom,
+          family: r.family,
+          year: r.year,
+          stateProvince: r.stateProvince,
           basisOfRecord: r.basisOfRecord,
           mediaUrl: r.media?.[0]?.identifier,
         })),
@@ -95,6 +122,8 @@ export function useGBIFStats() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
   return { stats, loading, error, refetch: load };
 }

@@ -63,7 +63,7 @@ export async function submitRoleChangeRequest(
       from_role: profile.role,
       to_role: requestedRole,
       justification,
-      status: 'pending'
+      status: 'pending',
     })
     .select()
     .single();
@@ -78,26 +78,26 @@ export async function submitRoleChangeRequest(
     action_type: 'role_change_request',
     action: 'Submitted role change request',
     detail: `Requested change from ${profile.role} to ${requestedRole}`,
-    role: profile.role
+    role: profile.role,
   });
 
   return { data: data as RoleChangeRequest, error: null };
 }
 
 // ── GET ROLE CHANGE REQUESTS ────────────────────────────────
-export async function getRoleChangeRequests(
-  filters?: {
-    status?: string;
-    userId?: string;
-  }
-): Promise<ApiResponse<RoleChangeRequest[]>> {
+export async function getRoleChangeRequests(filters?: {
+  status?: string;
+  userId?: string;
+}): Promise<ApiResponse<RoleChangeRequest[]>> {
   let query = supabase
     .from('role_change_requests')
-    .select(`
+    .select(
+      `
       *,
       requester:profiles!user_id(full_name, email),
       reviewer:profiles!reviewed_by(full_name)
-    `)
+    `
+    )
     .order('created_at', { ascending: false });
 
   if (filters?.status) {
@@ -119,7 +119,7 @@ export async function getRoleChangeRequests(
     ...req,
     requester_name: req.requester?.full_name,
     requester_email: req.requester?.email,
-    reviewer_name: req.reviewer?.full_name
+    reviewer_name: req.reviewer?.full_name,
   }));
 
   return { data: requests as RoleChangeRequest[], error: null };
@@ -155,7 +155,7 @@ export async function approveRoleChangeRequest(
       status: 'approved',
       reviewed_by: sessionData.session.user.id,
       reviewed_at: new Date().toISOString(),
-      review_note: approvalNote || null
+      review_note: approvalNote || null,
     })
     .eq('id', requestId)
     .select()
@@ -171,7 +171,7 @@ export async function approveRoleChangeRequest(
     action_type: 'role_change_approved',
     action: 'Approved role change request',
     detail: `Approved request ${requestId}`,
-    role: 'dashboard_management'
+    role: 'dashboard_management',
   });
 
   return { data: data as RoleChangeRequest, error: null };
@@ -197,7 +197,7 @@ export async function rejectRoleChangeRequest(
       status: 'rejected',
       reviewed_by: sessionData.session.user.id,
       reviewed_at: new Date().toISOString(),
-      rejection_reason: rejectionReason
+      rejection_reason: rejectionReason,
     })
     .eq('id', requestId)
     .select()
@@ -213,7 +213,7 @@ export async function rejectRoleChangeRequest(
     action_type: 'role_change_rejected',
     action: 'Rejected role change request',
     detail: `Rejected request ${requestId}: ${rejectionReason}`,
-    role: 'dashboard_management'
+    role: 'dashboard_management',
   });
 
   return { data: data as RoleChangeRequest, error: null };
@@ -241,7 +241,7 @@ export async function cancelRoleChangeRequest(
       user_id: sessionData.session.user.id,
       action_type: 'role_change_request',
       action: 'Cancelled role change request',
-      detail: `Cancelled request ${requestId}`
+      detail: `Cancelled request ${requestId}`,
     });
   }
 

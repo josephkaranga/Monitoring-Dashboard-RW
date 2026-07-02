@@ -31,7 +31,9 @@ function deriveAttentionItems(targets: NBSAPTarget[], indicators: Indicator[]): 
     else reasons.push('Progress needs acceleration');
 
     if ((t.pending_reports ?? 0) > 0) {
-      reasons.push(`${t.pending_reports} report${t.pending_reports! > 1 ? 's' : ''} pending review`);
+      reasons.push(
+        `${t.pending_reports} report${t.pending_reports! > 1 ? 's' : ''} pending review`
+      );
     }
     if ((t.total_reports ?? 0) === 0) {
       reasons.push('No data submissions yet');
@@ -95,11 +97,16 @@ export function AttentionPanel({ targets, indicators }: Props) {
 
   if (items.length === 0) {
     return (
-      <div style={{
-        background: 'var(--surface)', borderRadius: 'var(--radius, 14px)',
-        border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
-        padding: 24, textAlign: 'center',
-      }}>
+      <div
+        style={{
+          background: 'var(--surface)',
+          borderRadius: 'var(--radius, 14px)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-sm)',
+          padding: 24,
+          textAlign: 'center',
+        }}
+      >
         <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>
           <i className="fa-solid fa-circle-check" style={{ color: '#16a34a' }} />
         </div>
@@ -115,17 +122,35 @@ export function AttentionPanel({ targets, indicators }: Props) {
   const atRiskCount = items.filter(i => i.severity === 'at-risk').length;
 
   return (
-    <div style={{
-      background: 'var(--surface)', borderRadius: 'var(--radius, 14px)',
-      border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
-    }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        borderRadius: 'var(--radius, 14px)',
+        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       {/* Header */}
-      <div style={{
-        padding: '16px 20px', borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
+      <div
+        style={{
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div>
-          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: 'var(--text-1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             <i className="fa-solid fa-triangle-exclamation" style={{ color: '#d97706' }} />
             Requires Attention
           </div>
@@ -135,12 +160,30 @@ export function AttentionPanel({ targets, indicators }: Props) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {behindCount > 0 && (
-            <span style={{ background: '#fee2e2', color: '#dc2626', padding: '4px 10px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700 }}>
+            <span
+              style={{
+                background: '#fee2e2',
+                color: '#dc2626',
+                padding: '4px 10px',
+                borderRadius: 20,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+              }}
+            >
               {behindCount} Behind
             </span>
           )}
           {atRiskCount > 0 && (
-            <span style={{ background: '#fef3c7', color: '#d97706', padding: '4px 10px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700 }}>
+            <span
+              style={{
+                background: '#fef3c7',
+                color: '#d97706',
+                padding: '4px 10px',
+                borderRadius: 20,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+              }}
+            >
               {atRiskCount} At Risk
             </span>
           )}
@@ -152,34 +195,63 @@ export function AttentionPanel({ targets, indicators }: Props) {
         {items.map((item, idx) => {
           const pc = progressColor(item.progress);
           return (
-            <div key={`${item.type}-${item.id}`} style={{
-              padding: '14px 20px',
-              borderBottom: idx < items.length - 1 ? '1px solid #f8fafc' : 'none',
-              display: 'flex', gap: 12, alignItems: 'flex-start',
-            }}>
+            <div
+              key={`${item.type}-${item.id}`}
+              style={{
+                padding: '14px 20px',
+                borderBottom: idx < items.length - 1 ? '1px solid #f8fafc' : 'none',
+                display: 'flex',
+                gap: 12,
+                alignItems: 'flex-start',
+              }}
+            >
               {/* Severity indicator */}
-              <div style={{
-                width: 4, minHeight: 40, borderRadius: 2, flexShrink: 0, marginTop: 2,
-                background: item.severity === 'behind' ? '#dc2626' : '#d97706',
-              }} />
+              <div
+                style={{
+                  width: 4,
+                  minHeight: 40,
+                  borderRadius: 2,
+                  flexShrink: 0,
+                  marginTop: 2,
+                  background: item.severity === 'behind' ? '#dc2626' : '#d97706',
+                }}
+              />
 
               <div style={{ flex: 1 }}>
                 {/* Name + badges */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    marginBottom: 4,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   {item.goal && (
-                    <span style={{
-                      background: goalColors[item.goal]?.bg ?? '#f1f5f9',
-                      color: goalColors[item.goal]?.color ?? '#334155',
-                      fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4,
-                    }}>
+                    <span
+                      style={{
+                        background: goalColors[item.goal]?.bg ?? '#f1f5f9',
+                        color: goalColors[item.goal]?.color ?? '#334155',
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
                       Goal {item.goal}
                     </span>
                   )}
-                  <span style={{
-                    fontSize: '0.6rem', fontWeight: 600, padding: '2px 6px', borderRadius: 4,
-                    background: item.type === 'target' ? '#e0f2fe' : '#f3e8ff',
-                    color: item.type === 'target' ? '#0369a1' : '#6b21a8',
-                  }}>
+                  <span
+                    style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: item.type === 'target' ? '#e0f2fe' : '#f3e8ff',
+                      color: item.type === 'target' ? '#0369a1' : '#6b21a8',
+                    }}
+                  >
                     {item.type === 'target' ? 'Target' : 'Indicator'}
                   </span>
                   <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-1)' }}>
@@ -189,14 +261,28 @@ export function AttentionPanel({ targets, indicators }: Props) {
 
                 {/* Progress bar */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{ flex: 1, height: 5, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%', width: `${item.progress}%`,
-                      background: pc.color, borderRadius: 3,
-                      transition: 'width 0.8s ease',
-                    }} />
+                  <div
+                    style={{
+                      flex: 1,
+                      height: 5,
+                      background: '#f1f5f9',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${item.progress}%`,
+                        background: pc.color,
+                        borderRadius: 3,
+                        transition: 'width 0.8s ease',
+                      }}
+                    />
                   </div>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: pc.color, minWidth: 40 }}>
+                  <span
+                    style={{ fontSize: '0.72rem', fontWeight: 700, color: pc.color, minWidth: 40 }}
+                  >
                     {item.progress}%
                   </span>
                 </div>
@@ -204,11 +290,17 @@ export function AttentionPanel({ targets, indicators }: Props) {
                 {/* Reasons */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {item.reasons.map((reason, i) => (
-                    <span key={i} style={{
-                      fontSize: '0.62rem', color: '#64748b',
-                      background: '#f8fafc', padding: '2px 8px', borderRadius: 4,
-                      border: '1px solid #e2e8f0',
-                    }}>
+                    <span
+                      key={i}
+                      style={{
+                        fontSize: '0.62rem',
+                        color: '#64748b',
+                        background: '#f8fafc',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
                       {reason}
                     </span>
                   ))}

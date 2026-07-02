@@ -1,0 +1,9 @@
+dist/
+node_modules/
+*.min.js
+public/
+supabase/.temp/
+docs/
+migrations/
+coverage/
+.vite/

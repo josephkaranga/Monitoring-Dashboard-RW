@@ -84,12 +84,7 @@ function MyComponent() {
     // Scroll to target in matrix, etc.
   };
 
-  return (
-    <DataStreamCard
-      dataStream={dataStream}
-      onTargetClick={handleTargetClick}
-    />
-  );
+  return <DataStreamCard dataStream={dataStream} onTargetClick={handleTargetClick} />;
 }
 ```
 
@@ -112,18 +107,21 @@ function MyComponent() {
 ## Status Indicators
 
 ### Active (Green)
+
 - Color: `#10b981`
 - Background: `#d1fae5`
 - Text: `#065f46`
 - Icon: `fa-circle-check`
 
 ### Inactive (Gray)
+
 - Color: `#6b7280`
 - Background: `#f3f4f6`
 - Text: `#374151`
 - Icon: `fa-circle-pause`
 
 ### Error (Red)
+
 - Color: `#ef4444`
 - Background: `#fee2e2`
 - Text: `#991b1b`
@@ -145,15 +143,18 @@ The component uses inline styles with CSS custom properties for theming:
 ## Interactions
 
 ### Target Badge Click
+
 When a user clicks a target badge, the `onTargetClick` callback is triggered with the target ID. This typically scrolls to and highlights the target in the Indicators Matrix.
 
 ### Hover Effects
+
 - **Card**: Background changes to `--surface-3`, border changes to `--sky-dim`
 - **Target Badges**: Background darkens, slight upward translation
 
 ## Testing
 
 See `DataStreamCard.test.tsx` for test cases covering:
+
 - Active stream display
 - Inactive stream display
 - Error stream with error message
@@ -172,6 +173,7 @@ This component is designed to be wrapped with `React.memo` for performance optim
 ## Future Enhancements
 
 Potential improvements for future iterations:
+
 - Real-time occurrence count updates with animation
 - Expandable details section with more stream information
 - Filtering by target number

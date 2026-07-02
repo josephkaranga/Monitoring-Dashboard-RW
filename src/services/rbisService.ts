@@ -62,7 +62,7 @@ export async function connectToRBIS(): Promise<RBISConnection> {
   try {
     const response = await fetch(`${RBIS_BASE_URL}/health`, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
 
@@ -71,7 +71,7 @@ export async function connectToRBIS(): Promise<RBISConnection> {
     }
 
     const data = await response.json();
-    
+
     // Log successful connection
     await logRBISConnection('connected', null);
 
@@ -84,7 +84,7 @@ export async function connectToRBIS(): Promise<RBISConnection> {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown connection error';
     await logRBISConnection('error', errorMessage);
-    
+
     return {
       status: 'error',
       serverUrl: 'rbis.ur.ac.rw',
@@ -145,13 +145,10 @@ export async function getConnectionStatus(): Promise<RBISConnection> {
  * @param status - Connection status (connected, disconnected, error)
  * @param errorMessage - Error message if status is 'error'
  */
-async function logRBISConnection(
-  status: string,
-  errorMessage: string | null
-): Promise<void> {
+async function logRBISConnection(status: string, errorMessage: string | null): Promise<void> {
   try {
     const { data: sessionData } = await supabase.auth.getSession();
-    
+
     await supabase.from('rbis_connection_log').insert({
       status,
       server_url: 'rbis.ur.ac.rw',
@@ -211,14 +208,14 @@ async function fetchGBIFCount(params: Record<string, string>): Promise<number> {
     });
 
     const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(15000), // 15 second timeout
     });
-    
+
     if (!response.ok) {
       throw new Error(`GBIF API error: HTTP ${response.status}`);
     }
-    
+
     const data = await response.json();
     return data.count || 0;
   } catch (error) {
@@ -253,26 +250,29 @@ export async function fetchRecentOccurrences(limit = 5): Promise<RBISOccurrence[
     });
 
     const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(15000),
     });
-    
+
     if (!response.ok) {
       throw new Error(`GBIF API error: HTTP ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     return (data.results || []).map((record: any) => ({
       id: record.key?.toString() || Math.random().toString(),
       scientificName: record.scientificName || 'Unknown species',
       location: record.stateProvince || record.locality || 'Rwanda',
       timestamp: record.eventDate || record.modified || new Date().toISOString(),
       dataStream: record.datasetName || 'GBIF',
-      coordinates: record.decimalLatitude && record.decimalLongitude ? {
-        latitude: record.decimalLatitude,
-        longitude: record.decimalLongitude,
-      } : undefined,
+      coordinates:
+        record.decimalLatitude && record.decimalLongitude
+          ? {
+              latitude: record.decimalLatitude,
+              longitude: record.decimalLongitude,
+            }
+          : undefined,
     }));
   } catch (error) {
     console.error('fetchRecentOccurrences error:', error);
@@ -290,14 +290,16 @@ export async function fetchIndicatorsWithLinkages(): Promise<Indicator[]> {
   try {
     const { data: indicators, error } = await supabase
       .from('indicators')
-      .select(`
+      .select(
+        `
         *,
         rbis_linkages (
           linkage_status,
           data_stream_id,
           last_sync
         )
-      `)
+      `
+      )
       .order('id', { ascending: true });
 
     if (error) {
@@ -367,12 +369,15 @@ export async function fetchTargetsWithIndicators(): Promise<NBSAPTarget[]> {
     }
 
     const indicators = await fetchIndicatorsWithLinkages();
-    
+
     return (targets || []).map((target: any) => {
       const targetIndicators = indicators.filter(ind => ind.targetId === target.id);
-      const avgProgress = targetIndicators.length > 0
-        ? Math.round(targetIndicators.reduce((sum, ind) => sum + ind.progress, 0) / targetIndicators.length)
-        : 0;
+      const avgProgress =
+        targetIndicators.length > 0
+          ? Math.round(
+              targetIndicators.reduce((sum, ind) => sum + ind.progress, 0) / targetIndicators.length
+            )
+          : 0;
 
       return {
         id: target.id,
@@ -399,35 +404,38 @@ export async function fetchTargetsWithIndicators(): Promise<NBSAPTarget[]> {
 export async function fetchGBFGoals(): Promise<GBFGoal[]> {
   try {
     const targets = await fetchTargetsWithIndicators();
-    
+
     const goalDefinitions = [
-      { 
-        id: 'A' as const, 
-        title: 'Goal A: Ecosystem Integrity', 
-        description: 'Maintain and restore ecosystem integrity, connectivity, and resilience' 
+      {
+        id: 'A' as const,
+        title: 'Goal A: Ecosystem Integrity',
+        description: 'Maintain and restore ecosystem integrity, connectivity, and resilience',
       },
-      { 
-        id: 'B' as const, 
-        title: 'Goal B: Sustainable Use', 
-        description: 'Ensure sustainable use and equitable benefit-sharing' 
+      {
+        id: 'B' as const,
+        title: 'Goal B: Sustainable Use',
+        description: 'Ensure sustainable use and equitable benefit-sharing',
       },
-      { 
-        id: 'C' as const, 
-        title: 'Goal C: Benefit Sharing', 
-        description: 'Fair and equitable sharing of benefits from genetic resources' 
+      {
+        id: 'C' as const,
+        title: 'Goal C: Benefit Sharing',
+        description: 'Fair and equitable sharing of benefits from genetic resources',
       },
-      { 
-        id: 'D' as const, 
-        title: 'Goal D: Implementation', 
-        description: 'Adequate means of implementation and capacity building' 
+      {
+        id: 'D' as const,
+        title: 'Goal D: Implementation',
+        description: 'Adequate means of implementation and capacity building',
       },
     ];
 
     return goalDefinitions.map(goal => {
       const goalTargets = targets.filter(t => t.goalId === goal.id);
-      const avgProgress = goalTargets.length > 0
-        ? Math.round(goalTargets.reduce((sum, t) => sum + t.averageProgress, 0) / goalTargets.length)
-        : 0;
+      const avgProgress =
+        goalTargets.length > 0
+          ? Math.round(
+              goalTargets.reduce((sum, t) => sum + t.averageProgress, 0) / goalTargets.length
+            )
+          : 0;
 
       return {
         ...goal,
@@ -482,10 +490,7 @@ export async function fetchRBISDataStreams(): Promise<RBISDataStream[]> {
  * @param streamId - ID of the data stream to update
  * @param count - New occurrence count
  */
-export async function updateDataStreamCount(
-  streamId: string,
-  count: number
-): Promise<void> {
+export async function updateDataStreamCount(streamId: string, count: number): Promise<void> {
   try {
     await supabase
       .from('rbis_data_streams')
@@ -540,9 +545,10 @@ export async function fetchRBISDashboardSummary(): Promise<RBISDashboardSummary>
 
     const allIndicators = goals.flatMap(g => g.targets.flatMap(t => t.indicators));
     const linkedIndicators = allIndicators.filter(i => i.rbisLinkage.status === 'linked');
-    const linkagePercentage = allIndicators.length > 0
-      ? Math.round((linkedIndicators.length / allIndicators.length) * 100)
-      : 0;
+    const linkagePercentage =
+      allIndicators.length > 0
+        ? Math.round((linkedIndicators.length / allIndicators.length) * 100)
+        : 0;
 
     return {
       totalTargets: goals.flatMap(g => g.targets).length,
@@ -580,51 +586,58 @@ export function filterGoals(goals: GBFGoal[], filters: SearchFilters): GBFGoal[]
   // Apply search term
   if (filters.searchTerm.trim()) {
     const term = filters.searchTerm.toLowerCase();
-    
-    filtered = filtered.map(goal => ({
-      ...goal,
-      targets: goal.targets
-        .map(target => ({
-          ...target,
-          indicators: target.indicators.filter(indicator =>
-            indicator.title.toLowerCase().includes(term) ||
-            indicator.number.toLowerCase().includes(term) ||
-            target.title.toLowerCase().includes(term) ||
-            target.description.toLowerCase().includes(term)
-          ),
-        }))
-        .filter(target => target.indicators.length > 0),
-    })).filter(goal => goal.targets.length > 0);
+
+    filtered = filtered
+      .map(goal => ({
+        ...goal,
+        targets: goal.targets
+          .map(target => ({
+            ...target,
+            indicators: target.indicators.filter(
+              indicator =>
+                indicator.title.toLowerCase().includes(term) ||
+                indicator.number.toLowerCase().includes(term) ||
+                target.title.toLowerCase().includes(term) ||
+                target.description.toLowerCase().includes(term)
+            ),
+          }))
+          .filter(target => target.indicators.length > 0),
+      }))
+      .filter(goal => goal.targets.length > 0);
   }
 
   // Apply status filter
   if (filters.statusFilter && filters.statusFilter !== 'all') {
-    filtered = filtered.map(goal => ({
-      ...goal,
-      targets: goal.targets
-        .map(target => ({
-          ...target,
-          indicators: target.indicators.filter(
-            indicator => indicator.status === filters.statusFilter
-          ),
-        }))
-        .filter(target => target.indicators.length > 0),
-    })).filter(goal => goal.targets.length > 0);
+    filtered = filtered
+      .map(goal => ({
+        ...goal,
+        targets: goal.targets
+          .map(target => ({
+            ...target,
+            indicators: target.indicators.filter(
+              indicator => indicator.status === filters.statusFilter
+            ),
+          }))
+          .filter(target => target.indicators.length > 0),
+      }))
+      .filter(goal => goal.targets.length > 0);
   }
 
   // Apply linkage filter
   if (filters.linkageFilter && filters.linkageFilter !== 'all') {
-    filtered = filtered.map(goal => ({
-      ...goal,
-      targets: goal.targets
-        .map(target => ({
-          ...target,
-          indicators: target.indicators.filter(
-            indicator => indicator.rbisLinkage.status === filters.linkageFilter
-          ),
-        }))
-        .filter(target => target.indicators.length > 0),
-    })).filter(goal => goal.targets.length > 0);
+    filtered = filtered
+      .map(goal => ({
+        ...goal,
+        targets: goal.targets
+          .map(target => ({
+            ...target,
+            indicators: target.indicators.filter(
+              indicator => indicator.rbisLinkage.status === filters.linkageFilter
+            ),
+          }))
+          .filter(target => target.indicators.length > 0),
+      }))
+      .filter(goal => goal.targets.length > 0);
   }
 
   return filtered;

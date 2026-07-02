@@ -22,13 +22,13 @@ import {
   getToolWeight,
   getToolDescription,
   reportTypeToToolId,
-  toolIdToReportType
+  toolIdToReportType,
 } from './automaticReporting';
 import type { ReportType, SubmissionStatus } from './index';
 
 describe('Automatic Reporting Types', () => {
   // ── ENUM TESTS ─────────────────────────────────────────────
-  
+
   describe('ToolId enum', () => {
     it('should contain all required tool IDs', () => {
       expect(ToolId.T01).toBe('T01');
@@ -71,11 +71,11 @@ describe('Automatic Reporting Types', () => {
   describe('TOOL_WEIGHTS constant', () => {
     it('should have correct weight values as specified in requirements', () => {
       expect(TOOL_WEIGHTS[ToolId.T01]).toBe(0.25); // National Institutional Reporting
-      expect(TOOL_WEIGHTS[ToolId.T02]).toBe(0.20); // District Biodiversity Monitoring
+      expect(TOOL_WEIGHTS[ToolId.T02]).toBe(0.2); // District Biodiversity Monitoring
       expect(TOOL_WEIGHTS[ToolId.T03]).toBe(0.15); // Protected Area Monitoring
       expect(TOOL_WEIGHTS[ToolId.T04]).toBe(0.15); // Community Biodiversity Monitoring
-      expect(TOOL_WEIGHTS[ToolId.T05]).toBe(0.10); // Biodiversity Finance Tracking
-      expect(TOOL_WEIGHTS[ToolId.T06]).toBe(0.10); // Private Sector Compliance
+      expect(TOOL_WEIGHTS[ToolId.T05]).toBe(0.1); // Biodiversity Finance Tracking
+      expect(TOOL_WEIGHTS[ToolId.T06]).toBe(0.1); // Private Sector Compliance
       expect(TOOL_WEIGHTS[ToolId.T07]).toBe(0.05); // Research & Academic Contribution
     });
 
@@ -123,7 +123,7 @@ describe('Automatic Reporting Types', () => {
         weight: 0.25,
         description: 'National Institutional Reporting',
         active: true,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       expect(toolWeight.toolId).toBe(ToolId.T01);
@@ -145,7 +145,7 @@ describe('Automatic Reporting Types', () => {
         previousProgress: 30,
         newProgress: 35,
         calculatedAt: new Date(),
-        reportId: 'report-123'
+        reportId: 'report-123',
       };
 
       expect(calculation.targetId).toBe(1);
@@ -179,8 +179,8 @@ describe('Automatic Reporting Types', () => {
           previousProgress: 30,
           newProgress: 35,
           calculatedAt: new Date(),
-          reportId: 'report-123'
-        }
+          reportId: 'report-123',
+        },
       };
 
       expect(updateResult.success).toBe(true);
@@ -203,7 +203,7 @@ describe('Automatic Reporting Types', () => {
         nonCompliant: 5,
         compliancePercentage: 80,
         activeIssues: 5,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       };
 
       expect(eiaMetrics.totalReports).toBe(100);
@@ -227,7 +227,7 @@ describe('Automatic Reporting Types', () => {
         processingTimeout: 30,
         enableNotifications: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       expect(orgConfig.organizationId).toBe('org-123');
@@ -242,8 +242,12 @@ describe('Automatic Reporting Types', () => {
     });
 
     it('should accept valid audit level values', () => {
-      const levels: Array<'minimal' | 'standard' | 'comprehensive'> = ['minimal', 'standard', 'comprehensive'];
-      
+      const levels: Array<'minimal' | 'standard' | 'comprehensive'> = [
+        'minimal',
+        'standard',
+        'comprehensive',
+      ];
+
       levels.forEach(level => {
         const config: OrganizationConfig = {
           organizationId: 'org-123',
@@ -254,9 +258,9 @@ describe('Automatic Reporting Types', () => {
           processingTimeout: 30,
           enableNotifications: true,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         };
-        
+
         expect(config.auditLevel).toBe(level);
       });
     });
@@ -278,7 +282,7 @@ describe('Automatic Reporting Types', () => {
         [ToolId.T04]: 0.1,
         [ToolId.T05]: 0.1,
         [ToolId.T06]: 0.1,
-        [ToolId.T07]: 0.05
+        [ToolId.T07]: 0.05,
       } as Record<ToolId, number>;
 
       const result = validateToolWeights(invalidWeights);
@@ -293,11 +297,14 @@ describe('Automatic Reporting Types', () => {
         [ToolId.T04]: 0.1,
         [ToolId.T05]: 0.1,
         [ToolId.T06]: 0.1,
-        [ToolId.T07]: 0.4
+        [ToolId.T07]: 0.4,
       } as Record<ToolId, number>;
 
       // This should sum to 1.0 but might have floating point issues
-      const sum = Object.values(weightsWithPrecisionIssue).reduce((total, weight) => total + weight, 0);
+      const sum = Object.values(weightsWithPrecisionIssue).reduce(
+        (total, weight) => total + weight,
+        0
+      );
       expect(sum).toBe(1.0);
 
       const result = validateToolWeights(weightsWithPrecisionIssue);
@@ -308,11 +315,11 @@ describe('Automatic Reporting Types', () => {
   describe('getToolWeight function', () => {
     it('should return correct weight for each tool ID', () => {
       expect(getToolWeight(ToolId.T01)).toBe(0.25);
-      expect(getToolWeight(ToolId.T02)).toBe(0.20);
+      expect(getToolWeight(ToolId.T02)).toBe(0.2);
       expect(getToolWeight(ToolId.T03)).toBe(0.15);
       expect(getToolWeight(ToolId.T04)).toBe(0.15);
-      expect(getToolWeight(ToolId.T05)).toBe(0.10);
-      expect(getToolWeight(ToolId.T06)).toBe(0.10);
+      expect(getToolWeight(ToolId.T05)).toBe(0.1);
+      expect(getToolWeight(ToolId.T06)).toBe(0.1);
       expect(getToolWeight(ToolId.T07)).toBe(0.05);
     });
   });
@@ -361,10 +368,10 @@ describe('Automatic Reporting Types', () => {
         type: 'progress_updated',
         targetId: 1,
         newValues: {
-          progress: 35
+          progress: 35,
         },
         timestamp: new Date(),
-        sourceReportId: 'report-123'
+        sourceReportId: 'report-123',
       };
 
       expect(updateEvent.type).toBe('progress_updated');
@@ -378,10 +385,10 @@ describe('Automatic Reporting Types', () => {
       const batchUpdate: BatchUpdate = {
         updates: [
           { targetId: 1, contribution: 10, toolId: ToolId.T01 },
-          { targetId: 2, contribution: 5, toolId: ToolId.T02 }
+          { targetId: 2, contribution: 5, toolId: ToolId.T02 },
         ],
         createdAt: new Date(),
-        timeout: 30
+        timeout: 30,
       };
 
       expect(batchUpdate.updates).toHaveLength(2);
@@ -404,7 +411,7 @@ describe('Automatic Reporting Types', () => {
         nbsapTargetId: 1,
         formData: { field1: 'value1', field2: 42 },
         submissionTime: new Date(),
-        contributionValue: 20
+        contributionValue: 20,
       };
 
       expect(reportSubmission.id).toBe('report-123');
@@ -423,7 +430,7 @@ describe('Automatic Reporting Types', () => {
         success: true,
         progressUpdated: true,
         processingTime: 150,
-        status: UpdateStatus.COMPLETED
+        status: UpdateStatus.COMPLETED,
       };
 
       expect(processingResult.success).toBe(true);
@@ -466,7 +473,7 @@ describe('Automatic Reporting Types', () => {
 
     it('should validate weighted contribution calculations', () => {
       const baseContribution = 20;
-      
+
       // Test each tool weight produces correct weighted contribution
       Object.entries(TOOL_WEIGHTS).forEach(([toolId, weight]) => {
         const weightedContribution = baseContribution * weight;

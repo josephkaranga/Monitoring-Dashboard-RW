@@ -68,7 +68,7 @@ export async function fetchTargets(): Promise<NBSAPTarget[]> {
   // Map the data and handle missing responsible_stakeholders column gracefully
   return (data || []).map((target: any) => ({
     ...target,
-    responsible_stakeholders: target.responsible_stakeholders || []
+    responsible_stakeholders: target.responsible_stakeholders || [],
   })) as NBSAPTarget[];
 }
 
@@ -85,15 +85,18 @@ export async function fetchTargetsWithReportStats(): Promise<NBSAPTarget[]> {
   return (data || []) as NBSAPTarget[];
 }
 
-export async function fetchUserResponsibleTargets(userOrganization?: string): Promise<NBSAPTarget[]> {
+export async function fetchUserResponsibleTargets(
+  userOrganization?: string
+): Promise<NBSAPTarget[]> {
   console.log('🔧 fetchUserResponsibleTargets called with userOrg:', userOrganization);
-  
+
   try {
     // Use the database RPC function now that it has correct stakeholder mappings
     console.log('�️ Using database RPC function with updated stakeholder mappings');
-    
-    const { data: rpcData, error: rpcError } = await supabase
-      .rpc('get_user_responsible_targets', { user_org: userOrganization || '' });
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_responsible_targets', {
+      user_org: userOrganization || '',
+    });
 
     if (rpcError) {
       console.error('❌ RPC error:', rpcError);
@@ -110,35 +113,40 @@ export async function fetchUserResponsibleTargets(userOrganization?: string): Pr
         progress: item.progress,
         responsible_stakeholders: item.responsible_stakeholders || [],
         baseline: '', // Not returned by RPC
-        goal_color: '', // Not returned by RPC  
+        goal_color: '', // Not returned by RPC
         created_at: '', // Not returned by RPC
         updated_at: '', // Not returned by RPC
       }));
 
-      console.log('✅ RPC success: returning', transformedTargets.length, 'targets from database function');
-      console.log('🔍 Database targets:', transformedTargets.map(t => ({ 
-        id: t.id, 
-        title: t.title, 
-        stakeholders: t.responsible_stakeholders 
-      })));
+      console.log(
+        '✅ RPC success: returning',
+        transformedTargets.length,
+        'targets from database function'
+      );
+      console.log(
+        '🔍 Database targets:',
+        transformedTargets.map(t => ({
+          id: t.id,
+          title: t.title,
+          stakeholders: t.responsible_stakeholders,
+        }))
+      );
       return transformedTargets;
     }
 
     // If RPC returns empty, fall back to all targets
     console.log('⚠️ RPC returned empty, falling back to all targets');
     return await fetchTargets();
-    
   } catch (rpcError) {
     console.error('❌ RPC failed, using fallback method:', rpcError);
-    
+
     // Fallback: get all targets with stakeholder mapping
     try {
       const fallbackTargets = await fetchTargets();
       console.log('� Fallback: loaded', fallbackTargets.length, 'targets from fetchTargets()');
-      
+
       // Use the database mappings - these should now match the updated database
       return fallbackTargets;
-      
     } catch (fallbackError) {
       console.error('❌ Fallback fetchTargets failed:', fallbackError);
       return [];
@@ -187,10 +195,7 @@ export async function fetchRisks(filters?: {
   category?: string;
   search?: string;
 }): Promise<Risk[]> {
-  let query = supabase
-    .from('risks')
-    .select('*')
-    .order('level', { ascending: false });
+  let query = supabase.from('risks').select('*').order('level', { ascending: false });
 
   if (filters?.level && filters.level !== 'all') {
     query = query.eq('level', filters.level);
@@ -218,11 +223,7 @@ export async function upsertLiveRisk(risk: Partial<Risk> & { id: string }): Prom
 }
 
 export async function removeLiveRisk(riskId: string): Promise<void> {
-  await supabase
-    .from('risks')
-    .delete()
-    .eq('id', riskId)
-    .eq('is_live', true);
+  await supabase.from('risks').delete().eq('id', riskId).eq('is_live', true);
 }
 
 // ============================================================
@@ -263,10 +264,10 @@ export async function logAuditEvent(
 ): Promise<void> {
   try {
     const { data: sessionData } = await supabase.auth.getSession();
-    
+
     // If no session, log anonymously (for public access scenarios)
     const userId = sessionData.session?.user.id || 'anonymous';
-    
+
     let role = null;
     if (sessionData.session) {
       const { data: profile } = await supabase
@@ -297,10 +298,12 @@ export async function fetchAuditLog(filters?: {
 }): Promise<AuditEntry[]> {
   let query = supabase
     .from('audit_log')
-    .select(`
+    .select(
+      `
       *,
       profile:profiles(full_name, email, role)
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
     .limit(filters?.limit || 200);
 
@@ -322,9 +325,11 @@ export async function fetchAuditLog(filters?: {
 export async function exportAuditLogToCSV(entries: AuditEntry[]): Promise<string> {
   const fields = ['created_at', 'action_type', 'action', 'detail', 'role'];
   const header = fields.join(',');
-  const rows = entries.map((e) =>
+  const rows = entries.map(e =>
     fields
-      .map((f) => `"${String((e as unknown as Record<string, unknown>)[f] ?? '').replace(/"/g, '""')}"`)
+      .map(
+        f => `"${String((e as unknown as Record<string, unknown>)[f] ?? '').replace(/"/g, '""')}"`
+      )
       .join(',')
   );
   return [header, ...rows].join('\n');
@@ -347,17 +352,11 @@ export async function fetchNotifications(userId: string): Promise<Notification[]
 }
 
 export async function markNotificationRead(notificationId: string): Promise<void> {
-  await supabase
-    .from('notifications')
-    .update({ is_read: true })
-    .eq('id', notificationId);
+  await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId);
 }
 
 export async function markAllNotificationsRead(userId: string): Promise<void> {
-  await supabase
-    .from('notifications')
-    .update({ is_read: true })
-    .eq('user_id', userId);
+  await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId);
 }
 
 export async function createNotification(
@@ -412,9 +411,7 @@ export async function saveNotifPreferences(
 // USER SETTINGS SERVICE
 // ============================================================
 
-export async function fetchUserSettings(
-  userId: string
-): Promise<UserSettings | null> {
+export async function fetchUserSettings(userId: string): Promise<UserSettings | null> {
   const { data, error } = await supabase
     .from('user_settings')
     .select('*')
@@ -457,11 +454,7 @@ export function subscribeToReports(
   const channelName = `toolkit_reports_changes:${Math.random().toString(36).slice(2)}`;
   return supabase
     .channel(channelName)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'toolkit_reports' },
-      callback
-    )
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'toolkit_reports' }, callback)
     .subscribe();
 }
 
@@ -479,7 +472,7 @@ export function subscribeToNotifications(
         table: 'notifications',
         filter: `user_id=eq.${userId}`,
       },
-      (payload) => callback(payload.new as Notification)
+      payload => callback(payload.new as Notification)
     )
     .subscribe();
 }
@@ -497,16 +490,14 @@ export async function getIndicatorsByDistrict(filters?: {
   targetId?: number;
 }): Promise<Map<number, { progress: number; indicatorCount: number }>> {
   // Fetch all indicators (optionally filtered by target)
-  let query = supabase
-    .from('indicators')
-    .select('id, progress, nbsap_target_id');
+  let query = supabase.from('indicators').select('id, progress, nbsap_target_id');
 
   if (filters?.targetId) {
     query = query.eq('nbsap_target_id', filters.targetId);
   }
 
   const { data: indicators, error } = await query;
-  
+
   if (error) {
     console.error('getIndicatorsByDistrict error:', error);
     return new Map();
@@ -522,9 +513,7 @@ export async function getIndicatorsByDistrict(filters?: {
   const indicatorCount = indicators.length;
 
   // Fetch all districts
-  const { data: districts, error: districtError } = await supabase
-    .from('districts')
-    .select('id');
+  const { data: districts, error: districtError } = await supabase.from('districts').select('id');
 
   if (districtError || !districts) {
     console.error('getIndicatorsByDistrict districts error:', districtError);
@@ -544,11 +533,16 @@ export async function getIndicatorsByDistrict(filters?: {
  * Get risks aggregated by district
  * Calculates threat scores based on forest cover and documented risks
  */
-export async function getRisksByDistrict(): Promise<Map<number, { 
-  threatScore: number; 
-  threatLevel: 'high' | 'medium' | 'low';
-  riskFactors: string[];
-}>> {
+export async function getRisksByDistrict(): Promise<
+  Map<
+    number,
+    {
+      threatScore: number;
+      threatLevel: 'high' | 'medium' | 'low';
+      riskFactors: string[];
+    }
+  >
+> {
   // Fetch all districts with forest cover data
   const { data: districts, error: districtError } = await supabase
     .from('districts')
@@ -568,11 +562,14 @@ export async function getRisksByDistrict(): Promise<Map<number, {
     console.error('getRisksByDistrict risks error:', risksError);
   }
 
-  const result = new Map<number, { 
-    threatScore: number; 
-    threatLevel: 'high' | 'medium' | 'low';
-    riskFactors: string[];
-  }>();
+  const result = new Map<
+    number,
+    {
+      threatScore: number;
+      threatLevel: 'high' | 'medium' | 'low';
+      riskFactors: string[];
+    }
+  >();
 
   // Calculate threat score for each district
   districts.forEach(district => {
@@ -601,10 +598,10 @@ export async function getRisksByDistrict(): Promise<Map<number, {
     if (risks && risks.length > 0) {
       const highRisks = risks.filter(r => r.level === 'High').length;
       const mediumRisks = risks.filter(r => r.level === 'Medium').length;
-      
-      const riskScore = Math.min((highRisks * 5) + (mediumRisks * 2), 40);
+
+      const riskScore = Math.min(highRisks * 5 + mediumRisks * 2, 40);
       threatScore += riskScore;
-      
+
       if (highRisks > 0) {
         riskFactors.push(`${highRisks} high-priority national risks`);
       }
@@ -626,7 +623,7 @@ export async function getRisksByDistrict(): Promise<Map<number, {
     result.set(district.id, {
       threatScore,
       threatLevel,
-      riskFactors
+      riskFactors,
     });
   });
 

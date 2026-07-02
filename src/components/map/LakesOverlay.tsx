@@ -12,7 +12,7 @@ interface LakesOverlayProps {
 
 /**
  * LakesOverlay Component
- * 
+ *
  * Renders major lakes as polygons on the map.
  * Features:
  * - Polygon rendering with semi-transparent blue fill
@@ -20,7 +20,7 @@ interface LakesOverlayProps {
  * - Hover tooltips showing lake information
  * - Click events to show detailed lake information
  * - Loading and error states
- * 
+ *
  * Performance optimizations:
  * - Simplified polygon rendering for complex geometries
  * - Memoized path generation
@@ -32,16 +32,18 @@ export const LakesOverlay = React.memo(function LakesOverlay({
   onClick,
   loading = false,
   error = null,
-  viewBox = { minLon: 28.8, maxLon: 32.3, minLat: -2.9, maxLat: -1.0 }
+  viewBox = { minLon: 28.8, maxLon: 32.3, minLat: -2.9, maxLat: -1.0 },
 }: LakesOverlayProps) {
   /**
    * Check if a lake is within the viewport (simple bounds check)
    */
   const isInViewport = (lake: LakeFeature): boolean => {
     // Get rough bounds of the lake
-    let minLon = Infinity, maxLon = -Infinity;
-    let minLat = Infinity, maxLat = -Infinity;
-    
+    let minLon = Infinity,
+      maxLon = -Infinity;
+    let minLat = Infinity,
+      maxLat = -Infinity;
+
     const extractBounds = (coords: number[][]) => {
       coords.forEach(([lon, lat]) => {
         minLon = Math.min(minLon, lon);
@@ -50,7 +52,7 @@ export const LakesOverlay = React.memo(function LakesOverlay({
         maxLat = Math.max(maxLat, lat);
       });
     };
-    
+
     if (lake.geometry.type === 'Polygon') {
       const [exterior] = lake.geometry.coordinates as number[][][];
       extractBounds(exterior);
@@ -60,10 +62,14 @@ export const LakesOverlay = React.memo(function LakesOverlay({
         extractBounds(exterior);
       });
     }
-    
+
     // Check if lake bounds intersect with viewport
-    return !(maxLon < viewBox.minLon || minLon > viewBox.maxLon ||
-             maxLat < viewBox.minLat || minLat > viewBox.maxLat);
+    return !(
+      maxLon < viewBox.minLon ||
+      minLon > viewBox.maxLon ||
+      maxLat < viewBox.minLat ||
+      minLat > viewBox.maxLat
+    );
   };
 
   /**
@@ -72,12 +78,16 @@ export const LakesOverlay = React.memo(function LakesOverlay({
    */
   const coordinatesToPath = (coords: number[][], isHole = false): string => {
     if (!coords || coords.length === 0) return '';
-    
-    return coords.map((point, i) => {
-      const [lon, lat] = point;
-      const command = i === 0 ? 'M' : 'L';
-      return `${command}${lon},${-lat}`; // Negate latitude for correct north-south orientation
-    }).join(' ') + ' Z';
+
+    return (
+      coords
+        .map((point, i) => {
+          const [lon, lat] = point;
+          const command = i === 0 ? 'M' : 'L';
+          return `${command}${lon},${-lat}`; // Negate latitude for correct north-south orientation
+        })
+        .join(' ') + ' Z'
+    );
   };
 
   /**
@@ -121,13 +131,7 @@ export const LakesOverlay = React.memo(function LakesOverlay({
   if (error) {
     return (
       <g className="lakes-overlay">
-        <text
-          x="30"
-          y="-1.5"
-          fontSize="0.08"
-          fill="#f43f5e"
-          fontFamily="'DM Sans', sans-serif"
-        >
+        <text x="30" y="-1.5" fontSize="0.08" fill="#f43f5e" fontFamily="'DM Sans', sans-serif">
           Error loading lakes
         </text>
       </g>
@@ -150,7 +154,7 @@ export const LakesOverlay = React.memo(function LakesOverlay({
             key={`lake-${idx}`}
             d={pathData}
             fill="#7EC8FF"
-            fillOpacity={isLarge ? 0.35 : 0.30}
+            fillOpacity={isLarge ? 0.35 : 0.3}
             stroke="#4A90E2"
             strokeWidth={isLarge ? '0.008' : '0.005'}
             strokeOpacity={0.7}
@@ -159,13 +163,13 @@ export const LakesOverlay = React.memo(function LakesOverlay({
               cursor: 'pointer',
               transition: 'fill-opacity 0.2s, stroke-width 0.2s',
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={e => {
               e.currentTarget.style.fillOpacity = '0.50';
               e.currentTarget.style.strokeWidth = isLarge ? '0.012' : '0.008';
               e.currentTarget.style.strokeOpacity = '1';
               onHover(lake);
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={e => {
               e.currentTarget.style.fillOpacity = isLarge ? '0.35' : '0.30';
               e.currentTarget.style.strokeWidth = isLarge ? '0.008' : '0.005';
               e.currentTarget.style.strokeOpacity = '0.7';
@@ -176,9 +180,11 @@ export const LakesOverlay = React.memo(function LakesOverlay({
           >
             <title>
               {lake.properties.name}
-              {lake.properties.area_km2 && `\nArea: ${lake.properties.area_km2.toLocaleString()} km²`}
+              {lake.properties.area_km2 &&
+                `\nArea: ${lake.properties.area_km2.toLocaleString()} km²`}
               {lake.properties.max_depth_m && `\nMax depth: ${lake.properties.max_depth_m} m`}
-              {lake.properties.elevation_m && `\nElevation: ${lake.properties.elevation_m.toLocaleString()} m`}
+              {lake.properties.elevation_m &&
+                `\nElevation: ${lake.properties.elevation_m.toLocaleString()} m`}
               {lake.properties.district && `\nDistrict: ${lake.properties.district}`}
               {lake.properties.catchment && `\nCatchment: ${lake.properties.catchment}`}
             </title>

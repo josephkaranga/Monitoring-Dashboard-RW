@@ -3,10 +3,10 @@ import { ValidationError, formatErrorForUser } from '../../utils/errorHandling';
 
 /**
  * ValidationErrors Component
- * 
+ *
  * A reusable component for displaying validation errors in forms.
  * Supports both field-specific errors and general form errors.
- * 
+ *
  * Requirements: Task 14.2
  * - Display validation errors in a user-friendly format
  * - Support field-specific errors and general form errors
@@ -50,7 +50,7 @@ export interface ValidationErrorsProps {
 
 /**
  * ValidationErrors component displays validation errors in a consistent format
- * 
+ *
  * @example
  * ```tsx
  * // Field-specific errors
@@ -60,17 +60,17 @@ export interface ValidationErrorsProps {
  *     { field: 'year', message: 'Year must be between 2020 and 2030' }
  *   ]}
  * />
- * 
+ *
  * // General form errors
  * <ValidationErrors
  *   generalErrors={['Please fill in all required fields']}
  * />
- * 
+ *
  * // Using ValidationError instances
  * <ValidationErrors
  *   errors={[validationError1, validationError2]}
  * />
- * 
+ *
  * // Compact mode
  * <ValidationErrors
  *   fieldErrors={errors}
@@ -88,15 +88,18 @@ export const ValidationErrors: React.FC<ValidationErrorsProps> = ({
   onDismiss,
 }) => {
   // Convert ValidationError instances to FieldError format
-  const errorsFromInstances: FieldError[] = errors.map((error) => ({
+  const errorsFromInstances: FieldError[] = errors.map(error => ({
     field: error.field || 'general',
     message: formatErrorForUser(error),
     value: error.value,
   }));
 
   // Combine all field errors
-  const allFieldErrors = [...fieldErrors, ...errorsFromInstances.filter(e => e.field !== 'general')];
-  
+  const allFieldErrors = [
+    ...fieldErrors,
+    ...errorsFromInstances.filter(e => e.field !== 'general'),
+  ];
+
   // Combine all general errors
   const allGeneralErrors = [
     ...generalErrors,
@@ -192,10 +195,10 @@ export const ValidationErrors: React.FC<ValidationErrorsProps> = ({
                     borderRadius: '4px',
                     transition: 'background 0.2s',
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={e => {
                     e.currentTarget.style.background = '#fee2e2';
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={e => {
                     e.currentTarget.style.background = 'transparent';
                   }}
                   aria-label="Dismiss error"
@@ -316,10 +319,10 @@ export const ValidationErrors: React.FC<ValidationErrorsProps> = ({
                     borderRadius: '4px',
                     transition: 'background 0.2s',
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={e => {
                     e.currentTarget.style.background = '#fee2e2';
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={e => {
                     e.currentTarget.style.background = 'transparent';
                   }}
                   aria-label={`Dismiss error for ${error.field}`}
@@ -344,7 +347,7 @@ function formatFieldName(field: string): string {
   return field
     .replace(/([A-Z])/g, ' $1') // Add space before capital letters
     .replace(/_/g, ' ') // Replace underscores with spaces
-    .replace(/\b\w/g, (char) => char.toUpperCase()) // Capitalize first letter of each word
+    .replace(/\b\w/g, char => char.toUpperCase()) // Capitalize first letter of each word
     .trim();
 }
 

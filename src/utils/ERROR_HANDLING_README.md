@@ -59,6 +59,7 @@ const error = new AppError(
 ```
 
 **Properties:**
+
 - `message`: Technical error message
 - `code`: Error code for tracking
 - `severity`: Error severity level
@@ -81,6 +82,7 @@ throw new ValidationError(
 ```
 
 **Additional Properties:**
+
 - `field`: Field name that failed validation
 - `value`: Invalid value
 
@@ -89,11 +91,9 @@ throw new ValidationError(
 For authentication and authorization failures.
 
 ```typescript
-throw new AuthenticationError(
-  'User not authorized',
-  ErrorCode.AUTH_UNAUTHORIZED,
-  { userId: '123' }
-);
+throw new AuthenticationError('User not authorized', ErrorCode.AUTH_UNAUTHORIZED, {
+  userId: '123',
+});
 ```
 
 ### NetworkError
@@ -101,15 +101,11 @@ throw new AuthenticationError(
 For network and API request failures.
 
 ```typescript
-throw new NetworkError(
-  'Request failed',
-  500,
-  '/api/users',
-  ErrorCode.NETWORK_SERVER_ERROR
-);
+throw new NetworkError('Request failed', 500, '/api/users', ErrorCode.NETWORK_SERVER_ERROR);
 ```
 
 **Additional Properties:**
+
 - `statusCode`: HTTP status code
 - `endpoint`: API endpoint
 
@@ -118,15 +114,11 @@ throw new NetworkError(
 For database operation failures.
 
 ```typescript
-throw new DatabaseError(
-  'Query failed',
-  ErrorCode.DB_QUERY_FAILED,
-  'SELECT * FROM users',
-  'users'
-);
+throw new DatabaseError('Query failed', ErrorCode.DB_QUERY_FAILED, 'SELECT * FROM users', 'users');
 ```
 
 **Additional Properties:**
+
 - `query`: SQL query (optional)
 - `table`: Table name (optional)
 
@@ -135,15 +127,11 @@ throw new DatabaseError(
 For file operation failures.
 
 ```typescript
-throw new FileError(
-  'Upload failed',
-  ErrorCode.FILE_UPLOAD_FAILED,
-  'document.pdf',
-  1024000
-);
+throw new FileError('Upload failed', ErrorCode.FILE_UPLOAD_FAILED, 'document.pdf', 1024000);
 ```
 
 **Additional Properties:**
+
 - `fileName`: Name of the file
 - `fileSize`: Size in bytes
 
@@ -152,11 +140,9 @@ throw new FileError(
 For business logic violations.
 
 ```typescript
-throw new BusinessError(
-  'Cannot submit future reports',
-  ErrorCode.BUSINESS_INVALID_OPERATION,
-  { year: 2031 }
-);
+throw new BusinessError('Cannot submit future reports', ErrorCode.BUSINESS_INVALID_OPERATION, {
+  year: 2031,
+});
 ```
 
 ## Error Codes
@@ -164,6 +150,7 @@ throw new BusinessError(
 Error codes are organized by category:
 
 ### Authentication & Authorization
+
 - `AUTH_UNAUTHORIZED` - User not authenticated
 - `AUTH_INVALID_CREDENTIALS` - Invalid login credentials
 - `AUTH_SESSION_EXPIRED` - Session has expired
@@ -172,6 +159,7 @@ Error codes are organized by category:
 - `AUTH_INSUFFICIENT_PERMISSIONS` - Insufficient permissions
 
 ### Validation
+
 - `VALIDATION_INVALID_INPUT` - Invalid input
 - `VALIDATION_REQUIRED_FIELD` - Required field missing
 - `VALIDATION_INVALID_FORMAT` - Invalid format
@@ -180,6 +168,7 @@ Error codes are organized by category:
 - `VALIDATION_INVALID_YEAR` - Invalid year
 
 ### Network & API
+
 - `NETWORK_CONNECTION_ERROR` - Connection failed
 - `NETWORK_TIMEOUT` - Request timeout
 - `NETWORK_SERVER_ERROR` - Server error
@@ -188,6 +177,7 @@ Error codes are organized by category:
 - `API_RATE_LIMIT` - Rate limit exceeded
 
 ### Database
+
 - `DB_QUERY_FAILED` - Query failed
 - `DB_RECORD_NOT_FOUND` - Record not found
 - `DB_DUPLICATE_ENTRY` - Duplicate entry
@@ -195,6 +185,7 @@ Error codes are organized by category:
 - `DB_CONNECTION_ERROR` - Connection error
 
 ### File Operations
+
 - `FILE_NOT_FOUND` - File not found
 - `FILE_UPLOAD_FAILED` - Upload failed
 - `FILE_INVALID_TYPE` - Invalid file type
@@ -202,6 +193,7 @@ Error codes are organized by category:
 - `FILE_DOWNLOAD_FAILED` - Download failed
 
 ### Business Logic
+
 - `BUSINESS_INVALID_OPERATION` - Invalid operation
 - `BUSINESS_WORKFLOW_ERROR` - Workflow error
 - `BUSINESS_STATE_CONFLICT` - State conflict
@@ -246,6 +238,7 @@ logError(error, LogLevel.ERROR, { userId: '123', action: 'submit' });
 ```
 
 **Log Levels:**
+
 - `DEBUG` - Debug information
 - `INFO` - Informational messages
 - `WARN` - Warning messages
@@ -289,6 +282,7 @@ try {
 ```
 
 **Mapped Codes:**
+
 - `23505` → `DB_DUPLICATE_ENTRY`
 - `23503` → `DB_CONSTRAINT_VIOLATION`
 - `PGRST116` → `DB_RECORD_NOT_FOUND`
@@ -312,6 +306,7 @@ try {
 ```
 
 **Mapped Status Codes:**
+
 - `401` → `AUTH_UNAUTHORIZED`
 - `403` → `AUTH_INSUFFICIENT_PERMISSIONS`
 - `404` → `DB_RECORD_NOT_FOUND`
@@ -349,7 +344,7 @@ const safeFunction = withErrorHandling(
   async (id: string) => {
     return await fetchData(id);
   },
-  (error) => {
+  error => {
     console.error('Failed:', formatErrorForUser(error));
   }
 );
@@ -368,10 +363,7 @@ export async function updateProfile(userId: string, updates: any) {
     }
 
     // Database operation
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
+    const { data, error } = await supabase.from('profiles').update(updates).eq('id', userId);
 
     if (error) throw parseSupabaseError(error);
 

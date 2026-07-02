@@ -15,6 +15,7 @@ A reusable date picker component for the NBSAP Monitoring Dashboard that enforce
 ## Requirements
 
 This component satisfies the following requirements:
+
 - **7.3**: Update date picker controls to allow dates through December 31, 2030
 - **7.12**: Update export functionality to include years through 2030
 
@@ -28,14 +29,7 @@ import { DatePicker } from './components/common/DatePicker';
 function MyComponent() {
   const [date, setDate] = useState('');
 
-  return (
-    <DatePicker
-      value={date}
-      onChange={setDate}
-      label="Report Date"
-      required
-    />
-  );
+  return <DatePicker value={date} onChange={setDate} label="Report Date" required />;
 }
 ```
 
@@ -53,27 +47,22 @@ function MyComponent() {
 ### Disabled State
 
 ```tsx
-<DatePicker
-  value={historicalDate}
-  onChange={() => {}}
-  label="Historical Date"
-  disabled
-/>
+<DatePicker value={historicalDate} onChange={() => {}} label="Historical Date" disabled />
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `string` | `''` | The current date value in ISO format (YYYY-MM-DD) |
-| `onChange` | `(date: string) => void` | Required | Callback function called when the date changes |
-| `label` | `string` | `'Date'` | Label text displayed above the input |
-| `placeholder` | `string` | `undefined` | Placeholder text for the input |
-| `required` | `boolean` | `false` | Whether the field is required |
-| `disabled` | `boolean` | `false` | Whether the input is disabled |
-| `className` | `string` | `''` | Additional CSS classes to apply to the wrapper |
-| `id` | `string` | `undefined` | HTML id attribute for the input |
-| `showError` | `boolean` | `true` | Whether to display inline error messages |
+| Prop          | Type                     | Default     | Description                                       |
+| ------------- | ------------------------ | ----------- | ------------------------------------------------- |
+| `value`       | `string`                 | `''`        | The current date value in ISO format (YYYY-MM-DD) |
+| `onChange`    | `(date: string) => void` | Required    | Callback function called when the date changes    |
+| `label`       | `string`                 | `'Date'`    | Label text displayed above the input              |
+| `placeholder` | `string`                 | `undefined` | Placeholder text for the input                    |
+| `required`    | `boolean`                | `false`     | Whether the field is required                     |
+| `disabled`    | `boolean`                | `false`     | Whether the input is disabled                     |
+| `className`   | `string`                 | `''`        | Additional CSS classes to apply to the wrapper    |
+| `id`          | `string`                 | `undefined` | HTML id attribute for the input                   |
+| `showError`   | `boolean`                | `true`      | Whether to display inline error messages          |
 
 ## Validation
 
@@ -83,6 +72,7 @@ The DatePicker component automatically validates dates against the NBSAP reporti
 - **Maximum Date**: December 31, 2030
 
 Validation occurs:
+
 1. On change (as the user types or selects a date)
 2. On blur (when the input loses focus)
 
@@ -91,6 +81,7 @@ Error messages are displayed inline below the input field (unless `showError={fa
 ## Date Format
 
 The component uses the HTML5 date input type, which:
+
 - Accepts and returns dates in ISO format: `YYYY-MM-DD`
 - Provides a native date picker in supported browsers
 - Enforces the min/max date constraints at the browser level
@@ -98,6 +89,7 @@ The component uses the HTML5 date input type, which:
 ## Accessibility
 
 The component includes proper accessibility features:
+
 - Label association with `htmlFor` attribute
 - Required field indicator (red asterisk)
 - ARIA attributes for error states:
@@ -128,6 +120,7 @@ The component uses Tailwind CSS classes for styling and follows the same design 
 ## Examples
 
 See `DatePicker.example.tsx` for comprehensive usage examples including:
+
 - Basic usage
 - Custom ID and placeholder
 - Disabled state
@@ -154,6 +147,7 @@ To test the DatePicker component:
 ## Browser Support
 
 The component uses the HTML5 `<input type="date">` element, which is supported in:
+
 - Chrome/Edge (all versions)
 - Firefox (all versions)
 - Safari (all versions)

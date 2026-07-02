@@ -23,7 +23,7 @@ interface State {
 
 /**
  * RBISErrorBoundary catches React component errors and displays a fallback UI
- * 
+ *
  * @example
  * ```tsx
  * <RBISErrorBoundary>
@@ -135,7 +135,8 @@ export class RBISErrorBoundary extends Component<Props, State> {
               margin: '0 0 24px 0',
             }}
           >
-            The RBIS dashboard encountered an unexpected error. Please try resetting the dashboard or refreshing the page.
+            The RBIS dashboard encountered an unexpected error. Please try resetting the dashboard
+            or refreshing the page.
           </p>
 
           {/* Error Details (collapsible) */}

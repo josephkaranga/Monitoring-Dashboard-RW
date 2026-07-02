@@ -32,10 +32,10 @@ export default function DashboardLayout() {
 
   // ── Nav sections with role-based filtering ──────────────────────────────────────────
   // Role-based navigation filtering following the permission matrix:
-  // 
+  //
   // All roles (including public_viewer) can see:
   //   - Dashboard, Indicators, Targets, Reports, Stakeholders, Map
-  // 
+  //
   // public_viewer CANNOT see:
   //   - Reporting Modules (T01-T07)
   //   - Verification Queue
@@ -46,116 +46,177 @@ export default function DashboardLayout() {
   //   - Data Pipeline
   //   - User Management
   //   - Audit Log
-  // 
+  //
   // lead_government_ministry_reporting has:
   //   - Full reporting access (T01-T07)
   //   - Verification Queue access
   //   - Compliance, Analytics, Risk Register access
   //   - RBIS and Data Pipeline access
   //   - NO User Management or Audit Log access
-  // 
+  //
   // dashboard_management has:
   //   - Full access to all features
-  
+
   const analyticsNav = [
-    { to: '/dashboard',           icon: 'fa-chart-line',           label: 'Dashboard', visible: true },
-    { to: '/indicators',          icon: 'fa-layer-group',          label: 'Indicator Hierarchy', visible: true },
-    { to: '/targets',             icon: 'fa-bullseye',             label: '22 National Targets', badge: 22, visible: true },
-    { to: '/adaptive-management', icon: 'fa-rotate',               label: 'Adaptive Management', visible: canSeeAnalytics },
-    { to: '/risk',                icon: 'fa-triangle-exclamation', label: 'Risk Register', visible: canSeeRiskRegister },
+    { to: '/dashboard', icon: 'fa-chart-line', label: 'Dashboard', visible: true },
+    { to: '/indicators', icon: 'fa-layer-group', label: 'Indicator Hierarchy', visible: true },
+    { to: '/targets', icon: 'fa-bullseye', label: '22 National Targets', badge: 22, visible: true },
+    {
+      to: '/adaptive-management',
+      icon: 'fa-rotate',
+      label: 'Adaptive Management',
+      visible: canSeeAnalytics,
+    },
+    {
+      to: '/risk',
+      icon: 'fa-triangle-exclamation',
+      label: 'Risk Register',
+      visible: canSeeRiskRegister,
+    },
   ].filter(item => item.visible);
 
   // Reporting modules - only visible to users with canSubmitReports permission
   // Roles with access: lead_government_ministry_reporting, local_reporting, dashboard_management
   // public_viewer does NOT have access
   const reportingNav = [
-    { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark',    label: 'T01 · Institutional' },
-    { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree',         label: 'T02 · District' },
-    { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield',       label: 'T03 · Protected Areas' },
+    { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark', label: 'T01 · Institutional' },
+    { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree', label: 'T02 · District' },
+    { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield', label: 'T03 · Protected Areas' },
     { to: '/reporting-toolkit?tool=T04', icon: 'fa-people-group', label: 'T04 · Community' },
-    { to: '/reporting-toolkit?tool=T05', icon: 'fa-coins',        label: 'T05 · Finance' },
-    { to: '/reporting-toolkit?tool=T06', icon: 'fa-building',     label: 'T06 · Private Sector' },
-    { to: '/reporting-toolkit?tool=T07', icon: 'fa-flask',        label: 'T07 · Research' },
+    { to: '/reporting-toolkit?tool=T05', icon: 'fa-coins', label: 'T05 · Finance' },
+    { to: '/reporting-toolkit?tool=T06', icon: 'fa-building', label: 'T06 · Private Sector' },
+    { to: '/reporting-toolkit?tool=T07', icon: 'fa-flask', label: 'T07 · Research' },
   ];
 
   const governanceNav = [
     // Verification Queue - only for lead_government_ministry_reporting and dashboard_management
     // Controlled by canViewVerifQueue permission
-    ...(canSeeVerifQueue ? [{ to: '/verification-queue', icon: 'fa-file-circle-check', label: 'Verification Queue', badge: pendingCount || 0, visible: true }] : []),
+    ...(canSeeVerifQueue
+      ? [
+          {
+            to: '/verification-queue',
+            icon: 'fa-file-circle-check',
+            label: 'Verification Queue',
+            badge: pendingCount || 0,
+            visible: true,
+          },
+        ]
+      : []),
     // Compliance - visible to all roles EXCEPT public_viewer
     // Controlled by canViewCompliance permission
-    { to: '/compliance',  icon: 'fa-clipboard-check',  label: 'Compliance', badge: 0, visible: canSeeCompliance },
+    {
+      to: '/compliance',
+      icon: 'fa-clipboard-check',
+      label: 'Compliance',
+      badge: 0,
+      visible: canSeeCompliance,
+    },
     // Reports - visible to all roles including public_viewer
-    { to: '/reports',     icon: 'fa-file-contract',    label: 'Reports', visible: true },
+    { to: '/reports', icon: 'fa-file-contract', label: 'Reports', visible: true },
     // Stakeholders - visible to all roles including public_viewer
-    { to: '/stakeholders',icon: 'fa-users',             label: 'Stakeholders', visible: true },
+    { to: '/stakeholders', icon: 'fa-users', label: 'Stakeholders', visible: true },
     // Map - visible to all roles including public_viewer
-    { to: '/map',         icon: 'fa-map-location-dot',  label: 'District Map', visible: true },
+    { to: '/map', icon: 'fa-map-location-dot', label: 'District Map', visible: true },
   ].filter(item => item.visible);
 
   const systemNav = [
     // RBIS Integration - visible to all roles EXCEPT public_viewer and local_reporting
     // Controlled by canViewAnalytics permission
-    { to: '/rbis',          icon: 'fa-database',       label: 'Biodiversity Data', visible: canSeeAnalytics },
+    { to: '/rbis', icon: 'fa-database', label: 'Biodiversity Data', visible: canSeeAnalytics },
     // Data Pipeline - visible to all roles EXCEPT public_viewer and local_reporting
     // Controlled by canViewAnalytics permission
-    { to: '/data-pipeline', icon: 'fa-diagram-project', label: 'Data Pipeline', visible: canSeeAnalytics },
+    {
+      to: '/data-pipeline',
+      icon: 'fa-diagram-project',
+      label: 'Data Pipeline',
+      visible: canSeeAnalytics,
+    },
     // Role Requests - visible to all roles
-    { to: '/role-requests', icon: 'fa-user-clock',     label: 'Role Requests', visible: true },
+    { to: '/role-requests', icon: 'fa-user-clock', label: 'Role Requests', visible: true },
     // Settings - visible to all roles
-    { to: '/settings',      icon: 'fa-gear',            label: 'Settings', visible: true },
+    { to: '/settings', icon: 'fa-gear', label: 'Settings', visible: true },
     // User Management - only for dashboard_management
     // Controlled by canManageUsers permission
-    { to: '/users',         icon: 'fa-users-gear',      label: 'User Management', visible: canManageUsers },
+    { to: '/users', icon: 'fa-users-gear', label: 'User Management', visible: canManageUsers },
   ].filter(item => item.visible);
 
   // Admin navigation - only for dashboard_management
   // Controlled by canViewAuditLog permission
-  const adminNav = canViewAuditLog ? [
-    { to: '/role-requests/admin', icon: 'fa-user-check', label: 'Approve Requests' },
-  ] : [];
+  const adminNav = canViewAuditLog
+    ? [{ to: '/role-requests/admin', icon: 'fa-user-check', label: 'Approve Requests' }]
+    : [];
 
   const isActive = (to: string) => location.pathname === to.split('?')[0];
 
-  const NavItem = ({ to, icon, label, badge }: { to: string; icon: string; label: string; badge?: number }) => (
+  const NavItem = ({
+    to,
+    icon,
+    label,
+    badge,
+  }: {
+    to: string;
+    icon: string;
+    label: string;
+    badge?: number;
+  }) => (
     <NavLink
       to={to}
       onClick={() => setSidebarOpen(false)}
       style={({ isActive: a }) => ({
-        display: 'flex', alignItems: 'center', gap: 10,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
         padding: '9px 18px',
         color: a ? '#38bdf8' : '#bfdbfe',
         textDecoration: 'none',
-        fontSize: '0.82rem', fontWeight: 500,
+        fontSize: '0.82rem',
+        fontWeight: 500,
         borderLeft: a ? '3px solid #38bdf8' : '3px solid transparent',
         background: a ? 'rgba(56,189,248,0.15)' : 'transparent',
         transition: 'all 0.2s',
         position: 'relative' as const,
       })}
     >
-      <i className={`fa-solid ${icon}`} style={{ width: 16, textAlign: 'center', fontSize: '0.8rem', opacity: 0.85 }} />
+      <i
+        className={`fa-solid ${icon}`}
+        style={{ width: 16, textAlign: 'center', fontSize: '0.8rem', opacity: 0.85 }}
+      />
       <span style={{ flex: 1 }}>{label}</span>
       {badge ? (
-        <span style={{
-          background: '#f43f5e', color: '#fff',
-          fontSize: '0.58rem', padding: '1px 6px',
-          borderRadius: 10, fontWeight: 700,
-          fontFamily: "'DM Mono', monospace",
-        }}>{badge}</span>
+        <span
+          style={{
+            background: '#f43f5e',
+            color: '#fff',
+            fontSize: '0.58rem',
+            padding: '1px 6px',
+            borderRadius: 10,
+            fontWeight: 700,
+            fontFamily: "'DM Mono', monospace",
+          }}
+        >
+          {badge}
+        </span>
       ) : null}
     </NavLink>
   );
 
   const NavSection = ({ title, items }: { title: string; items: any[] }) => (
     <div style={{ padding: '4px 0' }}>
-      <div style={{
-        fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-        color: 'rgba(125,211,252,0.5)', padding: '8px 20px 4px',
-        fontFamily: "'DM Mono', monospace",
-      }}>
+      <div
+        style={{
+          fontSize: '0.6rem',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'rgba(125,211,252,0.5)',
+          padding: '8px 20px 4px',
+          fontFamily: "'DM Mono', monospace",
+        }}
+      >
         {title}
       </div>
-      {items.map(item => <NavItem key={item.to} {...item} />)}
+      {items.map(item => (
+        <NavItem key={item.to} {...item} />
+      ))}
     </div>
   );
 
@@ -164,19 +225,34 @@ export default function DashboardLayout() {
       {/* Brand */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 34, height: 34,
-            background: '#1e3a5f',
-            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#94a3b8', fontSize: 14, flexShrink: 0,
-          }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              background: '#1e3a5f',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#94a3b8',
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
             <i className="fa-solid fa-leaf" />
           </div>
           <div>
             <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', letterSpacing: 0.3 }}>
               NBSAP
             </div>
-            <div style={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '0.04em', marginTop: 1 }}>
+            <div
+              style={{
+                fontSize: '0.65rem',
+                color: '#64748b',
+                letterSpacing: '0.04em',
+                marginTop: 1,
+              }}
+            >
               Monitoring System
             </div>
           </div>
@@ -203,68 +279,115 @@ export default function DashboardLayout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface-2)' }}>
-
       {/* Desktop sidebar */}
-      <aside style={{
-        position: 'fixed', left: 0, top: 0, bottom: 0, width: 'var(--sidebar-w)',
-        background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
-        display: 'flex', flexDirection: 'column',
-        boxShadow: '4px 0 20px rgba(0,0,0,0.2)', zIndex: 200,
-      }} className="desktop-sidebar">
+      <aside
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 'var(--sidebar-w)',
+          background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
+          zIndex: 200,
+        }}
+        className="desktop-sidebar"
+      >
         {sidebarContent}
       </aside>
 
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 199, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 199,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+          }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
-      <aside style={{
-        position: 'fixed', left: 0, top: 0, bottom: 0, width: 'var(--sidebar-w)', zIndex: 200,
-        background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
-        display: 'flex', flexDirection: 'column',
-        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-        transition: 'transform 0.3s ease',
-        boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
-      }} className="mobile-sidebar">
+      <aside
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 'var(--sidebar-w)',
+          zIndex: 200,
+          background: 'linear-gradient(175deg, #0f2744 0%, #0c1e38 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s ease',
+          boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
+        }}
+        className="mobile-sidebar"
+      >
         {sidebarContent}
       </aside>
 
       {/* Main */}
-      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-
+      <main
+        style={{
+          marginLeft: 'var(--sidebar-w)',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+        }}
+      >
         {/* Topbar */}
-        <header style={{
-          position: 'sticky', top: 0, zIndex: 100,
-          background: 'rgba(248,250,252,0.95)', backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--border)',
-          padding: '12px 28px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+        <header
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
+            background: 'rgba(248,250,252,0.95)',
+            backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid var(--border)',
+            padding: '12px 28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Hamburger */}
             <button
               onClick={() => setSidebarOpen(s => !s)}
               className="hamburger-btn"
               style={{
-                display: 'none', width: 36, height: 36, borderRadius: 8,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'var(--text-2)',
+                display: 'none',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-2)',
               }}
             >
-              <i className={`fa-solid ${sidebarOpen ? 'fa-xmark' : 'fa-bars'}`} style={{ fontSize: 14 }} />
+              <i
+                className={`fa-solid ${sidebarOpen ? 'fa-xmark' : 'fa-bars'}`}
+                style={{ fontSize: 14 }}
+              />
             </button>
             <div>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-1)' }}>
                 {getPageTitle(location.pathname)}
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 1 }}>
-                {getGreeting()}, {user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}
+                {getGreeting()},{' '}
+                {user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}
               </p>
             </div>
           </div>
@@ -276,73 +399,178 @@ export default function DashboardLayout() {
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button
-                onClick={() => { const opening = !notifOpen; setNotifOpen(opening); if (opening) markAllRead(); }}
+                onClick={() => {
+                  const opening = !notifOpen;
+                  setNotifOpen(opening);
+                  if (opening) markAllRead();
+                }}
                 style={{
-                  position: 'relative', width: 36, height: 36, borderRadius: 9,
-                  border: '1px solid var(--border)', background: 'var(--surface)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', color: 'var(--text-2)',
+                  position: 'relative',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 9,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--text-2)',
                 }}
               >
                 <i className="fa-solid fa-bell" style={{ fontSize: '0.85rem' }} />
                 {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -4, right: -4,
-                    background: '#f43f5e', color: '#fff',
-                    fontSize: '0.55rem', width: 16, height: 16,
-                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 700, border: '2px solid var(--surface-2)',
-                  }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -4,
+                      background: '#f43f5e',
+                      color: '#fff',
+                      fontSize: '0.55rem',
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      border: '2px solid var(--surface-2)',
+                    }}
+                  >
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
 
               {notifOpen && (
-                <div style={{
-                  position: 'absolute', top: 44, right: 0, width: 340,
-                  background: 'var(--surface)', borderRadius: 'var(--radius)',
-                  border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)',
-                  zIndex: 400, overflow: 'hidden',
-                }}>
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 44,
+                    right: 0,
+                    width: 340,
+                    background: 'var(--surface)',
+                    borderRadius: 'var(--radius)',
+                    border: '1px solid var(--border)',
+                    boxShadow: 'var(--shadow-lg)',
+                    zIndex: 400,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '14px 16px',
+                      borderBottom: '1px solid var(--border)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>
                       Notifications
                       {unreadCount > 0 && (
-                        <span style={{ marginLeft: 6, background: '#fee2e2', color: '#991b1b', fontSize: '0.7rem', padding: '1px 6px', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            background: '#fee2e2',
+                            color: '#991b1b',
+                            fontSize: '0.7rem',
+                            padding: '1px 6px',
+                            borderRadius: 8,
+                            fontFamily: "'DM Mono', monospace",
+                            fontWeight: 700,
+                          }}
+                        >
                           {unreadCount}
                         </span>
                       )}
                     </h4>
-                    <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: 'var(--sky-dim)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>
+                    <button
+                      onClick={markAllRead}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--sky-dim)',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
                       Mark all read
                     </button>
                   </div>
                   <div style={{ maxHeight: 360, overflowY: 'auto' }}>
                     {notifications.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>No notifications</div>
-                    ) : notifications.slice(0, 8).map(n => (
                       <div
-                        key={n.id}
-                        onClick={() => { if (n.action_tab) navigate('/' + n.action_tab); setNotifOpen(false); }}
                         style={{
-                          display: 'flex', gap: 10, padding: '12px 16px',
-                          borderBottom: '1px solid var(--surface-3)',
-                          cursor: 'pointer', background: n.is_read ? 'transparent' : '#fafbff',
-                          transition: '0.15s',
+                          padding: 24,
+                          textAlign: 'center',
+                          color: 'var(--text-3)',
+                          fontSize: '0.8rem',
                         }}
                       >
-                        <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fee2e2', color: '#991b1b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0 }}>
-                          <i className="fa-solid fa-bell" />
-                        </div>
-                        <div>
-                          <p style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-1)', lineHeight: 1.3 }}>{n.title}</p>
-                          <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: 2, display: 'block' }}>
-                            {new Date(n.created_at).toLocaleString()}
-                          </span>
-                        </div>
+                        No notifications
                       </div>
-                    ))}
+                    ) : (
+                      notifications.slice(0, 8).map(n => (
+                        <div
+                          key={n.id}
+                          onClick={() => {
+                            if (n.action_tab) navigate('/' + n.action_tab);
+                            setNotifOpen(false);
+                          }}
+                          style={{
+                            display: 'flex',
+                            gap: 10,
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--surface-3)',
+                            cursor: 'pointer',
+                            background: n.is_read ? 'transparent' : '#fafbff',
+                            transition: '0.15s',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: 9,
+                              background: '#fee2e2',
+                              color: '#991b1b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.85rem',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <i className="fa-solid fa-bell" />
+                          </div>
+                          <div>
+                            <p
+                              style={{
+                                fontSize: '0.78rem',
+                                fontWeight: 500,
+                                color: 'var(--text-1)',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {n.title}
+                            </p>
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                color: 'var(--text-3)',
+                                marginTop: 2,
+                                display: 'block',
+                              }}
+                            >
+                              {new Date(n.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -352,30 +580,50 @@ export default function DashboardLayout() {
             <button
               onClick={() => navigate('/settings')}
               style={{
-                width: 36, height: 36, borderRadius: 9,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'var(--text-2)',
+                width: 36,
+                height: 36,
+                borderRadius: 9,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-2)',
               }}
             >
               <i className="fa-solid fa-gear" style={{ fontSize: '0.85rem' }} />
             </button>
 
             {/* User chip */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '4px 4px 4px 12px',
-              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20,
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '4px 4px 4px 12px',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 20,
+              }}
+            >
               <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-2)' }}>
-                {user ? (user.full_name || user.email) : '—'}
+                {user ? user.full_name || user.email : '—'}
               </span>
-              <div style={{
-                width: 28, height: 28,
-                background: '#1e3a5f',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: '0.65rem', fontWeight: 700,
-              }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: '#1e3a5f',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                }}
+              >
                 {user?.avatar_initials ?? '??'}
               </div>
             </div>
@@ -385,16 +633,26 @@ export default function DashboardLayout() {
               onClick={handleSignOut}
               title="Sign Out"
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 14px', borderRadius: 9,
-                border: '1px solid #fecaca', background: '#fff1f2',
-                cursor: 'pointer', color: '#dc2626',
-                fontSize: '0.78rem', fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 14px',
+                borderRadius: 9,
+                border: '1px solid #fecaca',
+                background: '#fff1f2',
+                cursor: 'pointer',
+                color: '#dc2626',
+                fontSize: '0.78rem',
+                fontWeight: 600,
                 fontFamily: "'DM Sans', sans-serif",
                 transition: '0.2s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fee2e2'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fff1f2'; }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = '#fee2e2';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = '#fff1f2';
+              }}
             >
               <i className="fa-solid fa-right-from-bracket" style={{ fontSize: '0.82rem' }} />
               Sign Out
@@ -434,23 +692,23 @@ function getGreeting(): string {
 
 function getPageTitle(pathname: string): string {
   const map: Record<string, string> = {
-    '/dashboard':           'Monitoring Dashboard',
-    '/indicators':          '4-Tier Indicator Hierarchy',
-    '/targets':             '22 National Targets',
+    '/dashboard': 'Monitoring Dashboard',
+    '/indicators': '4-Tier Indicator Hierarchy',
+    '/targets': '22 National Targets',
     '/adaptive-management': 'Adaptive Management & Decision Support',
-    '/reporting-toolkit':   'Reporting Modules',
-    '/verification-queue':  'Verification Queue',
-    '/compliance':          'Compliance & Accountability',
-    '/risk':                'Risk Register & Mitigation Matrix',
-    '/reports':             'Reports & Documentation',
-    '/stakeholders':        'Stakeholder Engagement Matrix',
-    '/map':                 'District Map',
-    '/rbis':                'Biodiversity Data',
-    '/data-pipeline':       '5-Tier Data Pipeline & Implementation Roadmap',
-    '/role-requests':       'Role Change Requests',
+    '/reporting-toolkit': 'Reporting Modules',
+    '/verification-queue': 'Verification Queue',
+    '/compliance': 'Compliance & Accountability',
+    '/risk': 'Risk Register & Mitigation Matrix',
+    '/reports': 'Reports & Documentation',
+    '/stakeholders': 'Stakeholder Engagement Matrix',
+    '/map': 'District Map',
+    '/rbis': 'Biodiversity Data',
+    '/data-pipeline': '5-Tier Data Pipeline & Implementation Roadmap',
+    '/role-requests': 'Role Change Requests',
     '/role-requests/admin': 'Approve Role Requests',
-    '/settings':            'Settings',
-    '/users':               'User Management',
+    '/settings': 'Settings',
+    '/users': 'User Management',
   };
   return map[pathname] ?? 'NBSAP Dashboard';
 }

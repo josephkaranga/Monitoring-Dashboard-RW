@@ -20,9 +20,7 @@ import type { FieldMeta } from './fieldRegistry';
 
 // ── Label fallback (no registry) ────────────────────────────
 export function formatFieldLabel(key: string): string {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
+  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 // ── Value coercion (type → string, nothing else) ────────────
@@ -38,9 +36,7 @@ export function formatFieldValue(val: unknown): string {
   if (typeof val === 'object') {
     const entries = Object.entries(val as Record<string, unknown>);
     if (entries.length === 0) return '—';
-    return entries
-      .map(([k, v]) => `${formatFieldLabel(k)}: ${formatFieldValue(v)}`)
-      .join(' · ');
+    return entries.map(([k, v]) => `${formatFieldLabel(k)}: ${formatFieldValue(v)}`).join(' · ');
   }
   return String(val);
 }
@@ -71,7 +67,10 @@ export function applyDisplayFormat(
 }
 
 // ── Resolve a single field: coerce then format ──────────────
-function resolveField(key: string, val: unknown): { label: string; value: string; section: string } {
+function resolveField(
+  key: string,
+  val: unknown
+): { label: string; value: string; section: string } {
   const meta = lookupField(key);
   const coerced = formatFieldValue(val);
   const formatted = applyDisplayFormat(coerced, meta.format);
@@ -111,15 +110,17 @@ export interface FormSection {
   fields: Array<{ key: string; label: string; value: string }>;
 }
 
-export function groupedFormData(
-  data: Record<string, unknown>
-): FormSection[] {
+export function groupedFormData(data: Record<string, unknown>): FormSection[] {
   const sections = new Map<string, FormSection>();
 
   function ensureSection(sectionLabel: string): FormSection {
     let sec = sections.get(sectionLabel);
     if (!sec) {
-      sec = { id: sectionLabel.toLowerCase().replace(/\s+/g, '-'), label: sectionLabel, fields: [] };
+      sec = {
+        id: sectionLabel.toLowerCase().replace(/\s+/g, '-'),
+        label: sectionLabel,
+        fields: [],
+      };
       sections.set(sectionLabel, sec);
     }
     return sec;

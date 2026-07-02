@@ -8,9 +8,11 @@ import { useLiveTargetProgress } from './useLiveTargetProgress';
 
 const { subscribeToTargetProgress, cleanup, callbacks } = vi.hoisted(() => {
   const callbacks = new Map<number, (progress: number) => void>();
-  const subscribeToTargetProgress = vi.fn((targetId: number, callback: (progress: number) => void) => {
-    callbacks.set(targetId, callback);
-  });
+  const subscribeToTargetProgress = vi.fn(
+    (targetId: number, callback: (progress: number) => void) => {
+      callbacks.set(targetId, callback);
+    }
+  );
   const cleanup = vi.fn();
   return { subscribeToTargetProgress, cleanup, callbacks };
 });
@@ -27,7 +29,10 @@ describe('useLiveTargetProgress', () => {
   });
 
   it('subscribes to each target and returns the original list before any update', () => {
-    const targets = [{ id: 1, progress: 10 }, { id: 2, progress: 20 }];
+    const targets = [
+      { id: 1, progress: 10 },
+      { id: 2, progress: 20 },
+    ];
     const { result } = renderHook(() => useLiveTargetProgress(targets));
 
     expect(subscribeToTargetProgress).toHaveBeenCalledWith(1, expect.any(Function));
@@ -36,14 +41,20 @@ describe('useLiveTargetProgress', () => {
   });
 
   it('overlays live progress for the target that received an update', () => {
-    const targets = [{ id: 1, progress: 10 }, { id: 2, progress: 20 }];
+    const targets = [
+      { id: 1, progress: 10 },
+      { id: 2, progress: 20 },
+    ];
     const { result } = renderHook(() => useLiveTargetProgress(targets));
 
     act(() => {
       callbacks.get(1)?.(55);
     });
 
-    expect(result.current).toEqual([{ id: 1, progress: 55 }, { id: 2, progress: 20 }]);
+    expect(result.current).toEqual([
+      { id: 1, progress: 55 },
+      { id: 2, progress: 20 },
+    ]);
   });
 
   it('cleans up subscriptions on unmount', () => {

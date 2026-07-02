@@ -2,9 +2,9 @@ import React from 'react';
 
 /**
  * YearSelector Component
- * 
+ *
  * A reusable dropdown component for selecting years within the NBSAP reporting period (2020-2030).
- * 
+ *
  * Requirements: 7.2, 7.6
  * - Generates years array from 2020 to 2030
  * - Renders select dropdown with year options
@@ -23,10 +23,7 @@ interface YearSelectorProps {
 }
 
 // Generate years from 2020 to 2030 (NBSAP reporting period)
-const REPORTING_YEARS = Array.from(
-  { length: 2030 - 2020 + 1 },
-  (_, i) => (2020 + i).toString()
-);
+const REPORTING_YEARS = Array.from({ length: 2030 - 2020 + 1 }, (_, i) => (2020 + i).toString());
 
 export const YearSelector: React.FC<YearSelectorProps> = ({
   value = '',
@@ -59,7 +56,7 @@ export const YearSelector: React.FC<YearSelectorProps> = ({
         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
         <option value="">{placeholder}</option>
-        {REPORTING_YEARS.map((year) => (
+        {REPORTING_YEARS.map(year => (
           <option key={year} value={year}>
             {year}
           </option>

@@ -66,14 +66,14 @@ async function fetchUserFromDatabase(userId: string) {
   try {
     // Simulated Supabase query
     const error = { message: 'Record not found', code: 'PGRST116' };
-    
+
     if (error) {
       throw parseSupabaseError(error);
     }
   } catch (error) {
     // Log the error
     logError(error, LogLevel.ERROR, { userId });
-    
+
     // Re-throw or handle
     throw error;
   }
@@ -84,14 +84,11 @@ async function fetchUserFromDatabase(userId: string) {
 async function makeAPIRequest(endpoint: string) {
   try {
     const response = await fetch(endpoint);
-    
+
     if (!response.ok) {
-      throw parseNetworkError(
-        { message: response.statusText, status: response.status },
-        endpoint
-      );
+      throw parseNetworkError({ message: response.statusText, status: response.status }, endpoint);
     }
-    
+
     return await response.json();
   } catch (error) {
     // Log and format error for user
@@ -108,7 +105,7 @@ const safeAPICall = withErrorHandling(
     const response = await fetch(url);
     return response.json();
   },
-  (error) => {
+  error => {
     console.error('API call failed:', formatErrorForUser(error));
   }
 );
@@ -162,11 +159,7 @@ async function userService_updateProfile(userId: string, updates: any) {
   try {
     // Validate input
     if (!updates.email?.includes('@')) {
-      throw createValidationError(
-        'email',
-        'Invalid email format',
-        updates.email
-      );
+      throw createValidationError('email', 'Invalid email format', updates.email);
     }
 
     // Check permissions
@@ -174,7 +167,7 @@ async function userService_updateProfile(userId: string, updates: any) {
 
     // Make database update
     // const result = await supabase.from('profiles').update(updates)...
-    
+
     return { success: true };
   } catch (error) {
     // Log the error with context
@@ -182,7 +175,7 @@ async function userService_updateProfile(userId: string, updates: any) {
 
     // Format for API response
     const apiError = formatErrorForAPI(error);
-    
+
     // Return error response
     return {
       success: false,
@@ -201,22 +194,22 @@ function handleSpecificErrors(error: unknown) {
         // Redirect to login
         console.log('Redirecting to login...');
         break;
-      
+
       case ErrorCode.AUTH_ACCOUNT_SUSPENDED:
         // Show suspension notice
         console.log('Account suspended:', error.userMessage);
         break;
-      
+
       case ErrorCode.VALIDATION_INVALID_YEAR:
         // Highlight year field
         console.log('Invalid year entered');
         break;
-      
+
       case ErrorCode.NETWORK_TIMEOUT:
         // Offer retry
         console.log('Request timed out, retry?');
         break;
-      
+
       default:
         // Generic error handling
         console.log('Error:', error.userMessage);

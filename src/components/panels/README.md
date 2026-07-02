@@ -9,22 +9,25 @@ This directory contains React components for displaying biodiversity metrics, sp
 Displays biodiversity index for all districts in a sortable table.
 
 **Props:**
+
 - `biodiversityData: Map<number, BiodiversityData>` - Map of district ID to biodiversity data
 - `loading?: boolean` - Loading state
 - `onDistrictClick?: (districtId: number) => void` - Callback when district is clicked
 
 **Features:**
+
 - Sortable columns (district name, biodiversity index, species richness, occurrence count)
 - Color-coded biodiversity index with progress bars
 - Province information for each district
 - Responsive table with scrolling
 
 **Usage:**
+
 ```tsx
 <BiodiversityIndexPanel
   biodiversityData={biodiversityData}
   loading={loading}
-  onDistrictClick={(districtId) => {
+  onDistrictClick={districtId => {
     // Zoom to district on map or highlight it
     console.log('District clicked:', districtId);
   }}
@@ -38,12 +41,14 @@ Displays biodiversity index for all districts in a sortable table.
 Visual breakdown of species by taxonomic kingdom with pie/bar chart.
 
 **Props:**
+
 - `occurrences: GBIFOccurrence[]` - Array of GBIF occurrences
 - `loading?: boolean` - Loading state
 - `onKingdomClick?: (kingdom: string | null) => void` - Callback when kingdom is clicked
 - `selectedKingdom?: string | null` - Currently selected kingdom for filtering
 
 **Features:**
+
 - Toggle between bar chart and pie chart views
 - Click kingdom to filter map occurrences
 - Color-coded kingdoms matching map overlay colors
@@ -51,6 +56,7 @@ Visual breakdown of species by taxonomic kingdom with pie/bar chart.
 - Clear filter button when kingdom is selected
 
 **Usage:**
+
 ```tsx
 const [selectedKingdom, setSelectedKingdom] = useState<string | null>(null);
 
@@ -59,7 +65,7 @@ const [selectedKingdom, setSelectedKingdom] = useState<string | null>(null);
   loading={loading}
   onKingdomClick={setSelectedKingdom}
   selectedKingdom={selectedKingdom}
-/>
+/>;
 ```
 
 ---
@@ -69,32 +75,33 @@ const [selectedKingdom, setSelectedKingdom] = useState<string | null>(null);
 Ranked list of biodiversity hotspots with priority scores.
 
 **Props:**
+
 - `hotspots: BiodiversityHotspot[]` - Array of hotspot districts
 - `loading?: boolean` - Loading state
 - `onHotspotClick?: (districtId: number) => void` - Callback when hotspot is clicked
 
 **Features:**
+
 - Ranked list with priority badges (1, 2, 3, etc.)
 - Color-coded priority levels (Critical, High, Medium, Moderate)
 - Shows biodiversity index, species richness, and protected area coverage
 - Hover effects with priority color borders
 
 **Usage:**
+
 ```tsx
 import { identifyHotspots } from '../../utils/hotspotDetection';
 
-const hotspots = identifyHotspots(
-  Array.from(biodiversityData.values())
-);
+const hotspots = identifyHotspots(Array.from(biodiversityData.values()));
 
 <HotspotsListPanel
   hotspots={hotspots}
   loading={loading}
-  onHotspotClick={(districtId) => {
+  onHotspotClick={districtId => {
     // Zoom to hotspot on map
     console.log('Hotspot clicked:', districtId);
   }}
-/>
+/>;
 ```
 
 ---
@@ -104,17 +111,20 @@ const hotspots = identifyHotspots(
 List of protected areas with filtering by designation type.
 
 **Props:**
+
 - `areas: ProtectedArea[]` - Array of protected area features
 - `loading?: boolean` - Loading state
 - `onAreaClick?: (areaName: string) => void` - Callback when area is clicked
 
 **Features:**
+
 - Filter by designation type (National Park, Reserve, Wetland, Forest Reserve)
 - Color-coded area types with icons
 - Shows area size and establishment date
 - Total area calculation in footer
 
 **Usage:**
+
 ```tsx
 import { useProtectedAreas } from '../../hooks/useProtectedAreas';
 
@@ -123,11 +133,11 @@ const { areas, loading } = useProtectedAreas();
 <ProtectedAreasListPanel
   areas={areas?.features || []}
   loading={loading}
-  onAreaClick={(areaName) => {
+  onAreaClick={areaName => {
     // Highlight area on map
     console.log('Protected area clicked:', areaName);
   }}
-/>
+/>;
 ```
 
 ---
@@ -137,6 +147,7 @@ const { areas, loading } = useProtectedAreas();
 Animated counter displaying total GBIF occurrences with trend indicator.
 
 **Props:**
+
 - `currentCount: number` - Current occurrence count
 - `previousCount?: number` - Previous count for trend calculation
 - `lastUpdated: Date | null` - Timestamp of last data fetch
@@ -144,6 +155,7 @@ Animated counter displaying total GBIF occurrences with trend indicator.
 - `onRefresh?: () => void` - Callback for manual refresh
 
 **Features:**
+
 - Animated counter with smooth easing
 - Trend indicator (up/down arrow with percentage change)
 - Shows absolute change and previous count
@@ -152,6 +164,7 @@ Animated counter displaying total GBIF occurrences with trend indicator.
 - Gradient background with decorative elements
 
 **Usage:**
+
 ```tsx
 const [previousCount, setPreviousCount] = useState(0);
 const { occurrences, totalCount, lastUpdated, loading, refresh } = useGBIFOccurrences();
@@ -167,7 +180,7 @@ const handleRefresh = async () => {
   lastUpdated={lastUpdated}
   loading={loading}
   onRefresh={handleRefresh}
-/>
+/>;
 ```
 
 ---
@@ -189,15 +202,15 @@ Kingdom colors are defined in `src/types/overlays.ts`:
 
 ```typescript
 export const kingdomColors: Record<string, string> = {
-  'Plantae': '#10b981',      // green
-  'Animalia': '#3b82f6',     // blue
-  'Fungi': '#f59e0b',        // orange
-  'Chromista': '#8b5cf6',    // purple
-  'Bacteria': '#ef4444',     // red
-  'Archaea': '#ec4899',      // pink
-  'Protozoa': '#14b8a6',     // teal
-  'Viruses': '#6b7280',      // gray
-  'default': '#9ca3af',      // light gray
+  Plantae: '#10b981', // green
+  Animalia: '#3b82f6', // blue
+  Fungi: '#f59e0b', // orange
+  Chromista: '#8b5cf6', // purple
+  Bacteria: '#ef4444', // red
+  Archaea: '#ec4899', // pink
+  Protozoa: '#14b8a6', // teal
+  Viruses: '#6b7280', // gray
+  default: '#9ca3af', // light gray
 };
 ```
 

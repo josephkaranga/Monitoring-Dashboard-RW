@@ -21,7 +21,10 @@ interface IndicatorRowProps {
  * IndicatorRow displays a single indicator with all its metrics
  * Optimized with React.memo for performance
  */
-export const IndicatorRow = memo(function IndicatorRow({ indicator, onTargetClick }: IndicatorRowProps) {
+export const IndicatorRow = memo(function IndicatorRow({
+  indicator,
+  onTargetClick,
+}: IndicatorRowProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -44,11 +47,11 @@ export const IndicatorRow = memo(function IndicatorRow({ indicator, onTargetClic
           cursor: 'pointer',
         }}
         onClick={() => setShowDetails(!showDetails)}
-        onMouseEnter={(e) => {
+        onMouseEnter={e => {
           e.currentTarget.parentElement!.style.background = 'var(--surface-3)';
           e.currentTarget.parentElement!.style.borderColor = 'var(--sky-dim)';
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={e => {
           e.currentTarget.parentElement!.style.background = 'var(--surface-2)';
           e.currentTarget.parentElement!.style.borderColor = 'var(--border)';
         }}

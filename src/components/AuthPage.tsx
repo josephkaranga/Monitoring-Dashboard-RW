@@ -11,18 +11,27 @@ import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from '../types/index';
 type AuthMode = 'login' | 'signup' | 'reset' | 'set-password';
 
 const inputBase: React.CSSProperties = {
-  width: '100%', padding: '10px 12px',
-  border: '1px solid #d1d5db', borderRadius: 6,
-  fontSize: '0.875rem', fontFamily: "'DM Sans', sans-serif",
-  outline: 'none', transition: 'border-color 0.15s',
-  background: '#fff', color: '#111827',
+  width: '100%',
+  padding: '10px 12px',
+  border: '1px solid #d1d5db',
+  borderRadius: 6,
+  fontSize: '0.875rem',
+  fontFamily: "'DM Sans', sans-serif",
+  outline: 'none',
+  transition: 'border-color 0.15s',
+  background: '#fff',
+  color: '#111827',
 };
 const inputError: React.CSSProperties = {
-  ...inputBase, border: '1px solid #ef4444',
+  ...inputBase,
+  border: '1px solid #ef4444',
 };
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '0.8rem', fontWeight: 500,
-  color: '#374151', marginBottom: 4,
+  display: 'block',
+  fontSize: '0.8rem',
+  fontWeight: 500,
+  color: '#374151',
+  marginBottom: 4,
 };
 const fieldWrap: React.CSSProperties = { marginBottom: 16 };
 
@@ -38,7 +47,11 @@ export default function AuthPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('policy_monitoring');
   const [loginForm, setLoginForm] = useState<LoginCredentials>({ email: '', password: '' });
   const [signupForm, setSignupForm] = useState<Omit<SignupData, 'role'> & { role: UserRole }>({
-    email: '', password: '', full_name: '', role: 'policy_monitoring', organization: '',
+    email: '',
+    password: '',
+    full_name: '',
+    role: 'policy_monitoring',
+    organization: '',
   });
   const [resetEmail, setResetEmail] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,80 +94,117 @@ export default function AuthPage() {
     return Object.keys(errs).length === 0;
   }, [mode, loginForm, signupForm, resetEmail]);
 
-  const handleLogin = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setLoading(true);
-    const result = await signIn(loginForm);
-    if (result.error) toast.error(result.error);
-    else { await writeAuditEntry('login', 'User signed in', loginForm.email); toast.success('Welcome back!'); }
-    setLoading(false);
-  }, [loginForm, validate]);
-
-  const handleSignup = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setLoading(true);
-    const result = await signUp({ ...signupForm, role: selectedRole });
-    if (result.error) toast.error(result.error);
-    else {
-      toast.success('Registration submitted. Awaiting administrator approval.');
-      setMode('login');
-    }
-    setLoading(false);
-  }, [signupForm, selectedRole, validate]);
-
-  const handleReset = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setLoading(true);
-    const result = await resetPassword(resetEmail);
-    if (result.error) toast.error(result.error);
-    else { toast.success('Password reset email sent.'); setMode('login'); }
-    setLoading(false);
-  }, [resetEmail, validate]);
-
-  const handleSetPassword = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
-    if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
-    setLoading(true);
-    try {
-      // Verify there is an active recovery session before calling updateUser.
-      // If the link expired or the session was lost, surface a clear message.
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Your reset link has expired. Please request a new one.');
-        setMode('reset');
-        return;
+  const handleLogin = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!validate()) return;
+      setLoading(true);
+      const result = await signIn(loginForm);
+      if (result.error) toast.error(result.error);
+      else {
+        await writeAuditEntry('login', 'User signed in', loginForm.email);
+        toast.success('Welcome back!');
       }
-
-      const result = await updatePassword(newPassword);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-
-      toast.success('Password updated! Please sign in with your new password.');
-      // Sign out the recovery session so the user logs in fresh.
-      // Use { scope: 'local' } to avoid a network call that could hang.
-      await supabase.auth.signOut({ scope: 'local' });
-      setNewPassword('');
-      setConfirmPassword('');
-      navigate('/auth', { replace: true });
-    } catch (err: any) {
-      console.error('Password update error:', err);
-      toast.error(err?.message || 'Something went wrong. Please request a new reset link.');
-    } finally {
       setLoading(false);
-    }
-  }, [newPassword, confirmPassword, navigate]);
+    },
+    [loginForm, validate]
+  );
+
+  const handleSignup = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!validate()) return;
+      setLoading(true);
+      const result = await signUp({ ...signupForm, role: selectedRole });
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success('Registration submitted. Awaiting administrator approval.');
+        setMode('login');
+      }
+      setLoading(false);
+    },
+    [signupForm, selectedRole, validate]
+  );
+
+  const handleReset = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!validate()) return;
+      setLoading(true);
+      const result = await resetPassword(resetEmail);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success('Password reset email sent.');
+        setMode('login');
+      }
+      setLoading(false);
+    },
+    [resetEmail, validate]
+  );
+
+  const handleSetPassword = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newPassword.length < 8) {
+        toast.error('Password must be at least 8 characters');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+      setLoading(true);
+      try {
+        // Verify there is an active recovery session before calling updateUser.
+        // If the link expired or the session was lost, surface a clear message.
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error('Your reset link has expired. Please request a new one.');
+          setMode('reset');
+          return;
+        }
+
+        const result = await updatePassword(newPassword);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+
+        toast.success('Password updated! Please sign in with your new password.');
+        // Sign out the recovery session so the user logs in fresh.
+        // Use { scope: 'local' } to avoid a network call that could hang.
+        await supabase.auth.signOut({ scope: 'local' });
+        setNewPassword('');
+        setConfirmPassword('');
+        navigate('/auth', { replace: true });
+      } catch (err: any) {
+        console.error('Password update error:', err);
+        toast.error(err?.message || 'Something went wrong. Please request a new reset link.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [newPassword, confirmPassword, navigate]
+  );
 
   const btnStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 0', background: '#111827', color: '#fff',
-    border: 'none', borderRadius: 6, fontSize: '0.875rem', fontWeight: 600,
-    cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif",
-    marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    width: '100%',
+    padding: '10px 0',
+    background: '#111827',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 6,
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    cursor: loading ? 'not-allowed' : 'pointer',
+    fontFamily: "'DM Sans', sans-serif",
+    marginTop: 8,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     opacity: loading ? 0.6 : 1,
   };
 
@@ -165,19 +215,33 @@ export default function AuthPage() {
         .auth-input:focus { border-color: #2563eb !important; box-shadow: 0 0 0 2px rgba(37,99,235,0.15) !important; }
       `}</style>
 
-      <div style={{
-        minHeight: '100vh', background: '#f3f4f6',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'DM Sans', sans-serif", padding: 24,
-      }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#f3f4f6',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'DM Sans', sans-serif",
+          padding: 24,
+        }}
+      >
         <div style={{ width: '100%', maxWidth: 400 }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{
-              width: 44, height: 44, background: '#111827', borderRadius: 10,
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', marginBottom: 16,
-            }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                background: '#111827',
+                borderRadius: 10,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                marginBottom: 16,
+              }}
+            >
               <i className="fa-solid fa-leaf" style={{ fontSize: 20 }} />
             </div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>
@@ -187,30 +251,63 @@ export default function AuthPage() {
           </div>
 
           {/* Card */}
-          <div style={{
-            background: '#fff', borderRadius: 8, padding: 28,
-            border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-          }}>
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 8,
+              padding: 28,
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            }}
+          >
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: 4 }}>
-              {mode === 'login' ? 'Sign in' : mode === 'signup' ? 'Create account' : mode === 'set-password' ? 'Set new password' : 'Reset password'}
+              {mode === 'login'
+                ? 'Sign in'
+                : mode === 'signup'
+                  ? 'Create account'
+                  : mode === 'set-password'
+                    ? 'Set new password'
+                    : 'Reset password'}
             </h2>
             <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: 24 }}>
-              {mode === 'login' ? 'Enter your credentials to continue.' : mode === 'signup' ? 'Register for a new account.' : mode === 'set-password' ? 'Choose a new password.' : 'We\'ll send you a reset link.'}
+              {mode === 'login'
+                ? 'Enter your credentials to continue.'
+                : mode === 'signup'
+                  ? 'Register for a new account.'
+                  : mode === 'set-password'
+                    ? 'Choose a new password.'
+                    : "We'll send you a reset link."}
             </p>
 
             {/* Tabs */}
             {mode !== 'reset' && mode !== 'set-password' && (
-              <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', marginBottom: 24 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 0,
+                  borderBottom: '1px solid #e5e7eb',
+                  marginBottom: 24,
+                }}
+              >
                 {(['login', 'signup'] as AuthMode[]).map(m => (
-                  <button key={m} type="button" onClick={() => setMode(m)}
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
                     style={{
-                      flex: 1, padding: '8px 0', border: 'none', background: 'none',
-                      fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                      flex: 1,
+                      padding: '8px 0',
+                      border: 'none',
+                      background: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
                       fontFamily: "'DM Sans', sans-serif",
                       color: mode === m ? '#111827' : '#9ca3af',
                       borderBottom: mode === m ? '2px solid #111827' : '2px solid transparent',
                       marginBottom: -1,
-                    }}>
+                    }}
+                  >
                     {m === 'login' ? 'Sign In' : 'Register'}
                   </button>
                 ))}
@@ -222,31 +319,88 @@ export default function AuthPage() {
               <form onSubmit={handleLogin} noValidate>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Email</label>
-                  <input type="email" placeholder="you@example.com" value={loginForm.email}
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={loginForm.email}
                     onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))}
-                    className="auth-input" style={errors.email ? inputError : inputBase} autoComplete="email" />
-                  {errors.email && <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>{errors.email}</div>}
+                    className="auth-input"
+                    style={errors.email ? inputError : inputBase}
+                    autoComplete="email"
+                  />
+                  {errors.email && (
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      {errors.email}
+                    </div>
+                  )}
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Password</label>
                   <div style={{ position: 'relative' }}>
-                    <input type={showPassword ? 'text' : 'password'} placeholder="Enter password" value={loginForm.password}
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter password"
+                      value={loginForm.password}
                       onChange={e => setLoginForm(f => ({ ...f, password: e.target.value }))}
-                      className="auth-input" style={{ ...(errors.password ? inputError : inputBase), paddingRight: 36 }} autoComplete="current-password" />
-                    <button type="button" onClick={() => setShowPassword(s => !s)}
-                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0 }}>
-                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ fontSize: '0.8rem' }} />
+                      className="auth-input"
+                      style={{ ...(errors.password ? inputError : inputBase), paddingRight: 36 }}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(s => !s)}
+                      style={{
+                        position: 'absolute',
+                        right: 10,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#9ca3af',
+                        padding: 0,
+                      }}
+                    >
+                      <i
+                        className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+                        style={{ fontSize: '0.8rem' }}
+                      />
                     </button>
                   </div>
-                  {errors.password && <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>{errors.password}</div>}
+                  {errors.password && (
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      {errors.password}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" disabled={loading} style={btnStyle}>
-                  {loading && <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.6s linear infinite' }} />}
+                  {loading && (
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff',
+                        animation: 'spin 0.6s linear infinite',
+                      }}
+                    />
+                  )}
                   {loading ? 'Signing in...' : 'Sign in'}
                 </button>
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
-                  <button type="button" onClick={() => setMode('reset')}
-                    style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+                  <button
+                    type="button"
+                    onClick={() => setMode('reset')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
                     Forgot password?
                   </button>
                 </div>
@@ -258,51 +412,123 @@ export default function AuthPage() {
               <form onSubmit={handleSignup} noValidate>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Full name</label>
-                  <input type="text" placeholder="Jean Baptiste Habimana" value={signupForm.full_name}
+                  <input
+                    type="text"
+                    placeholder="Jean Baptiste Habimana"
+                    value={signupForm.full_name}
                     onChange={e => setSignupForm(f => ({ ...f, full_name: e.target.value }))}
-                    className="auth-input" style={errors.full_name ? inputError : inputBase} autoComplete="name" />
-                  {errors.full_name && <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>{errors.full_name}</div>}
+                    className="auth-input"
+                    style={errors.full_name ? inputError : inputBase}
+                    autoComplete="name"
+                  />
+                  {errors.full_name && (
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      {errors.full_name}
+                    </div>
+                  )}
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Organisation</label>
-                  <input type="text" placeholder="REMA, Ministry, District..." value={signupForm.organization}
+                  <input
+                    type="text"
+                    placeholder="REMA, Ministry, District..."
+                    value={signupForm.organization}
                     onChange={e => setSignupForm(f => ({ ...f, organization: e.target.value }))}
-                    className="auth-input" style={inputBase} autoComplete="organization" />
+                    className="auth-input"
+                    style={inputBase}
+                    autoComplete="organization"
+                  />
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Email</label>
-                  <input type="email" placeholder="you@example.com" value={signupForm.email}
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={signupForm.email}
                     onChange={e => setSignupForm(f => ({ ...f, email: e.target.value }))}
-                    className="auth-input" style={errors.email ? inputError : inputBase} autoComplete="email" />
-                  {errors.email && <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>{errors.email}</div>}
+                    className="auth-input"
+                    style={errors.email ? inputError : inputBase}
+                    autoComplete="email"
+                  />
+                  {errors.email && (
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      {errors.email}
+                    </div>
+                  )}
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Role</label>
-                  <select value={selectedRole} onChange={e => setSelectedRole(e.target.value as UserRole)}
-                    style={{ ...inputBase, cursor: 'pointer' }}>
-                    {(Object.entries(USER_ROLE_LABELS) as [UserRole, string][]).map(([role, label]) => (
-                      <option key={role} value={role}>{label}</option>
-                    ))}
+                  <select
+                    value={selectedRole}
+                    onChange={e => setSelectedRole(e.target.value as UserRole)}
+                    style={{ ...inputBase, cursor: 'pointer' }}
+                  >
+                    {(Object.entries(USER_ROLE_LABELS) as [UserRole, string][]).map(
+                      ([role, label]) => (
+                        <option key={role} value={role}>
+                          {label}
+                        </option>
+                      )
+                    )}
                   </select>
-                  <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: 6, lineHeight: 1.4 }}>
+                  <p
+                    style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: 6, lineHeight: 1.4 }}
+                  >
                     {USER_ROLE_DESCRIPTIONS[selectedRole]}
                   </p>
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Password</label>
                   <div style={{ position: 'relative' }}>
-                    <input type={showPassword ? 'text' : 'password'} placeholder="Min. 8 characters" value={signupForm.password}
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Min. 8 characters"
+                      value={signupForm.password}
                       onChange={e => setSignupForm(f => ({ ...f, password: e.target.value }))}
-                      className="auth-input" style={{ ...(errors.password ? inputError : inputBase), paddingRight: 36 }} autoComplete="new-password" />
-                    <button type="button" onClick={() => setShowPassword(s => !s)}
-                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0 }}>
-                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ fontSize: '0.8rem' }} />
+                      className="auth-input"
+                      style={{ ...(errors.password ? inputError : inputBase), paddingRight: 36 }}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(s => !s)}
+                      style={{
+                        position: 'absolute',
+                        right: 10,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#9ca3af',
+                        padding: 0,
+                      }}
+                    >
+                      <i
+                        className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+                        style={{ fontSize: '0.8rem' }}
+                      />
                     </button>
                   </div>
-                  {errors.password && <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>{errors.password}</div>}
+                  {errors.password && (
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      {errors.password}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" disabled={loading} style={btnStyle}>
-                  {loading && <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.6s linear infinite' }} />}
+                  {loading && (
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff',
+                        animation: 'spin 0.6s linear infinite',
+                      }}
+                    />
+                  )}
                   {loading ? 'Creating account...' : 'Create account'}
                 </button>
               </form>
@@ -313,18 +539,49 @@ export default function AuthPage() {
               <form onSubmit={handleReset} noValidate>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Email</label>
-                  <input type="email" placeholder="you@example.com" value={resetEmail}
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={resetEmail}
                     onChange={e => setResetEmail(e.target.value)}
-                    className="auth-input" style={errors.email ? inputError : inputBase} autoComplete="email" />
-                  {errors.email && <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>{errors.email}</div>}
+                    className="auth-input"
+                    style={errors.email ? inputError : inputBase}
+                    autoComplete="email"
+                  />
+                  {errors.email && (
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      {errors.email}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" disabled={loading} style={btnStyle}>
-                  {loading && <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.6s linear infinite' }} />}
+                  {loading && (
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff',
+                        animation: 'spin 0.6s linear infinite',
+                      }}
+                    />
+                  )}
                   {loading ? 'Sending...' : 'Send reset link'}
                 </button>
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
-                  <button type="button" onClick={() => setMode('login')}
-                    style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+                  <button
+                    type="button"
+                    onClick={() => setMode('login')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
                     Back to sign in
                   </button>
                 </div>
@@ -337,30 +594,85 @@ export default function AuthPage() {
                 <div style={fieldWrap}>
                   <label style={labelStyle}>New password</label>
                   <div style={{ position: 'relative' }}>
-                    <input type={showPassword ? 'text' : 'password'} placeholder="Min. 8 characters" value={newPassword}
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Min. 8 characters"
+                      value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      className="auth-input" style={inputBase} autoComplete="new-password" autoFocus />
-                    <button type="button" onClick={() => setShowPassword(p => !p)}
-                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0 }}>
-                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ fontSize: '0.8rem' }} />
+                      className="auth-input"
+                      style={inputBase}
+                      autoComplete="new-password"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(p => !p)}
+                      style={{
+                        position: 'absolute',
+                        right: 10,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#9ca3af',
+                        padding: 0,
+                      }}
+                    >
+                      <i
+                        className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+                        style={{ fontSize: '0.8rem' }}
+                      />
                     </button>
                   </div>
                   {newPassword.length > 0 && newPassword.length < 8 && (
-                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>Must be at least 8 characters</div>
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      Must be at least 8 characters
+                    </div>
                   )}
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Confirm password</label>
-                  <input type={showPassword ? 'text' : 'password'} placeholder="Re-enter password" value={confirmPassword}
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    className="auth-input" style={confirmPassword && confirmPassword !== newPassword ? inputError : inputBase} autoComplete="new-password" />
+                    className="auth-input"
+                    style={
+                      confirmPassword && confirmPassword !== newPassword ? inputError : inputBase
+                    }
+                    autoComplete="new-password"
+                  />
                   {confirmPassword && confirmPassword !== newPassword && (
-                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>Passwords do not match</div>
+                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
+                      Passwords do not match
+                    </div>
                   )}
                 </div>
-                <button type="submit" disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
-                  style={{ ...btnStyle, opacity: (loading || newPassword.length < 8 || newPassword !== confirmPassword) ? 0.4 : 1 }}>
-                  {loading && <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.6s linear infinite' }} />}
+                <button
+                  type="submit"
+                  disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
+                  style={{
+                    ...btnStyle,
+                    opacity:
+                      loading || newPassword.length < 8 || newPassword !== confirmPassword
+                        ? 0.4
+                        : 1,
+                  }}
+                >
+                  {loading && (
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff',
+                        animation: 'spin 0.6s linear infinite',
+                      }}
+                    />
+                  )}
                   {loading ? 'Updating...' : 'Set password'}
                 </button>
               </form>

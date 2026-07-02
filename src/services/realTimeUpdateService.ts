@@ -33,7 +33,7 @@ export class RealTimeUpdateService {
           table: 'nbsap_targets',
           filter: `id=eq.${targetId}`,
         },
-        (payload) => {
+        payload => {
           const target = payload.new as NBSAPTarget;
           callback(target.progress, target);
           this.broadcastUpdate(targetId, target.progress);
@@ -69,7 +69,7 @@ export class RealTimeUpdateService {
    * Remove all active subscriptions. Call this on component unmount.
    */
   cleanup(): void {
-    this.subscriptions.forEach((channel) => supabase.removeChannel(channel));
+    this.subscriptions.forEach(channel => supabase.removeChannel(channel));
     this.subscriptions.clear();
   }
 }

@@ -47,7 +47,9 @@ curl "https://YOUR_PROJECT_REF.supabase.co/functions/v1/gbif-proxy?endpoint=occu
 import { supabase } from './supabase';
 
 // Get the function URL
-const { data: { url } } = supabase.functions.getUrl('gbif-proxy');
+const {
+  data: { url },
+} = supabase.functions.getUrl('gbif-proxy');
 
 // Make a request
 const response = await fetch(`${url}?endpoint=occurrence/search&limit=5&hasCoordinate=true`);
@@ -63,16 +65,19 @@ const data = await response.json();
 ### Examples
 
 **Get occurrence count:**
+
 ```
 GET /gbif-proxy?endpoint=occurrence/search&limit=0
 ```
 
 **Get recent occurrences with coordinates:**
+
 ```
 GET /gbif-proxy?endpoint=occurrence/search&limit=5&hasCoordinate=true
 ```
 
 **Get occurrences from last 7 days:**
+
 ```
 GET /gbif-proxy?endpoint=occurrence/search&limit=10&eventDate=2024-05-20,2024-05-27
 ```
@@ -116,6 +121,7 @@ Responses are cached for **5 minutes** (`Cache-Control: public, max-age=300`). T
 ## Monitoring
 
 Check function logs in Supabase Dashboard:
+
 1. Go to **Edge Functions** in your Supabase project
 2. Click on **gbif-proxy**
 3. View **Logs** tab for request/error logs
@@ -123,19 +129,23 @@ Check function logs in Supabase Dashboard:
 ## Troubleshooting
 
 ### Function not found
+
 - Verify deployment: `supabase functions list`
 - Redeploy: `supabase functions deploy gbif-proxy`
 
 ### CORS errors
+
 - Check that `corsHeaders` are properly set in the function
 - Verify the function is deployed with the latest code
 
 ### Timeout errors
+
 - GBIF API may be slow or unavailable
 - Check GBIF API status: https://www.gbif.org/
 - Increase timeout in function code if needed
 
 ### Rate limit errors
+
 - The function enforces 1 req/sec
 - Implement client-side request queuing if making many requests
 
@@ -170,6 +180,7 @@ curl "http://localhost:54321/functions/v1/gbif-proxy?endpoint=occurrence/search&
 ## Support
 
 For issues or questions:
+
 1. Check Supabase Edge Functions documentation
 2. Review GBIF API documentation: https://www.gbif.org/developer/summary
 3. Check function logs in Supabase Dashboard

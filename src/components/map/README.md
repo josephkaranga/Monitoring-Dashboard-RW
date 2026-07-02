@@ -9,10 +9,12 @@ This directory contains UI components for the GIS Biodiversity Enhancement featu
 A dropdown control for switching between different map visualization layers.
 
 **Props:**
+
 - `activeLayer: MapLayer` - Currently active layer
 - `onLayerChange: (layer: MapLayer) => void` - Callback when layer changes
 
 **Supported Layers:**
+
 1. Biodiversity Index
 2. Forest Cover
 3. Species Richness
@@ -24,19 +26,18 @@ A dropdown control for switching between different map visualization layers.
 9. Compliance Score
 
 **Features:**
+
 - Keyboard navigation (Tab, Enter, Arrow keys)
 - ARIA labels for screen readers
 - Focus indicators
 - Matches MapPage dark theme styling
 
 **Usage:**
+
 ```tsx
 import { LayerSwitcher } from './components/map';
 
-<LayerSwitcher
-  activeLayer={activeLayer}
-  onLayerChange={(layer) => setActiveLayer(layer)}
-/>
+<LayerSwitcher activeLayer={activeLayer} onLayerChange={layer => setActiveLayer(layer)} />;
 ```
 
 ---
@@ -46,10 +47,12 @@ import { LayerSwitcher } from './components/map';
 Checkbox controls for toggling map overlays on/off.
 
 **Props:**
+
 - `overlays: OverlayToggleConfig[]` - Array of overlay configurations
 - `onToggle: (overlayId: MapOverlay) => void` - Callback when overlay is toggled
 
 **OverlayToggleConfig Interface:**
+
 ```typescript
 interface OverlayToggleConfig {
   id: MapOverlay;
@@ -61,11 +64,13 @@ interface OverlayToggleConfig {
 ```
 
 **Supported Overlays:**
+
 1. GBIF Occurrences
 2. Protected Area Borders
 3. River Network
 
 **Features:**
+
 - Multiple overlays can be enabled simultaneously
 - Loading indicators during data fetch
 - Error state display
@@ -74,6 +79,7 @@ interface OverlayToggleConfig {
 - Hover effects
 
 **Usage:**
+
 ```tsx
 import { OverlayToggles } from './components/map';
 
@@ -83,10 +89,7 @@ const overlays = [
   { id: 'rivers', label: 'River Network', enabled: false },
 ];
 
-<OverlayToggles
-  overlays={overlays}
-  onToggle={(id) => handleOverlayToggle(id)}
-/>
+<OverlayToggles overlays={overlays} onToggle={id => handleOverlayToggle(id)} />;
 ```
 
 ---
@@ -96,12 +99,14 @@ const overlays = [
 A button for manually refreshing GBIF occurrence data.
 
 **Props:**
+
 - `onRefresh: () => void` - Callback when refresh is triggered
 - `loading: boolean` - Whether data is currently loading
 - `lastUpdated?: Date | null` - Timestamp of last data update
 - `disabled?: boolean` - Whether button is disabled
 
 **Features:**
+
 - Loading state with spinner animation
 - Disabled state during loading
 - Last updated timestamp with relative time display
@@ -110,14 +115,11 @@ A button for manually refreshing GBIF occurrence data.
 - Hover and focus effects
 
 **Usage:**
+
 ```tsx
 import { RefreshButton } from './components/map';
 
-<RefreshButton
-  onRefresh={handleRefresh}
-  loading={isLoading}
-  lastUpdated={lastUpdateTime}
-/>
+<RefreshButton onRefresh={handleRefresh} loading={isLoading} lastUpdated={lastUpdateTime} />;
 ```
 
 ---
@@ -127,10 +129,12 @@ import { RefreshButton } from './components/map';
 A dynamic legend that updates based on the active map layer.
 
 **Props:**
+
 - `activeLayer: MapLayer` - Currently active layer
 - `position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'` - Legend position (default: 'bottom-right')
 
 **Features:**
+
 - Dynamic content based on active layer
 - Color-coded value ranges
 - Data source attribution
@@ -139,13 +143,14 @@ A dynamic legend that updates based on the active map layer.
 - ARIA region label
 
 **Usage:**
+
 ```tsx
 import { MapLegend } from './components/map';
 
 <div style={{ position: 'relative' }}>
   <svg>{/* Map content */}</svg>
   <MapLegend activeLayer={activeLayer} position="bottom-right" />
-</div>
+</div>;
 ```
 
 ---
@@ -174,6 +179,7 @@ All components follow WCAG 2.1 AA guidelines:
 ## Integration Example
 
 See `MapControls.example.tsx` for a complete integration example showing:
+
 - State management
 - Event handling
 - Layout composition
@@ -182,12 +188,14 @@ See `MapControls.example.tsx` for a complete integration example showing:
 ## Type Definitions
 
 All components use TypeScript types from:
+
 - `src/types/mapLayers.ts` - MapLayer type and layer configurations
 - `src/types/overlays.ts` - MapOverlay type and overlay configurations
 
 ## Testing
 
 To test components:
+
 1. Import into MapPage.tsx
 2. Wire up state management
 3. Test keyboard navigation (Tab through controls, Enter/Space to activate)
@@ -197,6 +205,7 @@ To test components:
 ## Future Enhancements
 
 Potential improvements:
+
 - [ ] Add tooltips with layer descriptions
 - [ ] Add keyboard shortcuts (e.g., 1-9 for layers)
 - [ ] Add animation when switching layers

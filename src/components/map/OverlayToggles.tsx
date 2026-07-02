@@ -17,10 +17,10 @@ interface OverlayTogglesProps {
 
 /**
  * OverlayToggles Component
- * 
+ *
  * Provides checkbox controls for toggling map overlays on/off.
  * Supports 3 overlay types: GBIF Occurrences, Protected Area Borders, and River Network.
- * 
+ *
  * Features:
  * - Multiple overlays can be enabled simultaneously
  * - Loading indicators for async data fetching
@@ -49,7 +49,7 @@ export function OverlayToggles({ overlays, onToggle, isMobile = false }: Overlay
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        width: isMobile ? '100%' : 'auto'
+        width: isMobile ? '100%' : 'auto',
       }}
     >
       {!isMobile && (
@@ -65,12 +65,12 @@ export function OverlayToggles({ overlays, onToggle, isMobile = false }: Overlay
           Overlays:
         </div>
       )}
-      {overlays.map((overlay) => (
+      {overlays.map(overlay => (
         <label
           key={overlay.id}
           htmlFor={`overlay-${overlay.id}`}
           tabIndex={0}
-          onKeyDown={(e) => handleKeyDown(e, overlay.id)}
+          onKeyDown={e => handleKeyDown(e, overlay.id)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -85,21 +85,21 @@ export function OverlayToggles({ overlays, onToggle, isMobile = false }: Overlay
             outline: 'none',
             minHeight: isMobile ? 44 : 'auto',
             background: isMobile ? 'var(--surface)' : 'transparent',
-            border: isMobile ? '1px solid var(--border)' : 'none'
+            border: isMobile ? '1px solid var(--border)' : 'none',
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={e => {
             if (!overlay.error) {
               e.currentTarget.style.backgroundColor = 'var(--surface-2)';
             }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={e => {
             e.currentTarget.style.backgroundColor = isMobile ? 'var(--surface)' : 'transparent';
           }}
-          onFocus={(e) => {
+          onFocus={e => {
             e.currentTarget.style.outline = '2px solid var(--sky-dim)';
             e.currentTarget.style.outlineOffset = '2px';
           }}
-          onBlur={(e) => {
+          onBlur={e => {
             e.currentTarget.style.outline = 'none';
           }}
         >

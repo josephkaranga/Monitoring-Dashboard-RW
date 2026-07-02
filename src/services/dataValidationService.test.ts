@@ -107,7 +107,7 @@ describe('validateToolWeightsSum', () => {
     });
 
     expect(check.valid).toBe(false);
-    expect(check.issues.some((i) => i.field === 'weights')).toBe(true);
+    expect(check.issues.some(i => i.field === 'weights')).toBe(true);
   });
 
   it('flags individual out-of-range weights', () => {
@@ -122,14 +122,16 @@ describe('validateToolWeightsSum', () => {
     });
 
     expect(check.valid).toBe(false);
-    expect(check.issues.some((i) => i.field === ToolId.T01)).toBe(true);
-    expect(check.issues.some((i) => i.field === ToolId.T02)).toBe(true);
+    expect(check.issues.some(i => i.field === ToolId.T01)).toBe(true);
+    expect(check.issues.some(i => i.field === ToolId.T02)).toBe(true);
   });
 });
 
 describe('validateTargetProgressRow', () => {
   it('accepts a valid target row', () => {
-    expect(validateTargetProgressRow({ id: 1, progress: 50, auto_update_count: 3 }).valid).toBe(true);
+    expect(validateTargetProgressRow({ id: 1, progress: 50, auto_update_count: 3 }).valid).toBe(
+      true
+    );
   });
 
   it('flags a progress value outside the 0-100 range', () => {
@@ -141,11 +143,13 @@ describe('validateTargetProgressRow', () => {
   it('flags a negative auto_update_count', () => {
     const check = validateTargetProgressRow({ id: 2, progress: 50, auto_update_count: -1 });
     expect(check.valid).toBe(false);
-    expect(check.issues.some((i) => i.message.includes('cannot be negative'))).toBe(true);
+    expect(check.issues.some(i => i.message.includes('cannot be negative'))).toBe(true);
   });
 
   it('allows a missing auto_update_count', () => {
-    expect(validateTargetProgressRow({ id: 3, progress: 50, auto_update_count: null }).valid).toBe(true);
+    expect(validateTargetProgressRow({ id: 3, progress: 50, auto_update_count: null }).valid).toBe(
+      true
+    );
   });
 });
 
@@ -157,13 +161,13 @@ describe('validateProgressCalculation', () => {
   it('flags a weighted contribution that does not match base * weight', () => {
     const check = validateProgressCalculation(makeCalculation({ weightedContribution: 999 }));
     expect(check.valid).toBe(false);
-    expect(check.issues.some((i) => i.field === 'weightedContribution')).toBe(true);
+    expect(check.issues.some(i => i.field === 'weightedContribution')).toBe(true);
   });
 
   it('flags a new progress value that does not match previous + weighted contribution', () => {
     const check = validateProgressCalculation(makeCalculation({ newProgress: 999 }));
     expect(check.valid).toBe(false);
-    expect(check.issues.some((i) => i.field === 'newProgress')).toBe(true);
+    expect(check.issues.some(i => i.field === 'newProgress')).toBe(true);
   });
 
   it('clamps the expected new progress to 100 when the sum exceeds it', () => {

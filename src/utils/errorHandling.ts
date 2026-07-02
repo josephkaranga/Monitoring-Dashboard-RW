@@ -17,7 +17,7 @@ export enum ErrorCode {
   AUTH_ACCOUNT_DEACTIVATED = 'AUTH_004',
   AUTH_ACCOUNT_SUSPENDED = 'AUTH_005',
   AUTH_INSUFFICIENT_PERMISSIONS = 'AUTH_006',
-  
+
   // Validation
   VALIDATION_INVALID_INPUT = 'VAL_001',
   VALIDATION_REQUIRED_FIELD = 'VAL_002',
@@ -25,7 +25,7 @@ export enum ErrorCode {
   VALIDATION_OUT_OF_RANGE = 'VAL_004',
   VALIDATION_INVALID_DATE = 'VAL_005',
   VALIDATION_INVALID_YEAR = 'VAL_006',
-  
+
   // Network & API
   NETWORK_CONNECTION_ERROR = 'NET_001',
   NETWORK_TIMEOUT = 'NET_002',
@@ -33,26 +33,26 @@ export enum ErrorCode {
   API_REQUEST_FAILED = 'API_001',
   API_RESPONSE_INVALID = 'API_002',
   API_RATE_LIMIT = 'API_003',
-  
+
   // Database
   DB_QUERY_FAILED = 'DB_001',
   DB_RECORD_NOT_FOUND = 'DB_002',
   DB_DUPLICATE_ENTRY = 'DB_003',
   DB_CONSTRAINT_VIOLATION = 'DB_004',
   DB_CONNECTION_ERROR = 'DB_005',
-  
+
   // File Operations
   FILE_NOT_FOUND = 'FILE_001',
   FILE_UPLOAD_FAILED = 'FILE_002',
   FILE_INVALID_TYPE = 'FILE_003',
   FILE_SIZE_EXCEEDED = 'FILE_004',
   FILE_DOWNLOAD_FAILED = 'FILE_005',
-  
+
   // Business Logic
   BUSINESS_INVALID_OPERATION = 'BIZ_001',
   BUSINESS_WORKFLOW_ERROR = 'BIZ_002',
   BUSINESS_STATE_CONFLICT = 'BIZ_003',
-  
+
   // Unknown/Generic
   UNKNOWN_ERROR = 'ERR_000',
 }
@@ -137,14 +137,7 @@ export class ValidationError extends AppError {
     code: ErrorCode = ErrorCode.VALIDATION_INVALID_INPUT,
     context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      code,
-      ErrorSeverity.LOW,
-      undefined,
-      { ...context, field, value },
-      true
-    );
+    super(message, code, ErrorSeverity.LOW, undefined, { ...context, field, value }, true);
     this.field = field;
     this.value = value;
   }
@@ -159,14 +152,7 @@ export class AuthenticationError extends AppError {
     code: ErrorCode = ErrorCode.AUTH_UNAUTHORIZED,
     context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      code,
-      ErrorSeverity.MEDIUM,
-      undefined,
-      context,
-      true
-    );
+    super(message, code, ErrorSeverity.MEDIUM, undefined, context, true);
   }
 }
 
@@ -211,14 +197,7 @@ export class DatabaseError extends AppError {
     table?: string,
     context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      code,
-      ErrorSeverity.HIGH,
-      undefined,
-      { ...context, query, table },
-      true
-    );
+    super(message, code, ErrorSeverity.HIGH, undefined, { ...context, query, table }, true);
     this.query = query;
     this.table = table;
   }
@@ -238,14 +217,7 @@ export class FileError extends AppError {
     fileSize?: number,
     context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      code,
-      ErrorSeverity.MEDIUM,
-      undefined,
-      { ...context, fileName, fileSize },
-      true
-    );
+    super(message, code, ErrorSeverity.MEDIUM, undefined, { ...context, fileName, fileSize }, true);
     this.fileName = fileName;
     this.fileSize = fileSize;
   }
@@ -260,14 +232,7 @@ export class BusinessError extends AppError {
     code: ErrorCode = ErrorCode.BUSINESS_INVALID_OPERATION,
     context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      code,
-      ErrorSeverity.MEDIUM,
-      undefined,
-      context,
-      true
-    );
+    super(message, code, ErrorSeverity.MEDIUM, undefined, context, true);
   }
 }
 
@@ -301,18 +266,26 @@ export function formatErrorForLogging(error: unknown): string {
   }
 
   if (error instanceof Error) {
-    return JSON.stringify({
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-    }, null, 2);
+    return JSON.stringify(
+      {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      },
+      null,
+      2
+    );
   }
 
-  return JSON.stringify({
-    error: String(error),
-    timestamp: new Date().toISOString(),
-  }, null, 2);
+  return JSON.stringify(
+    {
+      error: String(error),
+      timestamp: new Date().toISOString(),
+    },
+    null,
+    2
+  );
 }
 
 /**
@@ -355,47 +328,55 @@ export function getUserFriendlyMessage(code: ErrorCode, technicalMessage?: strin
     [ErrorCode.AUTH_UNAUTHORIZED]: 'You are not authorized to perform this action. Please log in.',
     [ErrorCode.AUTH_INVALID_CREDENTIALS]: 'Invalid email or password. Please try again.',
     [ErrorCode.AUTH_SESSION_EXPIRED]: 'Your session has expired. Please log in again.',
-    [ErrorCode.AUTH_ACCOUNT_DEACTIVATED]: 'Your account has been deactivated. Please contact an administrator.',
-    [ErrorCode.AUTH_ACCOUNT_SUSPENDED]: 'Your account is currently suspended. Please contact an administrator.',
+    [ErrorCode.AUTH_ACCOUNT_DEACTIVATED]:
+      'Your account has been deactivated. Please contact an administrator.',
+    [ErrorCode.AUTH_ACCOUNT_SUSPENDED]:
+      'Your account is currently suspended. Please contact an administrator.',
     [ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS]: 'You do not have permission to perform this action.',
-    
+
     // Validation
     [ErrorCode.VALIDATION_INVALID_INPUT]: 'Please check your input and try again.',
     [ErrorCode.VALIDATION_REQUIRED_FIELD]: 'Please fill in all required fields.',
-    [ErrorCode.VALIDATION_INVALID_FORMAT]: 'The format of your input is invalid. Please check and try again.',
+    [ErrorCode.VALIDATION_INVALID_FORMAT]:
+      'The format of your input is invalid. Please check and try again.',
     [ErrorCode.VALIDATION_OUT_OF_RANGE]: 'The value you entered is out of the acceptable range.',
-    [ErrorCode.VALIDATION_INVALID_DATE]: 'Please enter a valid date between 2020-01-01 and 2030-12-31.',
+    [ErrorCode.VALIDATION_INVALID_DATE]:
+      'Please enter a valid date between 2020-01-01 and 2030-12-31.',
     [ErrorCode.VALIDATION_INVALID_YEAR]: 'Please enter a year between 2020 and 2030.',
-    
+
     // Network & API
-    [ErrorCode.NETWORK_CONNECTION_ERROR]: 'Unable to connect to the server. Please check your internet connection.',
+    [ErrorCode.NETWORK_CONNECTION_ERROR]:
+      'Unable to connect to the server. Please check your internet connection.',
     [ErrorCode.NETWORK_TIMEOUT]: 'The request took too long to complete. Please try again.',
     [ErrorCode.NETWORK_SERVER_ERROR]: 'The server encountered an error. Please try again later.',
     [ErrorCode.API_REQUEST_FAILED]: 'The request failed. Please try again.',
-    [ErrorCode.API_RESPONSE_INVALID]: 'Received an invalid response from the server. Please try again.',
+    [ErrorCode.API_RESPONSE_INVALID]:
+      'Received an invalid response from the server. Please try again.',
     [ErrorCode.API_RATE_LIMIT]: 'Too many requests. Please wait a moment and try again.',
-    
+
     // Database
     [ErrorCode.DB_QUERY_FAILED]: 'A database error occurred. Please try again.',
     [ErrorCode.DB_RECORD_NOT_FOUND]: 'The requested record was not found.',
     [ErrorCode.DB_DUPLICATE_ENTRY]: 'This record already exists.',
-    [ErrorCode.DB_CONSTRAINT_VIOLATION]: 'The operation violates data constraints. Please check your input.',
+    [ErrorCode.DB_CONSTRAINT_VIOLATION]:
+      'The operation violates data constraints. Please check your input.',
     [ErrorCode.DB_CONNECTION_ERROR]: 'Unable to connect to the database. Please try again later.',
-    
+
     // File Operations
     [ErrorCode.FILE_NOT_FOUND]: 'The requested file was not found.',
     [ErrorCode.FILE_UPLOAD_FAILED]: 'File upload failed. Please try again.',
     [ErrorCode.FILE_INVALID_TYPE]: 'Invalid file type. Please upload a supported file format.',
     [ErrorCode.FILE_SIZE_EXCEEDED]: 'File size exceeds the maximum allowed limit.',
     [ErrorCode.FILE_DOWNLOAD_FAILED]: 'File download failed. Please try again.',
-    
+
     // Business Logic
     [ErrorCode.BUSINESS_INVALID_OPERATION]: 'This operation is not allowed.',
     [ErrorCode.BUSINESS_WORKFLOW_ERROR]: 'Unable to complete the workflow. Please contact support.',
     [ErrorCode.BUSINESS_STATE_CONFLICT]: 'The current state does not allow this operation.',
-    
+
     // Unknown/Generic
-    [ErrorCode.UNKNOWN_ERROR]: technicalMessage || 'An unexpected error occurred. Please try again.',
+    [ErrorCode.UNKNOWN_ERROR]:
+      technicalMessage || 'An unexpected error occurred. Please try again.',
   };
 
   return messages[code] || messages[ErrorCode.UNKNOWN_ERROR];
@@ -458,19 +439,27 @@ export function logError(
   const logEntry = {
     level,
     timestamp: new Date().toISOString(),
-    error: error instanceof AppError ? error.toJSON() : {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    },
+    error:
+      error instanceof AppError
+        ? error.toJSON()
+        : {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
     context,
   };
 
   // Console logging
   if (loggerConfig.enableConsole) {
-    const consoleMethod = level === LogLevel.FATAL || level === LogLevel.ERROR ? 'error' :
-                         level === LogLevel.WARN ? 'warn' :
-                         level === LogLevel.INFO ? 'info' : 'log';
-    
+    const consoleMethod =
+      level === LogLevel.FATAL || level === LogLevel.ERROR
+        ? 'error'
+        : level === LogLevel.WARN
+          ? 'warn'
+          : level === LogLevel.INFO
+            ? 'info'
+            : 'log';
+
     console[consoleMethod]('[NBSAP Error]', logEntry);
   }
 
@@ -531,42 +520,26 @@ export function parseSupabaseError(error: any): AppError {
 
   // Map Supabase error codes to our error codes
   if (code === '23505') {
-    return new DatabaseError(
-      message,
-      ErrorCode.DB_DUPLICATE_ENTRY,
-      undefined,
-      undefined,
-      { supabaseCode: code }
-    );
+    return new DatabaseError(message, ErrorCode.DB_DUPLICATE_ENTRY, undefined, undefined, {
+      supabaseCode: code,
+    });
   }
 
   if (code === '23503') {
-    return new DatabaseError(
-      message,
-      ErrorCode.DB_CONSTRAINT_VIOLATION,
-      undefined,
-      undefined,
-      { supabaseCode: code }
-    );
+    return new DatabaseError(message, ErrorCode.DB_CONSTRAINT_VIOLATION, undefined, undefined, {
+      supabaseCode: code,
+    });
   }
 
   if (code === 'PGRST116') {
-    return new DatabaseError(
-      message,
-      ErrorCode.DB_RECORD_NOT_FOUND,
-      undefined,
-      undefined,
-      { supabaseCode: code }
-    );
+    return new DatabaseError(message, ErrorCode.DB_RECORD_NOT_FOUND, undefined, undefined, {
+      supabaseCode: code,
+    });
   }
 
-  return new DatabaseError(
-    message,
-    ErrorCode.DB_QUERY_FAILED,
-    undefined,
-    undefined,
-    { supabaseCode: code }
-  );
+  return new DatabaseError(message, ErrorCode.DB_QUERY_FAILED, undefined, undefined, {
+    supabaseCode: code,
+  });
 }
 
 /**
@@ -577,63 +550,33 @@ export function parseNetworkError(error: any, endpoint?: string): AppError {
   const statusCode = error?.status || error?.statusCode;
 
   if (statusCode === 401) {
-    return new AuthenticationError(
-      message,
-      ErrorCode.AUTH_UNAUTHORIZED,
-      { statusCode, endpoint }
-    );
+    return new AuthenticationError(message, ErrorCode.AUTH_UNAUTHORIZED, { statusCode, endpoint });
   }
 
   if (statusCode === 403) {
-    return new AuthenticationError(
-      message,
-      ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS,
-      { statusCode, endpoint }
-    );
+    return new AuthenticationError(message, ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS, {
+      statusCode,
+      endpoint,
+    });
   }
 
   if (statusCode === 404) {
-    return new NetworkError(
-      message,
-      statusCode,
-      endpoint,
-      ErrorCode.DB_RECORD_NOT_FOUND
-    );
+    return new NetworkError(message, statusCode, endpoint, ErrorCode.DB_RECORD_NOT_FOUND);
   }
 
   if (statusCode === 429) {
-    return new NetworkError(
-      message,
-      statusCode,
-      endpoint,
-      ErrorCode.API_RATE_LIMIT
-    );
+    return new NetworkError(message, statusCode, endpoint, ErrorCode.API_RATE_LIMIT);
   }
 
   if (statusCode >= 500) {
-    return new NetworkError(
-      message,
-      statusCode,
-      endpoint,
-      ErrorCode.NETWORK_SERVER_ERROR
-    );
+    return new NetworkError(message, statusCode, endpoint, ErrorCode.NETWORK_SERVER_ERROR);
   }
 
   if (error?.name === 'AbortError' || message.includes('timeout')) {
-    return new NetworkError(
-      message,
-      statusCode,
-      endpoint,
-      ErrorCode.NETWORK_TIMEOUT
-    );
+    return new NetworkError(message, statusCode, endpoint, ErrorCode.NETWORK_TIMEOUT);
   }
 
-  return new NetworkError(
-    message,
-    statusCode,
-    endpoint,
-    ErrorCode.NETWORK_CONNECTION_ERROR
-  );
+  return new NetworkError(message, statusCode, endpoint, ErrorCode.NETWORK_CONNECTION_ERROR);
 }
 
 /**
@@ -644,12 +587,7 @@ export function createValidationError(
   message: string,
   value?: unknown
 ): ValidationError {
-  return new ValidationError(
-    message,
-    field,
-    value,
-    ErrorCode.VALIDATION_INVALID_INPUT
-  );
+  return new ValidationError(message, field, value, ErrorCode.VALIDATION_INVALID_INPUT);
 }
 
 // ── EXPORTS ───────────────────────────────────────────────────
@@ -663,23 +601,23 @@ export default {
   DatabaseError,
   FileError,
   BusinessError,
-  
+
   // Error codes and severity
   ErrorCode,
   ErrorSeverity,
-  
+
   // Formatting functions
   formatErrorForUser,
   formatErrorForLogging,
   formatErrorForAPI,
   getUserFriendlyMessage,
-  
+
   // Logging utilities
   LogLevel,
   configureLogger,
   logError,
   logAndFormatError,
-  
+
   // Helper functions
   withErrorHandling,
   isOperationalError,

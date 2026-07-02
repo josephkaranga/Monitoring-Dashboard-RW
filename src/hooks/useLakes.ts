@@ -42,7 +42,7 @@ export function useLakes(options: UseLakesOptions = {}): UseLakesReturn {
         setError(null);
 
         const response = await fetch('/rwanda-lakes.geojson');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to load lakes: ${response.statusText}`);
         }

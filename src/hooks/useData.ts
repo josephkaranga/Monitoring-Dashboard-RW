@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../utils/supabase';
-import {
-  fetchReports,
-  getDashboardStats,
-  type ReportFilters,
-} from '../services/reportService';
+import { fetchReports, getDashboardStats, type ReportFilters } from '../services/reportService';
 import {
   fetchIndicators,
   fetchDistricts,
@@ -61,7 +57,9 @@ export function useAsync<T>(
   useEffect(() => {
     mountedRef.current = true;
     fetch();
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [fetch]);
 
   return { data, loading, error, refetch: fetch };
@@ -109,14 +107,18 @@ export function useReports(filters: ReportFilters = {}) {
   useEffect(() => {
     mountedRef.current = true;
     load();
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [load]);
 
   // Only subscribe to realtime if explicitly requested
   useEffect(() => {
     if (!filters.realtime) return;
     const channel = subscribeToReports(() => load());
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [load, filters.realtime]);
 
   return { reports, count, loading, error, refetch: load };
@@ -135,7 +137,9 @@ export function usePendingCount(): number {
     setCount(c || 0);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Refresh every 30s instead of realtime subscription
   useEffect(() => {
@@ -175,10 +179,7 @@ export function useRisks(filters?: { level?: string; category?: string; search?:
 
 export function useAuditLog(filters?: { actionType?: string; limit?: number }) {
   const { permissions } = useAuth();
-  const result = useAsync(
-    () => fetchAuditLog(filters),
-    [JSON.stringify(filters)]
-  );
+  const result = useAsync(() => fetchAuditLog(filters), [JSON.stringify(filters)]);
   // Return empty if no permission — but always call the hook
   if (!permissions?.canViewAuditLog) {
     return { data: [] as AuditEntry[], loading: false, error: null, refetch: () => {} };
@@ -201,18 +202,22 @@ export function useNotifications() {
     setLoading(false);
   }, [user?.id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Realtime subscription for new notifications only
   useEffect(() => {
     if (!user?.id) return;
     const channel = subscribeToNotifications(user.id, (newNotif: Notification) => {
-      setNotifications((prev) => [newNotif, ...prev]);
+      setNotifications(prev => [newNotif, ...prev]);
     });
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const markAllRead = useCallback(async () => {
     if (!user?.id || unreadCount === 0) return;
@@ -259,10 +264,7 @@ export function useAuditLogger() {
 // ── NBSAP Progress by District ────────────────────────────────
 
 export function useNBSAPProgress(targetId?: number) {
-  return useAsync(
-    () => getIndicatorsByDistrict(targetId ? { targetId } : undefined),
-    [targetId]
-  );
+  return useAsync(() => getIndicatorsByDistrict(targetId ? { targetId } : undefined), [targetId]);
 }
 
 // ── Threat Level by District ──────────────────────────────────

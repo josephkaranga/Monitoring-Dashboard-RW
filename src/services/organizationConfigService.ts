@@ -45,7 +45,11 @@ function mapRowToConfig(row: OrganizationConfigRow): OrganizationConfig {
 export type OrganizationConfigUpdate = Partial<
   Pick<
     OrganizationConfig,
-    'automaticUpdatesEnabled' | 'requireVerification' | 'auditLevel' | 'processingTimeout' | 'enableNotifications'
+    | 'automaticUpdatesEnabled'
+    | 'requireVerification'
+    | 'auditLevel'
+    | 'processingTimeout'
+    | 'enableNotifications'
   >
 >;
 
@@ -82,17 +86,28 @@ export class OrganizationConfigService {
    * Create a new organization configuration, defaulting any unspecified
    * settings to the platform defaults.
    */
-  async createConfig(organizationName: string, overrides: OrganizationConfigUpdate = {}): Promise<OrganizationConfig> {
+  async createConfig(
+    organizationName: string,
+    overrides: OrganizationConfigUpdate = {}
+  ): Promise<OrganizationConfig> {
     const { data, error } = await supabase
       .from('organization_configs')
       .insert({
         organization_name: organizationName,
         ...DEFAULT_ORGANIZATION_CONFIG,
-        ...(overrides.automaticUpdatesEnabled !== undefined && { automatic_updates_enabled: overrides.automaticUpdatesEnabled }),
-        ...(overrides.requireVerification !== undefined && { require_verification: overrides.requireVerification }),
+        ...(overrides.automaticUpdatesEnabled !== undefined && {
+          automatic_updates_enabled: overrides.automaticUpdatesEnabled,
+        }),
+        ...(overrides.requireVerification !== undefined && {
+          require_verification: overrides.requireVerification,
+        }),
         ...(overrides.auditLevel !== undefined && { audit_level: overrides.auditLevel }),
-        ...(overrides.processingTimeout !== undefined && { processing_timeout: overrides.processingTimeout }),
-        ...(overrides.enableNotifications !== undefined && { enable_notifications: overrides.enableNotifications }),
+        ...(overrides.processingTimeout !== undefined && {
+          processing_timeout: overrides.processingTimeout,
+        }),
+        ...(overrides.enableNotifications !== undefined && {
+          enable_notifications: overrides.enableNotifications,
+        }),
       })
       .select()
       .single();
@@ -106,13 +121,20 @@ export class OrganizationConfigService {
   /**
    * Update an existing organization configuration.
    */
-  async updateConfig(organizationId: string, updates: OrganizationConfigUpdate): Promise<OrganizationConfig> {
+  async updateConfig(
+    organizationId: string,
+    updates: OrganizationConfigUpdate
+  ): Promise<OrganizationConfig> {
     const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (updates.automaticUpdatesEnabled !== undefined) payload.automatic_updates_enabled = updates.automaticUpdatesEnabled;
-    if (updates.requireVerification !== undefined) payload.require_verification = updates.requireVerification;
+    if (updates.automaticUpdatesEnabled !== undefined)
+      payload.automatic_updates_enabled = updates.automaticUpdatesEnabled;
+    if (updates.requireVerification !== undefined)
+      payload.require_verification = updates.requireVerification;
     if (updates.auditLevel !== undefined) payload.audit_level = updates.auditLevel;
-    if (updates.processingTimeout !== undefined) payload.processing_timeout = updates.processingTimeout;
-    if (updates.enableNotifications !== undefined) payload.enable_notifications = updates.enableNotifications;
+    if (updates.processingTimeout !== undefined)
+      payload.processing_timeout = updates.processingTimeout;
+    if (updates.enableNotifications !== undefined)
+      payload.enable_notifications = updates.enableNotifications;
 
     const { data, error } = await supabase
       .from('organization_configs')
@@ -131,7 +153,10 @@ export class OrganizationConfigService {
    * Convenience method to enable or disable automatic processing for an
    * organization.
    */
-  async toggleAutomaticUpdates(organizationId: string, enabled: boolean): Promise<OrganizationConfig> {
+  async toggleAutomaticUpdates(
+    organizationId: string,
+    enabled: boolean
+  ): Promise<OrganizationConfig> {
     return this.updateConfig(organizationId, { automaticUpdatesEnabled: enabled });
   }
 }

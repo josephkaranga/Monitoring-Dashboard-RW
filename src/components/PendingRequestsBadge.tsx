@@ -33,7 +33,15 @@ export default function PendingRequestsBadge() {
 
   if (loading) {
     return (
-      <div style={{ padding: '6px 12px', background: '#f1f5f9', borderRadius: 16, fontSize: '0.8rem', color: '#94a3b8' }}>
+      <div
+        style={{
+          padding: '6px 12px',
+          background: '#f1f5f9',
+          borderRadius: 16,
+          fontSize: '0.8rem',
+          color: '#94a3b8',
+        }}
+      >
         <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: 6 }} />
         Loading...
       </div>
@@ -47,15 +55,37 @@ export default function PendingRequestsBadge() {
   return (
     <button
       onClick={handleClick}
-      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: 20, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,158,11,0.3)', transition: 'transform 0.2s' }}
-      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 14px',
+        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 20,
+        fontSize: '0.85rem',
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
+        transition: 'transform 0.2s',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       title={`${count} pending role change request${count !== 1 ? 's' : ''}`}
     >
       <i className="fa-solid fa-user-clock" />
       <span>{count} Pending</span>
       {count > 5 && (
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', animation: 'pulse 2s infinite' }} />
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: '#fff',
+            animation: 'pulse 2s infinite',
+          }}
+        />
       )}
       <style>{`
         @keyframes pulse {

@@ -19,7 +19,7 @@ interface ErrorDisplayProps {
 
 /**
  * ErrorDisplay component shows error states with retry functionality
- * 
+ *
  * @example
  * ```tsx
  * <ErrorDisplay message="Failed to load data" onRetry={refetch} />
@@ -27,7 +27,12 @@ interface ErrorDisplayProps {
  * <ErrorDisplay message="Connection timeout" type="warning" centered />
  * ```
  */
-export function ErrorDisplay({ message, onRetry, type = 'error', centered = false }: ErrorDisplayProps) {
+export function ErrorDisplay({
+  message,
+  onRetry,
+  type = 'error',
+  centered = false,
+}: ErrorDisplayProps) {
   const config = {
     error: {
       background: '#fef2f2',
@@ -118,10 +123,10 @@ export function ErrorDisplay({ message, onRetry, type = 'error', centered = fals
               fontFamily: "'DM Sans', sans-serif",
               transition: 'all 0.2s',
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={e => {
               e.currentTarget.style.background = iconBg;
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={e => {
               e.currentTarget.style.background = '#fff';
             }}
           >

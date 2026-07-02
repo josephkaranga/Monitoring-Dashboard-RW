@@ -16,7 +16,7 @@ interface RBISLinkageBadgeProps {
 
 /**
  * RBISLinkageBadge component displays RBIS linkage status with tooltip
- * 
+ *
  * @example
  * ```tsx
  * <RBISLinkageBadge linkage={{ status: 'linked', dataStreams: ['protected-areas'] }} />
@@ -27,7 +27,7 @@ export function RBISLinkageBadge({ linkage, size = 'medium' }: RBISLinkageBadgeP
   const [showTooltip, setShowTooltip] = useState(false);
 
   const config = {
-    'linked': {
+    linked: {
       label: 'Linked',
       background: '#d1fae5',
       color: '#065f46',
@@ -39,7 +39,7 @@ export function RBISLinkageBadge({ linkage, size = 'medium' }: RBISLinkageBadgeP
       color: '#4b5563',
       icon: 'fa-link-slash',
     },
-    'partial': {
+    partial: {
       label: 'Partial',
       background: '#fef3c7',
       color: '#92400e',
@@ -125,7 +125,15 @@ export function RBISLinkageBadge({ linkage, size = 'medium' }: RBISLinkageBadgeP
             </div>
           ))}
           {linkage.lastSync && (
-            <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', color: '#6b7280', fontSize: '0.65rem' }}>
+            <div
+              style={{
+                marginTop: 6,
+                paddingTop: 6,
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                color: '#6b7280',
+                fontSize: '0.65rem',
+              }}
+            >
               Last sync: {new Date(linkage.lastSync).toLocaleString()}
             </div>
           )}

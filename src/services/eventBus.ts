@@ -26,8 +26,10 @@ export interface DistrictStatusEventPayload {
  */
 export interface UpdateEventMap {
   'target-progress-updated': TargetProgressEventPayload;
-  'dashboard-refresh': TargetProgressEventPayload;
-  'national-targets-refresh': TargetProgressEventPayload;
+  // dashboard-refresh is a generic "something changed" signal; targetId/progress are optional
+  // because callers such as deleteReport emit it without a specific target in scope.
+  'dashboard-refresh': Partial<TargetProgressEventPayload>;
+  'national-targets-refresh': Partial<TargetProgressEventPayload>;
   'district-status-updated': DistrictStatusEventPayload;
 }
 
@@ -65,7 +67,7 @@ class EventBus {
    * Notify all listeners registered for an event.
    */
   emit<E extends UpdateEventName>(event: E, payload: UpdateEventMap[E]): void {
-    this.listeners.get(event)?.forEach((callback) => callback(payload));
+    this.listeners.get(event)?.forEach(callback => callback(payload));
   }
 
   /**

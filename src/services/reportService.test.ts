@@ -20,7 +20,11 @@ const { mockFrom, mockState, insertedRows } = vi.hoisted(() => {
         select: () => ({
           eq: () => ({
             eq: () => ({
-              maybeSingle: () => Promise.resolve({ data: mockState.toolWeightRow, error: mockState.toolWeightError }),
+              maybeSingle: () =>
+                Promise.resolve({
+                  data: mockState.toolWeightRow,
+                  error: mockState.toolWeightError,
+                }),
             }),
           }),
         }),
@@ -89,11 +93,19 @@ describe('fetchToolWeight', () => {
   });
 
   it('returns the weight and description from the tool_weights table when available', async () => {
-    mockState.toolWeightRow = { tool_id: 'T02', weight: 0.2, description: 'District Biodiversity Monitoring' };
+    mockState.toolWeightRow = {
+      tool_id: 'T02',
+      weight: 0.2,
+      description: 'District Biodiversity Monitoring',
+    };
 
     const info = await fetchToolWeight('T02');
 
-    expect(info).toEqual({ toolId: 'T02', weight: 0.2, description: 'District Biodiversity Monitoring' });
+    expect(info).toEqual({
+      toolId: 'T02',
+      weight: 0.2,
+      description: 'District Biodiversity Monitoring',
+    });
   });
 
   it('falls back to the built-in tool weight constants when no row is found', async () => {
@@ -119,7 +131,10 @@ describe('processReportAutomatic', () => {
   });
 
   it('logs the submission and automatic-processing outcome for an approved report', async () => {
-    const result = await processReportAutomatic(makeReport({ status: 'approved' }), makeOrgConfig());
+    const result = await processReportAutomatic(
+      makeReport({ status: 'approved' }),
+      makeOrgConfig()
+    );
 
     expect(result.status).toBe(UpdateStatus.COMPLETED);
     expect(result.progressUpdated).toBe(true);

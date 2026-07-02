@@ -16,7 +16,7 @@ interface StatusBadgeProps {
 
 /**
  * StatusBadge component displays color-coded indicator status
- * 
+ *
  * @example
  * ```tsx
  * <StatusBadge status="on-track" />

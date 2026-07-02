@@ -17,7 +17,7 @@ interface ProgressBarProps {
 
 /**
  * ProgressBar component displays progress with color gradient
- * 
+ *
  * @example
  * ```tsx
  * <ProgressBar progress={75} />

@@ -70,12 +70,12 @@ export function GBFGoalSection({
           transition: 'all 0.2s',
           textAlign: 'left',
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={e => {
           if (!expanded) {
             e.currentTarget.style.background = colors.bg;
           }
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={e => {
           if (!expanded) {
             e.currentTarget.style.background = 'transparent';
           }
@@ -122,7 +122,8 @@ export function GBFGoalSection({
                   fontFamily: "'DM Mono', monospace",
                 }}
               >
-                {goal.targets.length} targets • {goal.targets.reduce((sum, t) => sum + t.indicators.length, 0)} indicators
+                {goal.targets.length} targets •{' '}
+                {goal.targets.reduce((sum, t) => sum + t.indicators.length, 0)} indicators
               </span>
             </div>
           </div>
@@ -204,7 +205,7 @@ export function GBFGoalSection({
               No targets for this goal
             </div>
           ) : (
-            goal.targets.map((target) => (
+            goal.targets.map(target => (
               <TargetSection
                 key={target.id}
                 target={target}

@@ -82,18 +82,22 @@ function getAccountStatus(user: UserProfile): { status: string; color: string; m
     if (user.suspension_end_date) {
       const endDate = new Date(user.suspension_end_date);
       if (endDate < new Date()) {
-        return { status: 'Suspended (Expired)', color: '#f59e0b', message: `Suspension expired on ${endDate.toLocaleDateString()}` };
+        return {
+          status: 'Suspended (Expired)',
+          color: '#f59e0b',
+          message: `Suspension expired on ${endDate.toLocaleDateString()}`,
+        };
       }
-      return { 
-        status: 'Suspended', 
-        color: '#ef4444', 
-        message: `Until ${endDate.toLocaleDateString()}${user.suspension_reason ? ` - ${user.suspension_reason}` : ''}` 
+      return {
+        status: 'Suspended',
+        color: '#ef4444',
+        message: `Until ${endDate.toLocaleDateString()}${user.suspension_reason ? ` - ${user.suspension_reason}` : ''}`,
       };
     }
-    return { 
-      status: 'Suspended', 
-      color: '#ef4444', 
-      message: user.suspension_reason || 'Indefinite suspension' 
+    return {
+      status: 'Suspended',
+      color: '#ef4444',
+      message: user.suspension_reason || 'Indefinite suspension',
     };
   }
 
@@ -117,17 +121,17 @@ interface FloatingMenuProps {
   onDelete: () => void;
 }
 
-function FloatingMenu({ 
-  user, 
-  isOpen, 
-  position, 
-  onClose, 
-  onDeactivate, 
-  onSuspend, 
-  onReactivate, 
-  onResetPassword, 
-  onAssignRole, 
-  onDelete 
+function FloatingMenu({
+  user,
+  isOpen,
+  position,
+  onClose,
+  onDeactivate,
+  onSuspend,
+  onReactivate,
+  onResetPassword,
+  onAssignRole,
+  onDelete,
 }: FloatingMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -158,7 +162,7 @@ function FloatingMenu({
         boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
         zIndex: 1000,
         minWidth: 160,
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {!user.is_active ? (
@@ -172,10 +176,10 @@ function FloatingMenu({
             textAlign: 'left',
             fontSize: 13,
             cursor: 'pointer',
-            color: '#10b981'
+            color: '#10b981',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
           Reactivate
         </button>
@@ -190,10 +194,10 @@ function FloatingMenu({
             textAlign: 'left',
             fontSize: 13,
             cursor: 'pointer',
-            color: '#10b981'
+            color: '#10b981',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
           Unsuspend
         </button>
@@ -209,10 +213,10 @@ function FloatingMenu({
               textAlign: 'left',
               fontSize: 13,
               cursor: 'pointer',
-              color: '#BA7517'
+              color: '#BA7517',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+            onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             Deactivate
           </button>
@@ -226,18 +230,18 @@ function FloatingMenu({
               textAlign: 'left',
               fontSize: 13,
               cursor: 'pointer',
-              color: '#BA7517'
+              color: '#BA7517',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+            onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             Suspend
           </button>
         </>
       )}
-      
+
       <div style={{ height: '0.5px', background: '#e5e7eb', margin: '4px 0' }} />
-      
+
       <button
         onClick={onResetPassword}
         style={{
@@ -248,14 +252,14 @@ function FloatingMenu({
           textAlign: 'left',
           fontSize: 13,
           cursor: 'pointer',
-          color: '#374151'
+          color: '#374151',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+        onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
       >
         Reset PWD
       </button>
-      
+
       <button
         onClick={onAssignRole}
         style={{
@@ -266,16 +270,16 @@ function FloatingMenu({
           textAlign: 'left',
           fontSize: 13,
           cursor: 'pointer',
-          color: '#374151'
+          color: '#374151',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+        onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
       >
         Assign Role
       </button>
-      
+
       <div style={{ height: '0.5px', background: '#e5e7eb', margin: '4px 0' }} />
-      
+
       <button
         onClick={onDelete}
         style={{
@@ -286,10 +290,10 @@ function FloatingMenu({
           textAlign: 'left',
           fontSize: 13,
           cursor: 'pointer',
-          color: '#dc2626'
+          color: '#dc2626',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+        onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
       >
         Delete
       </button>
@@ -314,11 +318,11 @@ export default function UserManagementPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   // Floating menu state
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-  
+
   // Modal states
   const [resetTarget, setResetTarget] = useState<UserProfile | null>(null);
   const [suspendTarget, setSuspendTarget] = useState<UserProfile | null>(null);
@@ -330,7 +334,8 @@ export default function UserManagementPage() {
   /* ---------------- DERIVED DATA ---------------- */
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
-      const matchSearch = !search ||
+      const matchSearch =
+        !search ||
         u.email.toLowerCase().includes(search.toLowerCase()) ||
         u.full_name?.toLowerCase().includes(search.toLowerCase());
       const matchRole = roleFilter === 'all' || u.role === roleFilter;
@@ -369,19 +374,25 @@ export default function UserManagementPage() {
     [isAdmin, refetch]
   );
 
-  const handleDeactivate = useCallback(async (userId: string, userName: string) => {
-    if (!window.confirm(`Deactivate ${userName}'s account? This will prevent them from logging in.`)) return;
-    setUpdating(userId);
-    const reason = prompt('Reason for deactivation (optional):');
-    const res = await deactivateUserAccount(userId, reason || undefined);
-    if (res.error) toast.error(res.error);
-    else {
-      toast.success('Account deactivated');
-      refetch();
-    }
-    setUpdating(null);
-    setOpenMenuId(null);
-  }, [refetch]);
+  const handleDeactivate = useCallback(
+    async (userId: string, userName: string) => {
+      if (
+        !window.confirm(`Deactivate ${userName}'s account? This will prevent them from logging in.`)
+      )
+        return;
+      setUpdating(userId);
+      const reason = prompt('Reason for deactivation (optional):');
+      const res = await deactivateUserAccount(userId, reason || undefined);
+      if (res.error) toast.error(res.error);
+      else {
+        toast.success('Account deactivated');
+        refetch();
+      }
+      setUpdating(null);
+      setOpenMenuId(null);
+    },
+    [refetch]
+  );
 
   const handleSuspend = useCallback((user: UserProfile) => {
     setSuspendTarget(user);
@@ -407,57 +418,66 @@ export default function UserManagementPage() {
     setUpdating(null);
   }, [suspendTarget, suspendReason, suspendEndDate, refetch]);
 
-  const handleReactivate = useCallback(async (userId: string, userName: string) => {
-    if (!window.confirm(`Reactivate ${userName}'s account?`)) return;
-    setUpdating(userId);
-    const res = await reactivateUserAccount(userId);
-    if (res.error) toast.error(res.error);
-    else {
-      toast.success('Account reactivated');
-      refetch();
-    }
-    setUpdating(null);
-    setOpenMenuId(null);
-  }, [refetch]);
-  const handleDelete = useCallback(async (userId: string, userName: string) => {
-    if (!window.confirm(`Delete ${userName}? This action cannot be undone.`)) return;
-    setUpdating(userId);
-    const { error } = await supabase.rpc('admin_delete_user', { target_user_id: userId });
-    if (error) toast.error(error.message);
-    else {
-      toast.success('User deleted');
-      refetch();
-    }
-    setUpdating(null);
-    setOpenMenuId(null);
-  }, [refetch]);
-
-  const handleMenuToggle = useCallback((userId: string, event: React.MouseEvent) => {
-    if (openMenuId === userId) {
+  const handleReactivate = useCallback(
+    async (userId: string, userName: string) => {
+      if (!window.confirm(`Reactivate ${userName}'s account?`)) return;
+      setUpdating(userId);
+      const res = await reactivateUserAccount(userId);
+      if (res.error) toast.error(res.error);
+      else {
+        toast.success('Account reactivated');
+        refetch();
+      }
+      setUpdating(null);
       setOpenMenuId(null);
-      return;
-    }
-    
-    const rect = event.currentTarget.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const menuWidth = 160;
-    const menuHeight = 200;
-    
-    let left = rect.right + 8;
-    let top = rect.top;
-    
-    // Adjust if menu would overflow viewport
-    if (left + menuWidth > viewportWidth) {
-      left = rect.left - menuWidth - 8;
-    }
-    if (top + menuHeight > viewportHeight) {
-      top = viewportHeight - menuHeight - 8;
-    }
-    
-    setMenuPosition({ top, left });
-    setOpenMenuId(userId);
-  }, [openMenuId]);
+    },
+    [refetch]
+  );
+  const handleDelete = useCallback(
+    async (userId: string, userName: string) => {
+      if (!window.confirm(`Delete ${userName}? This action cannot be undone.`)) return;
+      setUpdating(userId);
+      const { error } = await supabase.rpc('admin_delete_user', { target_user_id: userId });
+      if (error) toast.error(error.message);
+      else {
+        toast.success('User deleted');
+        refetch();
+      }
+      setUpdating(null);
+      setOpenMenuId(null);
+    },
+    [refetch]
+  );
+
+  const handleMenuToggle = useCallback(
+    (userId: string, event: React.MouseEvent) => {
+      if (openMenuId === userId) {
+        setOpenMenuId(null);
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const menuWidth = 160;
+      const menuHeight = 200;
+
+      let left = rect.right + 8;
+      let top = rect.top;
+
+      // Adjust if menu would overflow viewport
+      if (left + menuWidth > viewportWidth) {
+        left = rect.left - menuWidth - 8;
+      }
+      if (top + menuHeight > viewportHeight) {
+        top = viewportHeight - menuHeight - 8;
+      }
+
+      setMenuPosition({ top, left });
+      setOpenMenuId(userId);
+    },
+    [openMenuId]
+  );
 
   const handleSelectAll = useCallback(() => {
     if (selectedUsers.size === paginatedUsers.length) {
@@ -467,41 +487,53 @@ export default function UserManagementPage() {
     }
   }, [selectedUsers.size, paginatedUsers]);
 
-  const handleUserSelect = useCallback((userId: string) => {
-    const newSelected = new Set(selectedUsers);
-    if (newSelected.has(userId)) {
-      newSelected.delete(userId);
-    } else {
-      newSelected.add(userId);
-    }
-    setSelectedUsers(newSelected);
-  }, [selectedUsers]);
+  const handleUserSelect = useCallback(
+    (userId: string) => {
+      const newSelected = new Set(selectedUsers);
+      if (newSelected.has(userId)) {
+        newSelected.delete(userId);
+      } else {
+        newSelected.add(userId);
+      }
+      setSelectedUsers(newSelected);
+    },
+    [selectedUsers]
+  );
   /* =========================================================
      RENDER
   ========================================================= */
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: 'auto', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      
+    <div
+      style={{
+        padding: 24,
+        maxWidth: 1400,
+        margin: 'auto',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}
+    >
       {/* ================= TOP TOOLBAR ================= */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20,
-        gap: 16 
-      }}>
-        
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+          gap: 16,
+        }}
+      >
         {/* Search Input */}
         <div style={{ position: 'relative', flex: '0 0 300px' }}>
-          <div style={{ 
-            position: 'absolute', 
-            left: 12, 
-            top: '50%', 
-            transform: 'translateY(-50%)', 
-            color: '#9ca3af',
-            fontSize: 14
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              left: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#9ca3af',
+              fontSize: 14,
+            }}
+          >
             🔍
           </div>
           <input
@@ -514,7 +546,7 @@ export default function UserManagementPage() {
               border: '0.5px solid #d1d5db',
               borderRadius: 8,
               fontSize: 13,
-              outline: 'none'
+              outline: 'none',
             }}
           />
         </div>
@@ -533,12 +565,14 @@ export default function UserManagementPage() {
             borderRadius: 8,
             fontSize: 13,
             background: 'white',
-            minWidth: 160
+            minWidth: 160,
           }}
         >
           <option value="all">All Roles</option>
           {Object.entries(ROLE_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k}>
+              {v}
+            </option>
           ))}
         </select>
 
@@ -557,7 +591,7 @@ export default function UserManagementPage() {
               fontWeight: 500,
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
             }}
           >
             <span>+</span>
@@ -566,12 +600,14 @@ export default function UserManagementPage() {
         )}
       </div>
       {/* ================= ROLE FILTER TABS ================= */}
-      <div style={{ 
-        display: 'flex', 
-        gap: 8, 
-        marginBottom: 24, 
-        flexWrap: 'wrap' 
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 24,
+          flexWrap: 'wrap',
+        }}
+      >
         <button
           onClick={() => {
             setRoleFilter('all');
@@ -585,12 +621,12 @@ export default function UserManagementPage() {
             color: roleFilter === 'all' ? 'white' : '#6b7280',
             cursor: 'pointer',
             fontSize: 13,
-            fontWeight: 500
+            fontWeight: 500,
           }}
         >
           All ({roleCounts.all || 0})
         </button>
-        
+
         {Object.entries(ROLE_LABELS).map(([role, label]) => (
           <button
             key={role}
@@ -606,7 +642,7 @@ export default function UserManagementPage() {
               color: roleFilter === role ? 'white' : '#6b7280',
               cursor: 'pointer',
               fontSize: 13,
-              fontWeight: 500
+              fontWeight: 500,
             }}
           >
             {label} ({roleCounts[role] || 0})
@@ -615,81 +651,100 @@ export default function UserManagementPage() {
       </div>
 
       {/* ================= TABLE ================= */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: 12, 
-        border: '0.5px solid #e5e7eb',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)' 
-      }}>
-        <table style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse' 
-        }}>
-          
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 12,
+          border: '0.5px solid #e5e7eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        }}
+      >
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+          }}
+        >
           <thead>
-            <tr style={{ 
-              background: '#f9fafb',
-              borderBottom: '0.5px solid #e5e7eb'
-            }}>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: 13, 
-                fontWeight: 600,
-                color: '#374151',
-                width: 50
-              }}>
+            <tr
+              style={{
+                background: '#f9fafb',
+                borderBottom: '0.5px solid #e5e7eb',
+              }}
+            >
+              <th
+                style={{
+                  padding: '16px 20px',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#374151',
+                  width: 50,
+                }}
+              >
                 <input
                   type="checkbox"
-                  checked={selectedUsers.size === paginatedUsers.length && paginatedUsers.length > 0}
+                  checked={
+                    selectedUsers.size === paginatedUsers.length && paginatedUsers.length > 0
+                  }
                   onChange={handleSelectAll}
                   style={{ cursor: 'pointer' }}
                 />
               </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: 13, 
-                fontWeight: 600,
-                color: '#374151'
-              }}>
+              <th
+                style={{
+                  padding: '16px 20px',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#374151',
+                }}
+              >
                 User
               </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: 13, 
-                fontWeight: 600,
-                color: '#374151'
-              }}>
+              <th
+                style={{
+                  padding: '16px 20px',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#374151',
+                }}
+              >
                 Role
               </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: 13, 
-                fontWeight: 600,
-                color: '#374151'
-              }}>
+              <th
+                style={{
+                  padding: '16px 20px',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#374151',
+                }}
+              >
                 Status
               </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: 13, 
-                fontWeight: 600,
-                color: '#374151'
-              }}>
+              <th
+                style={{
+                  padding: '16px 20px',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#374151',
+                }}
+              >
                 Last Login
               </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'center', 
-                fontSize: 13, 
-                fontWeight: 600,
-                color: '#374151',
-                width: 80
-              }}>
+              <th
+                style={{
+                  padding: '16px 20px',
+                  textAlign: 'center',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#374151',
+                  width: 80,
+                }}
+              >
                 Actions
               </th>
             </tr>
@@ -712,17 +767,17 @@ export default function UserManagementPage() {
                 const statusInfo = getAccountStatus(u);
                 const roleColors = ROLE_COLORS[u.role];
                 const avatarColor = getAvatarColor(u.full_name || u.email);
-                
+
                 return (
-                  <tr 
+                  <tr
                     key={u.id}
-                    style={{ 
-                      borderBottom: index < paginatedUsers.length - 1 ? '0.5px solid #f3f4f6' : 'none'
+                    style={{
+                      borderBottom:
+                        index < paginatedUsers.length - 1 ? '0.5px solid #f3f4f6' : 'none',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
-                    
                     {/* CHECKBOX */}
                     <td style={{ padding: '16px 20px' }}>
                       <input
@@ -747,24 +802,28 @@ export default function UserManagementPage() {
                             justifyContent: 'center',
                             color: 'white',
                             fontSize: 14,
-                            fontWeight: 600
+                            fontWeight: 600,
                           }}
                         >
                           {u.avatar_initials}
                         </div>
                         <div>
-                          <div style={{ 
-                            fontSize: 13, 
-                            fontWeight: 500, 
-                            color: '#111827',
-                            marginBottom: 2
-                          }}>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: '#111827',
+                              marginBottom: 2,
+                            }}
+                          >
                             {u.full_name || 'No name'}
                           </div>
-                          <div style={{ 
-                            fontSize: 11, 
-                            color: '#6b7280'
-                          }}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: '#6b7280',
+                            }}
+                          >
                             {u.email}
                           </div>
                         </div>
@@ -779,7 +838,7 @@ export default function UserManagementPage() {
                           background: roleColors.bg,
                           color: roleColors.text,
                           fontSize: 11,
-                          fontWeight: 500
+                          fontWeight: 500,
                         }}
                       >
                         {ROLE_LABELS[u.role]}
@@ -794,14 +853,16 @@ export default function UserManagementPage() {
                             width: 8,
                             height: 8,
                             borderRadius: '50%',
-                            background: statusInfo.status === 'Active' ? '#10b981' : '#ef4444'
+                            background: statusInfo.status === 'Active' ? '#10b981' : '#ef4444',
                           }}
                         />
-                        <span style={{ 
-                          fontSize: 13, 
-                          color: '#374151',
-                          fontWeight: 500
-                        }}>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            color: '#374151',
+                            fontWeight: 500,
+                          }}
+                        >
                           {statusInfo.status}
                         </span>
                       </div>
@@ -809,15 +870,14 @@ export default function UserManagementPage() {
 
                     {/* LAST LOGIN */}
                     <td style={{ padding: '16px 20px' }}>
-                      <span style={{ 
-                        fontSize: 13, 
-                        color: u.last_login ? '#6b7280' : '#BA7517',
-                        fontWeight: u.last_login ? 400 : 500
-                      }}>
-                        {u.last_login 
-                          ? new Date(u.last_login).toLocaleDateString()
-                          : 'Never'
-                        }
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: u.last_login ? '#6b7280' : '#BA7517',
+                          fontWeight: u.last_login ? 400 : 500,
+                        }}
+                      >
+                        {u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}
                       </span>
                     </td>
 
@@ -825,7 +885,7 @@ export default function UserManagementPage() {
                     <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                       {isAdmin && (
                         <button
-                          onClick={(e) => handleMenuToggle(u.id, e)}
+                          onClick={e => handleMenuToggle(u.id, e)}
                           disabled={updating === u.id}
                           style={{
                             background: 'none',
@@ -834,16 +894,15 @@ export default function UserManagementPage() {
                             fontSize: 16,
                             color: '#6b7280',
                             padding: '4px 8px',
-                            borderRadius: 4
+                            borderRadius: 4,
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#f3f4f6')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                         >
                           ⋮
                         </button>
                       )}
                     </td>
-
                   </tr>
                 );
               })
@@ -852,19 +911,20 @@ export default function UserManagementPage() {
         </table>
       </div>
       {/* ================= FOOTER ================= */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginTop: 20 
-      }}>
-        
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: 20,
+        }}
+      >
         {/* Entries per page */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 13, color: '#6b7280' }}>Show</span>
           <select
             value={pageSize}
-            onChange={(e) => {
+            onChange={e => {
               setPageSize(Number(e.target.value));
               setCurrentPage(1);
             }}
@@ -873,7 +933,7 @@ export default function UserManagementPage() {
               border: '0.5px solid #d1d5db',
               borderRadius: 6,
               fontSize: 13,
-              background: 'white'
+              background: 'white',
             }}
           >
             <option value={10}>10</option>
@@ -886,7 +946,6 @@ export default function UserManagementPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            
             {/* Previous button */}
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -898,7 +957,7 @@ export default function UserManagementPage() {
                 background: 'white',
                 cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                 fontSize: 13,
-                color: currentPage === 1 ? '#9ca3af' : '#374151'
+                color: currentPage === 1 ? '#9ca3af' : '#374151',
               }}
             >
               Prev
@@ -930,7 +989,7 @@ export default function UserManagementPage() {
                     cursor: 'pointer',
                     fontSize: 13,
                     fontWeight: currentPage === pageNum ? 600 : 400,
-                    minWidth: 32
+                    minWidth: 32,
                   }}
                 >
                   {pageNum}
@@ -949,7 +1008,7 @@ export default function UserManagementPage() {
                 background: 'white',
                 cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                 fontSize: 13,
-                color: currentPage === totalPages ? '#9ca3af' : '#374151'
+                color: currentPage === totalPages ? '#9ca3af' : '#374151',
               }}
             >
               Next
@@ -994,7 +1053,7 @@ export default function UserManagementPage() {
       )}
 
       {/* ================= MODALS ================= */}
-      
+
       {/* Role Assignment Modal */}
       {roleAssignTarget && (
         <div
@@ -1005,43 +1064,47 @@ export default function UserManagementPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => setRoleAssignTarget(null)}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             style={{
               background: 'white',
               padding: 24,
               borderRadius: 12,
               minWidth: 400,
-              maxWidth: 500
+              maxWidth: 500,
             }}
           >
-            <h3 style={{ 
-              marginTop: 0, 
-              marginBottom: 20, 
-              fontSize: 16, 
-              fontWeight: 600,
-              color: '#111827'
-            }}>
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: 20,
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
               Assign Role: {roleAssignTarget.full_name || roleAssignTarget.email}
             </h3>
-            
+
             <div style={{ marginBottom: 20 }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: 8, 
-                fontSize: 13, 
-                fontWeight: 500,
-                color: '#374151'
-              }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: '#374151',
+                }}
+              >
                 Select new role
               </label>
               <select
                 defaultValue={roleAssignTarget.role}
-                onChange={(e) => {
+                onChange={e => {
                   handleRoleChange(roleAssignTarget.id, e.target.value as UserRole);
                 }}
                 style={{
@@ -1050,11 +1113,13 @@ export default function UserManagementPage() {
                   border: '0.5px solid #d1d5db',
                   borderRadius: 8,
                   fontSize: 13,
-                  background: 'white'
+                  background: 'white',
                 }}
               >
                 {Object.entries(ROLE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
                 ))}
               </select>
             </div>
@@ -1069,7 +1134,7 @@ export default function UserManagementPage() {
                   borderRadius: 6,
                   cursor: 'pointer',
                   fontSize: 13,
-                  color: '#374151'
+                  color: '#374151',
                 }}
               >
                 Cancel
@@ -1078,7 +1143,7 @@ export default function UserManagementPage() {
           </div>
         </div>
       )}
-      
+
       {/* Reset Password Modal */}
       {resetTarget && (
         <div
@@ -1089,35 +1154,40 @@ export default function UserManagementPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => setResetTarget(null)}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             style={{
               background: 'white',
               padding: 24,
               borderRadius: 12,
-              minWidth: 400
+              minWidth: 400,
             }}
           >
-            <h3 style={{ 
-              marginTop: 0, 
-              marginBottom: 16, 
-              fontSize: 16, 
-              fontWeight: 600,
-              color: '#111827'
-            }}>
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: 16,
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
               Reset Password
             </h3>
-            
-            <p style={{ 
-              marginBottom: 20, 
-              fontSize: 13, 
-              color: '#6b7280'
-            }}>
-              Reset password for {resetTarget.email}? A new temporary password will be sent to their email.
+
+            <p
+              style={{
+                marginBottom: 20,
+                fontSize: 13,
+                color: '#6b7280',
+              }}
+            >
+              Reset password for {resetTarget.email}? A new temporary password will be sent to their
+              email.
             </p>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -1130,7 +1200,7 @@ export default function UserManagementPage() {
                   borderRadius: 6,
                   cursor: 'pointer',
                   fontSize: 13,
-                  color: '#374151'
+                  color: '#374151',
                 }}
               >
                 Cancel
@@ -1150,7 +1220,7 @@ export default function UserManagementPage() {
                   borderRadius: 6,
                   cursor: 'pointer',
                   fontSize: 13,
-                  fontWeight: 500
+                  fontWeight: 500,
                 }}
               >
                 Send Reset Email
@@ -1159,7 +1229,7 @@ export default function UserManagementPage() {
           </div>
         </div>
       )}
-      
+
       {/* Suspend Modal */}
       {suspendTarget && (
         <div
@@ -1170,37 +1240,41 @@ export default function UserManagementPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => setSuspendTarget(null)}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             style={{
               background: 'white',
               padding: 24,
               borderRadius: 12,
-              minWidth: 500
+              minWidth: 500,
             }}
           >
-            <h3 style={{ 
-              marginTop: 0, 
-              marginBottom: 20, 
-              fontSize: 16, 
-              fontWeight: 600,
-              color: '#111827'
-            }}>
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: 20,
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
               Suspend Account: {suspendTarget.full_name || suspendTarget.email}
             </h3>
-            
+
             <div style={{ marginBottom: 16 }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: 8, 
-                fontSize: 13, 
-                fontWeight: 500,
-                color: '#374151'
-              }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: '#374151',
+                }}
+              >
                 Reason for suspension *
               </label>
               <textarea
@@ -1215,20 +1289,22 @@ export default function UserManagementPage() {
                   borderRadius: 8,
                   fontSize: 13,
                   resize: 'vertical',
-                  outline: 'none'
+                  outline: 'none',
                 }}
                 required
               />
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: 8, 
-                fontSize: 13, 
-                fontWeight: 500,
-                color: '#374151'
-              }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: '#374151',
+                }}
+              >
                 Suspension end date (optional)
               </label>
               <input
@@ -1242,14 +1318,16 @@ export default function UserManagementPage() {
                   border: '0.5px solid #d1d5db',
                   borderRadius: 8,
                   fontSize: 13,
-                  outline: 'none'
+                  outline: 'none',
                 }}
               />
-              <div style={{ 
-                fontSize: 11, 
-                color: '#9ca3af', 
-                marginTop: 4 
-              }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: '#9ca3af',
+                  marginTop: 4,
+                }}
+              >
                 Leave empty for indefinite suspension
               </div>
             </div>
@@ -1268,7 +1346,7 @@ export default function UserManagementPage() {
                   borderRadius: 6,
                   cursor: 'pointer',
                   fontSize: 13,
-                  color: '#374151'
+                  color: '#374151',
                 }}
               >
                 Cancel
@@ -1284,7 +1362,7 @@ export default function UserManagementPage() {
                   borderRadius: 6,
                   cursor: !suspendReason.trim() ? 'not-allowed' : 'pointer',
                   fontSize: 13,
-                  fontWeight: 500
+                  fontWeight: 500,
                 }}
               >
                 {updating === suspendTarget.id ? 'Suspending...' : 'Suspend Account'}
@@ -1293,7 +1371,6 @@ export default function UserManagementPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

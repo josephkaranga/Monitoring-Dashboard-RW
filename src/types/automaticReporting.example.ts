@@ -21,7 +21,7 @@ import {
   getToolWeight,
   getToolDescription,
   reportTypeToToolId,
-  toolIdToReportType
+  toolIdToReportType,
 } from './automaticReporting';
 
 /**
@@ -40,15 +40,15 @@ const exampleToolWeights: ToolWeight[] = [
     weight: TOOL_WEIGHTS[ToolId.T01], // 0.25
     description: TOOL_DESCRIPTIONS[ToolId.T01],
     active: true,
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
     toolId: ToolId.T06,
     weight: TOOL_WEIGHTS[ToolId.T06], // 0.10 - for EIA compliance
     description: TOOL_DESCRIPTIONS[ToolId.T06],
     active: true,
-    updatedAt: new Date()
-  }
+    updatedAt: new Date(),
+  },
 ];
 
 // Example 2: Progress calculation for T01 National Institutional Reporting
@@ -61,7 +61,7 @@ const exampleProgressCalculation: ProgressCalculation = {
   previousProgress: 30,
   newProgress: 35, // 30 + 5 = 35
   calculatedAt: new Date(),
-  reportId: 'report-123'
+  reportId: 'report-123',
 };
 
 // Example 3: Update result with successful progress update
@@ -73,7 +73,7 @@ const exampleUpdateResult: UpdateResult = {
   processingTime: 250, // milliseconds
   newProgress: exampleProgressCalculation.newProgress,
   updatedAt: new Date(),
-  calculationDetails: exampleProgressCalculation
+  calculationDetails: exampleProgressCalculation,
 };
 
 // Example 4: EIA Compliance metrics from T06 reports
@@ -84,7 +84,7 @@ const exampleEIAMetrics: EIAMetrics = {
   nonCompliant: 5,
   compliancePercentage: 80, // 80/100 * 100
   activeIssues: 5, // non-compliant reports
-  lastUpdated: new Date()
+  lastUpdated: new Date(),
 };
 
 // Example 5: Organization configuration for automatic updates
@@ -97,7 +97,7 @@ const exampleOrgConfig: OrganizationConfig = {
   processingTimeout: 30, // 30 seconds
   enableNotifications: true,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
 };
 
 // Example 6: Report submission with T06 EIA compliance data
@@ -112,10 +112,10 @@ const exampleT06ReportSubmission: ReportSubmission = {
     companyName: 'Example Mining Corp',
     eiaCompliance: ComplianceState.COMPLIANT,
     mitigationMeasures: ['Water quality monitoring', 'Biodiversity offset'],
-    complianceScore: 85
+    complianceScore: 85,
   },
   submissionTime: new Date(),
-  contributionValue: 15 // base contribution value
+  contributionValue: 15, // base contribution value
 };
 
 // Example 7: Real-time update event for progress change
@@ -123,21 +123,21 @@ const exampleUpdateEvent: UpdateEvent = {
   type: 'progress_updated',
   targetId: 1,
   newValues: {
-    progress: exampleProgressCalculation.newProgress
+    progress: exampleProgressCalculation.newProgress,
   },
   timestamp: new Date(),
-  sourceReportId: exampleProgressCalculation.reportId
+  sourceReportId: exampleProgressCalculation.reportId,
 };
 
 // Example 8: Batch update for multiple targets
 const exampleBatchUpdate: BatchUpdate = {
   updates: [
     { targetId: 1, contribution: 10, toolId: ToolId.T01 }, // National reporting
-    { targetId: 2, contribution: 8, toolId: ToolId.T02 },  // District monitoring
-    { targetId: 3, contribution: 5, toolId: ToolId.T06 }   // EIA compliance
+    { targetId: 2, contribution: 8, toolId: ToolId.T02 }, // District monitoring
+    { targetId: 3, contribution: 5, toolId: ToolId.T06 }, // EIA compliance
   ],
   createdAt: new Date(),
-  timeout: 30
+  timeout: 30,
 };
 
 // Example 9: Processing result for successful automatic update
@@ -146,7 +146,7 @@ const exampleProcessingResult: ProcessingResult = {
   progressUpdated: true,
   processingTime: 180, // milliseconds
   status: UpdateStatus.COMPLETED,
-  updateResults: [exampleUpdateResult]
+  updateResults: [exampleUpdateResult],
 };
 
 // Example 10: Validation functions usage
@@ -159,7 +159,7 @@ export function demonstrateValidation(): void {
   const t01Weight = getToolWeight(ToolId.T01);
   const t01Description = getToolDescription(ToolId.T01);
   console.log(`${ToolId.T01}: ${t01Description} (weight: ${t01Weight})`);
-  
+
   // Convert between types
   const reportType = toolIdToReportType(ToolId.T06);
   const toolId = reportTypeToToolId(reportType);
@@ -169,12 +169,12 @@ export function demonstrateValidation(): void {
 // Example 11: Calculate weighted contribution for different tools
 export function calculateWeightedContributions(baseContribution: number): Record<ToolId, number> {
   const contributions: Record<ToolId, number> = {} as Record<ToolId, number>;
-  
+
   Object.values(ToolId).forEach(toolId => {
     const weight = getToolWeight(toolId);
     contributions[toolId] = baseContribution * weight;
   });
-  
+
   return contributions;
 }
 
@@ -215,5 +215,5 @@ export {
   exampleT06ReportSubmission,
   exampleUpdateEvent,
   exampleBatchUpdate,
-  exampleProcessingResult
+  exampleProcessingResult,
 };

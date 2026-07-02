@@ -29,10 +29,7 @@ export interface LayerData {
 export type ColorScale = (value: number) => string;
 
 // Color scale generators
-export const createGradientScale = (
-  minColor: string,
-  maxColor: string
-): ColorScale => {
+export const createGradientScale = (minColor: string, maxColor: string): ColorScale => {
   return (value: number) => {
     // Simple linear interpolation between two colors
     const normalized = Math.max(0, Math.min(1, value / 100));
@@ -56,12 +53,12 @@ export const createCategoricalScale = (
 
 // Predefined color scales
 export const biodiversityColorScale: ColorScale = createCategoricalScale([
-  { threshold: 0, color: '#f0fdf4' },   // very light green
-  { threshold: 20, color: '#bbf7d0' },  // light green
-  { threshold: 40, color: '#86efac' },  // medium light green
-  { threshold: 60, color: '#4ade80' },  // medium green
-  { threshold: 80, color: '#22c55e' },  // green
-  { threshold: 90, color: '#16a34a' },  // dark green
+  { threshold: 0, color: '#f0fdf4' }, // very light green
+  { threshold: 20, color: '#bbf7d0' }, // light green
+  { threshold: 40, color: '#86efac' }, // medium light green
+  { threshold: 60, color: '#4ade80' }, // medium green
+  { threshold: 80, color: '#22c55e' }, // green
+  { threshold: 90, color: '#16a34a' }, // dark green
 ]);
 
 export const threatLevelColorScale: ColorScale = (value: number) => {
@@ -71,9 +68,9 @@ export const threatLevelColorScale: ColorScale = (value: number) => {
 };
 
 export const nbsapProgressColorScale: ColorScale = createCategoricalScale([
-  { threshold: 0, color: '#fee2e2' },   // light red
-  { threshold: 25, color: '#fed7aa' },  // light orange
-  { threshold: 50, color: '#fef3c7' },  // light yellow
-  { threshold: 75, color: '#d9f99d' },  // light green
-  { threshold: 90, color: '#86efac' },  // green
+  { threshold: 0, color: '#fee2e2' }, // light red
+  { threshold: 25, color: '#fed7aa' }, // light orange
+  { threshold: 50, color: '#fef3c7' }, // light yellow
+  { threshold: 75, color: '#d9f99d' }, // light green
+  { threshold: 90, color: '#86efac' }, // green
 ]);

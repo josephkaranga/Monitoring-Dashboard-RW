@@ -34,15 +34,45 @@ const LoadingScreen = () => (
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#38bdf8,#0ea5e9)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          background: 'linear-gradient(135deg,#38bdf8,#0ea5e9)',
+          borderRadius: 9,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <span style={{ color: '#fff', fontSize: 16 }}>🌿</span>
       </div>
       <div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1rem', color: '#0f2744', fontWeight: 700 }}>NBSAP</div>
-        <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: "'DM Mono', monospace" }}>Monitoring System</div>
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: '1rem',
+            color: '#0f2744',
+            fontWeight: 700,
+          }}
+        >
+          NBSAP
+        </div>
+        <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: "'DM Mono', monospace" }}>
+          Monitoring System
+        </div>
       </div>
     </div>
-    <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#0ea5e9', animation: 'spin 0.7s linear infinite' }} />
+    <div
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        border: '3px solid #e2e8f0',
+        borderTopColor: '#0ea5e9',
+        animation: 'spin 0.7s linear infinite',
+      }}
+    />
     <p style={{ color: '#94a3b8', fontSize: '0.78rem' }}>Loading your dashboard…</p>
     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
@@ -64,12 +94,10 @@ const UnauthorizedScreen = ({ role }: { role: string }) => (
     }}
   >
     <div style={{ fontSize: '3rem' }}>🔒</div>
-    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
-      Access Restricted
-    </h2>
+    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>Access Restricted</h2>
     <p style={{ fontSize: '0.85rem', color: '#64748b', maxWidth: 360, lineHeight: 1.6 }}>
-      Your role (<strong>{role}</strong>) does not have permission to view this page.
-      Contact your REMA system administrator if you believe this is an error.
+      Your role (<strong>{role}</strong>) does not have permission to view this page. Contact your
+      REMA system administrator if you believe this is an error.
     </p>
     <a
       href="/dashboard"
@@ -127,13 +155,7 @@ export default function ProtectedRoute({
 
   // Not authenticated → redirect to login, preserving intended destination
   if (!session || !user) {
-    return (
-      <Navigate
-        to={redirectTo}
-        state={{ from: location.pathname }}
-        replace
-      />
-    );
+    return <Navigate to={redirectTo} state={{ from: location.pathname }} replace />;
   }
 
   // Role check
@@ -178,16 +200,18 @@ export default function ProtectedRoute({
 
 /** Only REMA admins */
 export function AdminOnly() {
-  return (
-    <ProtectedRoute allowedRoles={['dashboard_management']} />
-  );
+  return <ProtectedRoute allowedRoles={['dashboard_management']} />;
 }
 
 /** Anyone who can submit reports */
 export function ReporterRoute() {
   return (
     <ProtectedRoute
-      allowedRoles={['lead_government_ministry_reporting', 'local_reporting', 'dashboard_management']}
+      allowedRoles={[
+        'lead_government_ministry_reporting',
+        'local_reporting',
+        'dashboard_management',
+      ]}
     />
   );
 }
@@ -195,8 +219,6 @@ export function ReporterRoute() {
 /** Anyone who can approve reports */
 export function ApproverRoute() {
   return (
-    <ProtectedRoute
-      allowedRoles={['lead_government_ministry_reporting', 'dashboard_management']}
-    />
+    <ProtectedRoute allowedRoles={['lead_government_ministry_reporting', 'dashboard_management']} />
   );
 }

@@ -20,7 +20,7 @@ interface ConnectionBarProps {
 
 /**
  * ConnectionBar displays RBIS connection status and controls
- * 
+ *
  * @example
  * ```tsx
  * <ConnectionBar
@@ -31,7 +31,12 @@ interface ConnectionBarProps {
  * />
  * ```
  */
-export function ConnectionBar({ connection, loading, onConnect, onDisconnect }: ConnectionBarProps) {
+export function ConnectionBar({
+  connection,
+  loading,
+  onConnect,
+  onDisconnect,
+}: ConnectionBarProps) {
   const { status, serverUrl, lastSync, error } = connection;
 
   // Status configuration
@@ -78,7 +83,15 @@ export function ConnectionBar({ connection, loading, onConnect, onDisconnect }: 
         boxShadow: 'var(--shadow-sm)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}
+      >
         {/* Left: Status indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {/* Status badge */}
@@ -116,14 +129,20 @@ export function ConnectionBar({ connection, loading, onConnect, onDisconnect }: 
           {/* Server info */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <i className="fa-solid fa-server" style={{ fontSize: '0.8rem', color: 'var(--text-3)' }} />
+              <i
+                className="fa-solid fa-server"
+                style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}
+              />
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-2)' }}>
                 {serverUrl}
               </span>
             </div>
             {lastSync && status === 'connected' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <i className="fa-solid fa-clock" style={{ fontSize: '0.7rem', color: 'var(--text-4)' }} />
+                <i
+                  className="fa-solid fa-clock"
+                  style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}
+                />
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
                   Last sync: {new Date(lastSync).toLocaleString()}
                 </span>
@@ -152,13 +171,13 @@ export function ConnectionBar({ connection, loading, onConnect, onDisconnect }: 
             transition: 'all 0.2s',
             fontFamily: "'DM Sans', sans-serif",
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={e => {
             if (!loading && status !== 'connecting') {
               e.currentTarget.style.transform = 'translateY(-1px)';
               e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
             }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={e => {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.boxShadow = 'none';
           }}
@@ -167,7 +186,11 @@ export function ConnectionBar({ connection, loading, onConnect, onDisconnect }: 
             className={`fa-solid ${status === 'connected' ? 'fa-plug-circle-xmark' : 'fa-plug-circle-check'}`}
             style={{ fontSize: '0.9rem' }}
           />
-          {loading || status === 'connecting' ? 'Connecting...' : status === 'connected' ? 'Disconnect' : 'Connect to RBIS'}
+          {loading || status === 'connecting'
+            ? 'Connecting...'
+            : status === 'connected'
+              ? 'Disconnect'
+              : 'Connect to RBIS'}
         </button>
       </div>
 
@@ -185,12 +208,22 @@ export function ConnectionBar({ connection, loading, onConnect, onDisconnect }: 
             gap: 10,
           }}
         >
-          <i className="fa-solid fa-circle-exclamation" style={{ fontSize: '0.9rem', color: '#dc2626', marginTop: 2 }} />
+          <i
+            className="fa-solid fa-circle-exclamation"
+            style={{ fontSize: '0.9rem', color: '#dc2626', marginTop: 2 }}
+          />
           <div>
             <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#991b1b', margin: 0 }}>
               Connection Failed
             </p>
-            <p style={{ fontSize: '0.75rem', color: '#dc2626', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+            <p
+              style={{
+                fontSize: '0.75rem',
+                color: '#dc2626',
+                margin: '4px 0 0 0',
+                lineHeight: 1.4,
+              }}
+            >
               {error}
             </p>
           </div>

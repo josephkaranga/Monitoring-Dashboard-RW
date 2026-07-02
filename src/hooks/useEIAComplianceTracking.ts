@@ -57,7 +57,8 @@ export function calculateEIAMetrics(reports: T06ReportRow[]): EIAMetrics {
   }
 
   const totalReports = reports.length;
-  const compliancePercentage = totalReports > 0 ? Math.round((compliantReports / totalReports) * 100) : 0;
+  const compliancePercentage =
+    totalReports > 0 ? Math.round((compliantReports / totalReports) * 100) : 0;
 
   return {
     totalReports,
@@ -100,8 +101,8 @@ export function useEIAComplianceTracking() {
     setEIAMetrics(metrics);
 
     const period = getCurrentQuarterLabel();
-    setComplianceTrend((prev) => {
-      const existingIndex = prev.findIndex((point) => point.period === period);
+    setComplianceTrend(prev => {
+      const existingIndex = prev.findIndex(point => point.period === period);
       if (existingIndex === -1) {
         return [...prev, { period, percentage: metrics.compliancePercentage }];
       }

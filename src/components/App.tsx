@@ -1,10 +1,5 @@
 import React, { Suspense, lazy, Component } from 'react';
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-} from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../services/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
@@ -63,7 +58,9 @@ const PageLoader = () => (
 // When Vercel deploys a new build, old chunk URLs (e.g. DashboardPage-abc123.js)
 // no longer exist. This catches the "Failed to fetch dynamically imported module"
 // error and forces a hard reload to pick up the new build.
-interface ChunkErrorState { hasError: boolean }
+interface ChunkErrorState {
+  hasError: boolean;
+}
 
 class ChunkErrorBoundary extends Component<{ children: React.ReactNode }, ChunkErrorState> {
   constructor(props: { children: React.ReactNode }) {
@@ -92,12 +89,30 @@ class ChunkErrorBoundary extends Component<{ children: React.ReactNode }, ChunkE
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          minHeight: '100vh', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', flexDirection: 'column', gap: 12,
-          fontFamily: "'DM Sans', sans-serif", color: '#64748b', textAlign: 'center', padding: 24,
-        }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#0ea5e9', animation: 'spin 0.7s linear infinite' }} />
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: 12,
+            fontFamily: "'DM Sans', sans-serif",
+            color: '#64748b',
+            textAlign: 'center',
+            padding: 24,
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              border: '3px solid #e2e8f0',
+              borderTopColor: '#0ea5e9',
+              animation: 'spin 0.7s linear infinite',
+            }}
+          />
           <p style={{ fontSize: '0.85rem' }}>New version available — reloading…</p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
@@ -189,7 +204,10 @@ export default function App() {
                   <Route
                     element={
                       <ProtectedRoute
-                        allowedRoles={['lead_government_ministry_reporting', 'dashboard_management']}
+                        allowedRoles={[
+                          'lead_government_ministry_reporting',
+                          'dashboard_management',
+                        ]}
                         requiredPermission="canApproveReports"
                       />
                     }
@@ -216,13 +234,7 @@ export default function App() {
                   </Route>
 
                   {/* Role change approval: admin only */}
-                  <Route
-                    element={
-                      <ProtectedRoute
-                        allowedRoles={['dashboard_management']}
-                      />
-                    }
-                  >
+                  <Route element={<ProtectedRoute allowedRoles={['dashboard_management']} />}>
                     <Route path="/role-requests/admin" element={<RoleChangeApprovalPanel />} />
                   </Route>
                 </Route>

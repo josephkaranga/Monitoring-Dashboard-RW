@@ -29,7 +29,13 @@ interface IndicatorsMatrixProps {
  * IndicatorsMatrix displays the complete indicators-targets-RBIS matrix
  * with search, filter, and collapsible sections
  */
-export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetClick }: IndicatorsMatrixProps) {
+export function IndicatorsMatrix({
+  goals,
+  loading,
+  error,
+  onRefetch,
+  onTargetClick,
+}: IndicatorsMatrixProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [goalFilter, setGoalFilter] = useState<GBFGoalFilter>('all');
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
@@ -47,14 +53,15 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
   const summary = useMemo(() => {
     const allIndicators = filteredGoals.flatMap(g => g.targets.flatMap(t => t.indicators));
     const linkedIndicators = allIndicators.filter(i => i.rbisLinkage.status === 'linked');
-    
+
     return {
       totalTargets: filteredGoals.flatMap(g => g.targets).length,
       totalIndicators: allIndicators.length,
       linkedIndicators: linkedIndicators.length,
-      linkagePercentage: allIndicators.length > 0
-        ? Math.round((linkedIndicators.length / allIndicators.length) * 100)
-        : 0,
+      linkagePercentage:
+        allIndicators.length > 0
+          ? Math.round((linkedIndicators.length / allIndicators.length) * 100)
+          : 0,
     };
   }, [filteredGoals]);
 
@@ -138,7 +145,14 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
     >
       {/* Header */}
       <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
             Indicators & Targets Matrix
           </h3>
@@ -197,7 +211,7 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
               type="text"
               placeholder="Search indicators, targets..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               style={{
                 width: '100%',
                 padding: '10px 14px 10px 40px',
@@ -213,7 +227,7 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
 
           {/* Goal filter buttons */}
           <div style={{ display: 'flex', gap: 6 }}>
-            {(['all', 'A', 'B', 'C', 'D'] as GBFGoalFilter[]).map((filter) => (
+            {(['all', 'A', 'B', 'C', 'D'] as GBFGoalFilter[]).map(filter => (
               <button
                 key={filter}
                 onClick={() => setGoalFilter(filter)}
@@ -248,26 +262,62 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
           }}
         >
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>Targets</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-1)', fontFamily: "'DM Mono', monospace" }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>
+              Targets
+            </div>
+            <div
+              style={{
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                color: 'var(--text-1)',
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
               {summary.totalTargets}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>Indicators</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-1)', fontFamily: "'DM Mono', monospace" }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>
+              Indicators
+            </div>
+            <div
+              style={{
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                color: 'var(--text-1)',
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
               {summary.totalIndicators}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>Linked to RBIS</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#10b981', fontFamily: "'DM Mono', monospace" }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>
+              Linked to RBIS
+            </div>
+            <div
+              style={{
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                color: '#10b981',
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
               {summary.linkedIndicators}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>Linkage %</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#0ea5e9', fontFamily: "'DM Mono', monospace" }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: 4 }}>
+              Linkage %
+            </div>
+            <div
+              style={{
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                color: '#0ea5e9',
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
               {summary.linkagePercentage}%
             </div>
           </div>
@@ -286,7 +336,10 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
               borderRadius: 12,
             }}
           >
-            <i className="fa-solid fa-magnifying-glass" style={{ fontSize: '2.5rem', marginBottom: 16, opacity: 0.5 }} />
+            <i
+              className="fa-solid fa-magnifying-glass"
+              style={{ fontSize: '2.5rem', marginBottom: 16, opacity: 0.5 }}
+            />
             <p style={{ fontSize: '0.95rem', fontWeight: 600, margin: '0 0 8px 0' }}>
               No results found
             </p>
@@ -296,7 +349,7 @@ export function IndicatorsMatrix({ goals, loading, error, onRefetch, onTargetCli
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {filteredGoals.map((goal) => (
+            {filteredGoals.map(goal => (
               <GBFGoalSection
                 key={goal.id}
                 goal={goal}

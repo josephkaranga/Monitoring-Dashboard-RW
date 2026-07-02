@@ -66,13 +66,13 @@ nbsap-monitoring-system/
 
 ## User Roles & Permissions
 
-| Role | Label | Submit | Approve | Verif Queue | Audit Log | User Mgmt |
-|------|-------|--------|---------|-------------|-----------|-----------|
-| `policy_monitoring` | Policy Monitor | — | — | — | — | — |
-| `sector_reporting` | Sector Reporter | Yes | Yes | — | — | — |
-| `local_reporting` | Local Reporter | Yes | — | — | — | — |
-| `dashboard_management` | REMA Admin | Yes | Yes | Yes | Yes | Yes |
-| `programme_alignment` | Dev. Partner | — | — | — | — | — |
+| Role                   | Label           | Submit | Approve | Verif Queue | Audit Log | User Mgmt |
+| ---------------------- | --------------- | ------ | ------- | ----------- | --------- | --------- |
+| `policy_monitoring`    | Policy Monitor  | —      | —       | —           | —         | —         |
+| `sector_reporting`     | Sector Reporter | Yes    | Yes     | —           | —         | —         |
+| `local_reporting`      | Local Reporter  | Yes    | —       | —           | —         | —         |
+| `dashboard_management` | REMA Admin      | Yes    | Yes     | Yes         | Yes       | Yes       |
+| `programme_alignment`  | Dev. Partner    | —      | —       | —           | —         | —         |
 
 ---
 
@@ -90,12 +90,12 @@ npm install
 
 Required environment variables:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Public anon key |
-| `VITE_APP_URL` | Yes | Deployed app URL |
-| `VITE_ENABLE_REALTIME` | No | Toggle Supabase Realtime |
+| Variable                 | Required | Description              |
+| ------------------------ | -------- | ------------------------ |
+| `VITE_SUPABASE_URL`      | Yes      | Supabase project URL     |
+| `VITE_SUPABASE_ANON_KEY` | Yes      | Public anon key          |
+| `VITE_APP_URL`           | Yes      | Deployed app URL         |
+| `VITE_ENABLE_REALTIME`   | No       | Toggle Supabase Realtime |
 
 ### 2. Run Database Migrations
 
@@ -104,6 +104,7 @@ In Supabase SQL Editor, run migrations `001` through `022` in order from the `mi
 ### 3. Configure Authentication
 
 In Supabase Dashboard → Authentication → URL Configuration:
+
 - **Site URL:** `https://nbsap-dashboard-rw.vercel.app`
 - **Redirect URLs:** `https://nbsap-dashboard-rw.vercel.app/auth`
 
@@ -134,6 +135,7 @@ Uses Supabase Auth with PKCE flow — password reset links contain only a short-
 ### Row Level Security
 
 Every table has RLS enabled. The database enforces permissions via SQL functions:
+
 - `get_user_role()` — returns current user's role
 - `can_write()` — true for reporters and admin
 - `is_admin()` — true only for `dashboard_management`
@@ -154,36 +156,36 @@ Report approvals automatically update NBSAP target progress using tool-specific 
 
 ## Database Tables
 
-| Table | Purpose | RLS |
-|-------|---------|-----|
-| `profiles` | User accounts + roles | Own row; admin sees all |
-| `nbsap_targets` | 22 NBSAP targets | Read: all; Write: admin |
-| `indicators` | 79 biodiversity indicators | Read: all; Write: reporters |
-| `toolkit_reports` | T01–T07 submissions | Scoped by role |
-| `tool_weights` | Tool weight factors (T01–T07) | Read: all; Write: admin |
-| `districts` | 30 districts + coordinates | Read: all; Write: local/admin |
-| `provinces` | 5 provinces | Read: all |
-| `risks` | Risk register | Read: all; Write: admin |
-| `compliance_records` | EIA compliance issues | Read: all; Write: reporters |
-| `role_change_requests` | Role change approval workflow | Scoped by role |
-| `system_metrics` | Aggregated dashboard metrics | Read: all; Write: triggers |
-| `notifications` | Per-user alerts | Own row only |
-| `audit_log` | Activity history | Own rows; admin sees all |
-| `user_settings` | Dashboard preferences | Own row only |
+| Table                  | Purpose                       | RLS                           |
+| ---------------------- | ----------------------------- | ----------------------------- |
+| `profiles`             | User accounts + roles         | Own row; admin sees all       |
+| `nbsap_targets`        | 22 NBSAP targets              | Read: all; Write: admin       |
+| `indicators`           | 79 biodiversity indicators    | Read: all; Write: reporters   |
+| `toolkit_reports`      | T01–T07 submissions           | Scoped by role                |
+| `tool_weights`         | Tool weight factors (T01–T07) | Read: all; Write: admin       |
+| `districts`            | 30 districts + coordinates    | Read: all; Write: local/admin |
+| `provinces`            | 5 provinces                   | Read: all                     |
+| `risks`                | Risk register                 | Read: all; Write: admin       |
+| `compliance_records`   | EIA compliance issues         | Read: all; Write: reporters   |
+| `role_change_requests` | Role change approval workflow | Scoped by role                |
+| `system_metrics`       | Aggregated dashboard metrics  | Read: all; Write: triggers    |
+| `notifications`        | Per-user alerts               | Own row only                  |
+| `audit_log`            | Activity history              | Own rows; admin sees all      |
+| `user_settings`        | Dashboard preferences         | Own row only                  |
 
 ---
 
 ## Reporting Tools
 
-| Tool | Name | Weight |
-|------|------|--------|
-| T01 | National Institutional Reporting | 0.250 |
-| T02 | District Biodiversity Monitoring | 0.200 |
-| T03 | Protected Area Monitoring | 0.150 |
-| T04 | Community Biodiversity Monitoring | 0.150 |
-| T05 | Biodiversity Finance Tracking | 0.100 |
-| T06 | Private Sector Compliance | 0.100 |
-| T07 | Research & Academic Contribution | 0.050 |
+| Tool | Name                              | Weight |
+| ---- | --------------------------------- | ------ |
+| T01  | National Institutional Reporting  | 0.250  |
+| T02  | District Biodiversity Monitoring  | 0.200  |
+| T03  | Protected Area Monitoring         | 0.150  |
+| T04  | Community Biodiversity Monitoring | 0.150  |
+| T05  | Biodiversity Finance Tracking     | 0.100  |
+| T06  | Private Sector Compliance         | 0.100  |
+| T07  | Research & Academic Contribution  | 0.050  |
 
 ---
 

@@ -21,15 +21,15 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
   areas,
   loading = false,
   onAreaClick,
-  isMobile = false
+  isMobile = false,
 }: ProtectedAreasListPanelProps) {
   const [filterType, setFilterType] = useState<DesignationType | 'all'>('all');
 
-  const filteredAreas = areas.filter(area => 
-    filterType === 'all' || area.properties.designationType === filterType
+  const filteredAreas = areas.filter(
+    area => filterType === 'all' || area.properties.designationType === filterType
   );
 
-  const getTypeColor = (type: DesignationType): string => {
+  const getTypeColor = (type: string | undefined): string => {
     switch (type) {
       case 'National Park':
         return '#10b981'; // green
@@ -44,7 +44,7 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
     }
   };
 
-  const getTypeIcon = (type: DesignationType): string => {
+  const getTypeIcon = (type: string | undefined): string => {
     switch (type) {
       case 'National Park':
         return 'fa-mountain-sun';
@@ -59,21 +59,26 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
     }
   };
 
-  const typeCounts = areas.reduce((acc, area) => {
-    const type = area.properties.designationType;
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {} as Record<DesignationType, number>);
+  const typeCounts = areas.reduce(
+    (acc, area) => {
+      const type = area.properties.designationType;
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    },
+    {} as Record<DesignationType, number>
+  );
 
   if (loading) {
     return (
-      <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-sm)',
-        padding: isMobile ? 12 : 18
-      }}>
+      <div
+        style={{
+          background: 'var(--surface)',
+          borderRadius: 'var(--radius)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-sm)',
+          padding: isMobile ? 12 : 18,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <i className="fa-solid fa-shield-halved" style={{ color: '#10b981' }} />
           <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
@@ -81,7 +86,10 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
           </h3>
         </div>
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)' }}>
-          <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '1.5rem', marginBottom: 8 }} />
+          <i
+            className="fa-solid fa-spinner fa-spin"
+            style={{ fontSize: '1.5rem', marginBottom: 8 }}
+          />
           <p style={{ fontSize: '0.8rem', margin: 0 }}>Loading protected areas...</p>
         </div>
       </div>
@@ -90,13 +98,15 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
 
   if (areas.length === 0) {
     return (
-      <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-sm)',
-        padding: isMobile ? 12 : 18
-      }}>
+      <div
+        style={{
+          background: 'var(--surface)',
+          borderRadius: 'var(--radius)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-sm)',
+          padding: isMobile ? 12 : 18,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <i className="fa-solid fa-shield-halved" style={{ color: '#10b981' }} />
           <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
@@ -104,7 +114,10 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
           </h3>
         </div>
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)' }}>
-          <i className="fa-solid fa-inbox" style={{ fontSize: '1.5rem', marginBottom: 8, opacity: 0.5 }} />
+          <i
+            className="fa-solid fa-inbox"
+            style={{ fontSize: '1.5rem', marginBottom: 8, opacity: 0.5 }}
+          />
           <p style={{ fontSize: '0.8rem', margin: 0 }}>No protected areas data available</p>
           <p style={{ fontSize: '0.7rem', margin: '8px 0 0 0', opacity: 0.7 }}>
             Add GeoJSON file to display protected areas
@@ -115,40 +128,46 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
   }
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      borderRadius: 'var(--radius)',
-      border: '1px solid var(--border)',
-      boxShadow: 'var(--shadow-sm)',
-      padding: isMobile ? 12 : 18
-    }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        borderRadius: 'var(--radius)',
+        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)',
+        padding: isMobile ? 12 : 18,
+      }}
+    >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <i className="fa-solid fa-shield-halved" style={{ color: '#10b981' }} />
         <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>
           Protected Areas
         </h3>
-        <span style={{
-          fontSize: '0.65rem',
-          padding: '3px 8px',
-          borderRadius: 12,
-          fontWeight: 700,
-          fontFamily: "'DM Mono', monospace",
-          background: '#dcfce7',
-          color: '#166534',
-          marginLeft: 'auto'
-        }}>
+        <span
+          style={{
+            fontSize: '0.65rem',
+            padding: '3px 8px',
+            borderRadius: 12,
+            fontWeight: 700,
+            fontFamily: "'DM Mono', monospace",
+            background: '#dcfce7',
+            color: '#166534',
+            marginLeft: 'auto',
+          }}
+        >
           {filteredAreas.length} Areas
         </span>
       </div>
 
       {/* Filter buttons */}
-      <div style={{
-        display: 'flex',
-        gap: 6,
-        marginBottom: 16,
-        flexWrap: 'wrap'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 6,
+          marginBottom: 16,
+          flexWrap: 'wrap',
+        }}
+      >
         <button
           onClick={() => setFilterType('all')}
           style={{
@@ -160,7 +179,7 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
             fontSize: '0.7rem',
             cursor: 'pointer',
             fontWeight: 600,
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
           }}
         >
           All ({areas.length})
@@ -170,7 +189,8 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
             key={type}
             onClick={() => setFilterType(type as DesignationType)}
             style={{
-              background: filterType === type ? getTypeColor(type as DesignationType) : 'transparent',
+              background:
+                filterType === type ? getTypeColor(type as DesignationType) : 'transparent',
               border: `1px solid ${filterType === type ? getTypeColor(type as DesignationType) : 'var(--border)'}`,
               color: filterType === type ? '#fff' : 'var(--text-2)',
               padding: '4px 10px',
@@ -178,7 +198,7 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
               fontSize: '0.7rem',
               cursor: 'pointer',
               fontWeight: 600,
-              transition: 'all 0.15s ease'
+              transition: 'all 0.15s ease',
             }}
           >
             {type} ({count})
@@ -204,15 +224,15 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
                 border: '1px solid var(--border)',
                 borderRadius: 8,
                 cursor: onAreaClick ? 'pointer' : 'default',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={e => {
                 if (onAreaClick) {
                   e.currentTarget.style.background = 'var(--surface-3)';
                   e.currentTarget.style.borderColor = getTypeColor(area.properties.designationType);
                 }
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={e => {
                 e.currentTarget.style.background = 'var(--surface-2)';
                 e.currentTarget.style.borderColor = 'var(--border)';
               }}
@@ -229,39 +249,45 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flexShrink: 0
+                    flexShrink: 0,
                   }}
                 >
                   <i className={`fa-solid ${getTypeIcon(area.properties.designationType)}`} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h4 style={{
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    color: 'var(--text-1)',
-                    margin: 0,
-                    marginBottom: 4
-                  }}>
+                  <h4
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: 'var(--text-1)',
+                      margin: 0,
+                      marginBottom: 4,
+                    }}
+                  >
                     {area.properties.name}
                   </h4>
-                  <span style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--text-3)'
-                  }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--text-3)',
+                    }}
+                  >
                     {area.properties.designationType}
                   </span>
                 </div>
               </div>
 
               {/* Area details */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 8,
-                marginTop: 8,
-                paddingTop: 8,
-                borderTop: '1px solid var(--border)'
-              }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 8,
+                  marginTop: 8,
+                  paddingTop: 8,
+                  borderTop: '1px solid var(--border)',
+                }}
+              >
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginBottom: 2 }}>
                     Area
@@ -285,16 +311,18 @@ export const ProtectedAreasListPanel = React.memo(function ProtectedAreasListPan
       </div>
 
       {/* Footer */}
-      <div style={{
-        marginTop: 12,
-        paddingTop: 12,
-        borderTop: '1px solid var(--border)',
-        fontSize: '0.7rem',
-        color: 'var(--text-3)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
+      <div
+        style={{
+          marginTop: 12,
+          paddingTop: 12,
+          borderTop: '1px solid var(--border)',
+          fontSize: '0.7rem',
+          color: 'var(--text-3)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <span>
           <i className="fa-solid fa-info-circle" style={{ marginRight: 4 }} />
           {onAreaClick ? 'Click to view on map' : 'Protected conservation zones'}

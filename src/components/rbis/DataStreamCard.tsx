@@ -23,7 +23,7 @@ interface DataStreamCardProps {
  * - Last update timestamp (Req 7.10)
  * - Clickable target number badges (Req 8.1, 8.2, 8.4)
  * - Hover effect on target badges (Req 9.8)
- * 
+ *
  * @example
  * ```tsx
  * <DataStreamCard
@@ -33,7 +33,17 @@ interface DataStreamCardProps {
  * ```
  */
 export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProps) {
-  const { name, description, targetNumbers, occurrenceCount, status, errorMessage, lastUpdate, icon, color } = dataStream;
+  const {
+    name,
+    description,
+    targetNumbers,
+    occurrenceCount,
+    status,
+    errorMessage,
+    lastUpdate,
+    icon,
+    color,
+  } = dataStream;
 
   // Status configuration (Req 7.5, 7.6, 7.7, 7.8, 9.3)
   const statusConfig = {
@@ -73,11 +83,11 @@ export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProp
         borderRadius: 10,
         transition: 'all 0.2s',
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         e.currentTarget.style.background = 'var(--surface-3)';
         e.currentTarget.style.borderColor = 'var(--sky-dim)';
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         e.currentTarget.style.background = 'var(--surface-2)';
         e.currentTarget.style.borderColor = 'var(--border)';
       }}
@@ -97,7 +107,10 @@ export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProp
             flexShrink: 0,
           }}
         >
-          <i className={`fa-solid ${streamIcon}`} style={{ fontSize: '1rem', color: streamColor }} />
+          <i
+            className={`fa-solid ${streamIcon}`}
+            style={{ fontSize: '1rem', color: streamColor }}
+          />
         </div>
 
         {/* Title and status */}
@@ -170,11 +183,20 @@ export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProp
       {/* Target badges - Clickable with hover effect (Req 7.2, 8.1, 8.2, 8.4, 9.8) */}
       {targetNumbers.length > 0 && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div
+            style={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color: 'var(--text-3)',
+              marginBottom: 6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
             Supports Targets
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {targetNumbers.map((targetId) => (
+            {targetNumbers.map(targetId => (
               <button
                 key={targetId}
                 onClick={() => onTargetClick(targetId)}
@@ -190,11 +212,11 @@ export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProp
                   transition: 'all 0.2s',
                   fontFamily: "'DM Sans', sans-serif",
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={e => {
                   e.currentTarget.style.background = '#bfdbfe';
                   e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={e => {
                   e.currentTarget.style.background = '#dbeafe';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
@@ -218,7 +240,10 @@ export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProp
           }}
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-            <i className="fa-solid fa-circle-exclamation" style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: 2 }} />
+            <i
+              className="fa-solid fa-circle-exclamation"
+              style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: 2 }}
+            />
             <p style={{ fontSize: '0.75rem', color: '#991b1b', margin: 0, lineHeight: 1.4 }}>
               {errorMessage}
             </p>
@@ -227,9 +252,19 @@ export function DataStreamCard({ dataStream, onTargetClick }: DataStreamCardProp
       )}
 
       {/* Last update timestamp (Req 7.10) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          paddingTop: 12,
+          borderTop: '1px solid var(--border)',
+        }}
+      >
         <i className="fa-solid fa-clock" style={{ fontSize: '0.65rem', color: 'var(--text-4)' }} />
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}>
+        <span
+          style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontFamily: "'DM Mono', monospace" }}
+        >
           Last updated: {new Date(lastUpdate).toLocaleString()}
         </span>
       </div>

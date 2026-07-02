@@ -80,9 +80,9 @@ export interface AutoReactivationParams {
  */
 export function getAccountSuspendedMessage(params: AccountSuspendedParams): string {
   const { reason, endDate, suspendedBy, contactEmail } = params;
-  
+
   let message = `Your account has been suspended. Reason: ${reason}.`;
-  
+
   if (endDate) {
     const endDateStr = endDate.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -93,17 +93,17 @@ export function getAccountSuspendedMessage(params: AccountSuspendedParams): stri
   } else {
     message += ' This suspension is indefinite.';
   }
-  
+
   if (suspendedBy) {
     message += ` Suspended by: ${suspendedBy}.`;
   }
-  
+
   if (contactEmail) {
     message += ` If you have questions, please contact ${contactEmail}.`;
   } else {
     message += ' Please contact an administrator for more information.';
   }
-  
+
   return message;
 }
 
@@ -112,23 +112,23 @@ export function getAccountSuspendedMessage(params: AccountSuspendedParams): stri
  */
 export function getAccountDeactivatedMessage(params: AccountDeactivatedParams): string {
   const { reason, deactivatedBy, contactEmail } = params;
-  
+
   let message = 'Your account has been deactivated and you no longer have access to the system.';
-  
+
   if (reason) {
     message += ` Reason: ${reason}.`;
   }
-  
+
   if (deactivatedBy) {
     message += ` Deactivated by: ${deactivatedBy}.`;
   }
-  
+
   if (contactEmail) {
     message += ` To request reactivation or for more information, please contact ${contactEmail}.`;
   } else {
     message += ' Please contact an administrator to request reactivation.';
   }
-  
+
   return message;
 }
 
@@ -137,21 +137,22 @@ export function getAccountDeactivatedMessage(params: AccountDeactivatedParams): 
  */
 export function getAccountReactivatedMessage(params: AccountReactivatedParams): string {
   const { reactivatedBy, previousStatus } = params;
-  
-  let message = 'Good news! Your account has been reactivated and you now have full access to the system.';
-  
+
+  let message =
+    'Good news! Your account has been reactivated and you now have full access to the system.';
+
   if (previousStatus === 'suspended') {
     message += ' Your suspension has been lifted.';
   } else if (previousStatus === 'deactivated') {
     message += ' Your account has been restored.';
   }
-  
+
   if (reactivatedBy) {
     message += ` Reactivated by: ${reactivatedBy}.`;
   }
-  
+
   message += ' You can now log in and resume your activities.';
-  
+
   return message;
 }
 
@@ -160,15 +161,15 @@ export function getAccountReactivatedMessage(params: AccountReactivatedParams): 
  */
 export function getSuspensionExpiringSoonMessage(params: SuspensionExpiringSoonParams): string {
   const { endDate, daysRemaining, reason } = params;
-  
+
   const endDateStr = endDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
-  
+
   let message = `Your account suspension will expire soon. `;
-  
+
   if (daysRemaining === 1) {
     message += `Your account will be automatically reactivated tomorrow (${endDateStr}).`;
   } else if (daysRemaining === 0) {
@@ -176,13 +177,13 @@ export function getSuspensionExpiringSoonMessage(params: SuspensionExpiringSoonP
   } else {
     message += `Your account will be automatically reactivated in ${daysRemaining} days on ${endDateStr}.`;
   }
-  
+
   if (reason) {
     message += ` Original suspension reason: ${reason}.`;
   }
-  
+
   message += ' You will regain full access once the suspension period ends.';
-  
+
   return message;
 }
 
@@ -191,21 +192,21 @@ export function getSuspensionExpiringSoonMessage(params: SuspensionExpiringSoonP
  */
 export function getAutoReactivationMessage(params: AutoReactivationParams): string {
   const { suspensionEndDate, originalReason } = params;
-  
+
   const endDateStr = suspensionEndDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
-  
+
   let message = `Your account has been automatically reactivated. Your suspension period ended on ${endDateStr}.`;
-  
+
   if (originalReason) {
     message += ` Original suspension reason: ${originalReason}.`;
   }
-  
+
   message += ' You now have full access to the system. Welcome back!';
-  
+
   return message;
 }
 
@@ -224,7 +225,7 @@ export function getAccountStatusNotificationTitle(type: AccountStatusMessageType
     [AccountStatusMessageType.SUSPENSION_INDEFINITE]: 'Account Suspended Indefinitely',
     [AccountStatusMessageType.SUSPENSION_TEMPORARY]: 'Account Temporarily Suspended',
   };
-  
+
   return titles[type];
 }
 
@@ -233,7 +234,9 @@ export function getAccountStatusNotificationTitle(type: AccountStatusMessageType
 /**
  * Get notification type (for styling) based on account status message type
  */
-export function getNotificationType(type: AccountStatusMessageType): 'success' | 'warning' | 'error' | 'info' {
+export function getNotificationType(
+  type: AccountStatusMessageType
+): 'success' | 'warning' | 'error' | 'info' {
   const typeMap: Record<AccountStatusMessageType, 'success' | 'warning' | 'error' | 'info'> = {
     [AccountStatusMessageType.ACCOUNT_SUSPENDED]: 'error',
     [AccountStatusMessageType.ACCOUNT_DEACTIVATED]: 'error',
@@ -243,7 +246,7 @@ export function getNotificationType(type: AccountStatusMessageType): 'success' |
     [AccountStatusMessageType.SUSPENSION_INDEFINITE]: 'error',
     [AccountStatusMessageType.SUSPENSION_TEMPORARY]: 'warning',
   };
-  
+
   return typeMap[type];
 }
 
@@ -284,7 +287,7 @@ export function formatAccountStatus(status: AccountStatus): string {
     [AccountStatus.SUSPENDED]: 'Suspended',
     [AccountStatus.REACTIVATED]: 'Reactivated',
   };
-  
+
   return statusLabels[status];
 }
 
@@ -298,7 +301,7 @@ export function getAccountStatusBadgeColor(status: AccountStatus): string {
     [AccountStatus.SUSPENDED]: 'orange',
     [AccountStatus.REACTIVATED]: 'blue',
   };
-  
+
   return colorMap[status];
 }
 
@@ -312,7 +315,7 @@ export function getAdminActionMessage(
   reason?: string
 ): string {
   let message = '';
-  
+
   switch (action) {
     case 'suspend':
       message = `Suspended account for ${targetUserName} (${targetUserEmail}).`;
@@ -324,11 +327,11 @@ export function getAdminActionMessage(
       message = `Reactivated account for ${targetUserName} (${targetUserEmail}).`;
       break;
   }
-  
+
   if (reason) {
     message += ` Reason: ${reason}`;
   }
-  
+
   return message;
 }
 
@@ -337,26 +340,31 @@ export function getAdminActionMessage(
  */
 export function getUserNotificationMessage(
   type: AccountStatusMessageType,
-  params: AccountSuspendedParams | AccountDeactivatedParams | AccountReactivatedParams | SuspensionExpiringSoonParams | AutoReactivationParams
+  params:
+    | AccountSuspendedParams
+    | AccountDeactivatedParams
+    | AccountReactivatedParams
+    | SuspensionExpiringSoonParams
+    | AutoReactivationParams
 ): string {
   switch (type) {
     case AccountStatusMessageType.ACCOUNT_SUSPENDED:
     case AccountStatusMessageType.SUSPENSION_INDEFINITE:
     case AccountStatusMessageType.SUSPENSION_TEMPORARY:
       return getAccountSuspendedMessage(params as AccountSuspendedParams);
-    
+
     case AccountStatusMessageType.ACCOUNT_DEACTIVATED:
       return getAccountDeactivatedMessage(params as AccountDeactivatedParams);
-    
+
     case AccountStatusMessageType.ACCOUNT_REACTIVATED:
       return getAccountReactivatedMessage(params as AccountReactivatedParams);
-    
+
     case AccountStatusMessageType.SUSPENSION_EXPIRING_SOON:
       return getSuspensionExpiringSoonMessage(params as SuspensionExpiringSoonParams);
-    
+
     case AccountStatusMessageType.AUTO_REACTIVATION:
       return getAutoReactivationMessage(params as AutoReactivationParams);
-    
+
     default:
       return 'Your account status has been updated. Please contact an administrator for details.';
   }
@@ -370,58 +378,60 @@ export function getUserNotificationMessage(
  */
 export const ACCOUNT_STATUS_MESSAGES = {
   // Account status login error messages
-  ACCOUNT_DEACTIVATED: 'Your account has been deactivated. Please contact an administrator to request reactivation.',
-  ACCOUNT_SUSPENDED: 'Your account is currently suspended. Please contact an administrator for more information.',
-  ACCOUNT_SUSPENDED_WITH_END_DATE: (endDate: string) => 
+  ACCOUNT_DEACTIVATED:
+    'Your account has been deactivated. Please contact an administrator to request reactivation.',
+  ACCOUNT_SUSPENDED:
+    'Your account is currently suspended. Please contact an administrator for more information.',
+  ACCOUNT_SUSPENDED_WITH_END_DATE: (endDate: string) =>
     `Your account is suspended until ${endDate}. Please contact an administrator if you have questions.`,
-  
+
   // Account status change notifications
   DEACTIVATION_NOTIFICATION: (reason?: string) =>
     `Your account has been deactivated and you no longer have access to the system.${reason ? ` Reason: ${reason}` : ''} Please contact an administrator to request reactivation.`,
-  
+
   SUSPENSION_NOTIFICATION: (reason: string, endDate?: string) =>
     `Your account has been suspended. Reason: ${reason}.${endDate ? ` Your account will be automatically reactivated on ${endDate}.` : ' This suspension is indefinite.'} Please contact an administrator if you have questions.`,
-  
-  REACTIVATION_NOTIFICATION: 'Good news! Your account has been reactivated and you now have full access to the system. You can now log in and resume your activities.',
-  
+
+  REACTIVATION_NOTIFICATION:
+    'Good news! Your account has been reactivated and you now have full access to the system. You can now log in and resume your activities.',
+
   // Year validation error messages (Requirements 7.10, 7.11)
   INVALID_YEAR: 'Please enter a valid year between 2020 and 2030.',
   YEAR_OUT_OF_RANGE: (year: number) =>
     `Year ${year} is outside the allowed reporting period. Please enter a year between 2020 and 2030.`,
   YEAR_REQUIRED: 'Year is required. Please select a year between 2020 and 2030.',
-  
+
   // Date validation error messages (Requirements 7.10, 7.11)
   INVALID_DATE: 'Please enter a valid date between January 1, 2020 and December 31, 2030.',
   DATE_OUT_OF_RANGE: (date: string) =>
     `Date ${date} is outside the allowed reporting period. Please enter a date between January 1, 2020 and December 31, 2030.`,
-  DATE_REQUIRED: 'Date is required. Please enter a date between January 1, 2020 and December 31, 2030.',
+  DATE_REQUIRED:
+    'Date is required. Please enter a date between January 1, 2020 and December 31, 2030.',
   DATE_TOO_EARLY: 'Date cannot be earlier than January 1, 2020.',
   DATE_TOO_LATE: 'Date cannot be later than December 31, 2030.',
-  
+
   // General validation messages
   FORM_VALIDATION_ERROR: 'Please correct the errors below before continuing.',
-  SUBMISSION_ERROR: 'An error occurred while submitting your request. Please try again or contact an administrator.',
+  SUBMISSION_ERROR:
+    'An error occurred while submitting your request. Please try again or contact an administrator.',
   PERMISSION_DENIED: 'You do not have permission to perform this action.',
-  
+
   // Admin action confirmation messages
   CONFIRM_DEACTIVATE: (userName: string) =>
     `Are you sure you want to deactivate the account for ${userName}? This will prevent them from logging in.`,
-  
+
   CONFIRM_SUSPEND: (userName: string) =>
     `Are you sure you want to suspend the account for ${userName}? This will prevent them from accessing the system.`,
-  
+
   CONFIRM_REACTIVATE: (userName: string) =>
     `Are you sure you want to reactivate the account for ${userName}? This will restore their access to the system.`,
-  
+
   // Success messages for admin actions
-  DEACTIVATION_SUCCESS: (userName: string) =>
-    `Successfully deactivated account for ${userName}.`,
-  
-  SUSPENSION_SUCCESS: (userName: string) =>
-    `Successfully suspended account for ${userName}.`,
-  
-  REACTIVATION_SUCCESS: (userName: string) =>
-    `Successfully reactivated account for ${userName}.`,
+  DEACTIVATION_SUCCESS: (userName: string) => `Successfully deactivated account for ${userName}.`,
+
+  SUSPENSION_SUCCESS: (userName: string) => `Successfully suspended account for ${userName}.`,
+
+  REACTIVATION_SUCCESS: (userName: string) => `Successfully reactivated account for ${userName}.`,
 } as const;
 
 // ── VALIDATION ERROR HELPER FUNCTIONS ────────────────────────
@@ -433,11 +443,11 @@ export function validateReportingYear(year: number): { isValid: boolean; message
   if (!year) {
     return { isValid: false, message: ACCOUNT_STATUS_MESSAGES.YEAR_REQUIRED };
   }
-  
+
   if (year < 2020 || year > 2030) {
     return { isValid: false, message: ACCOUNT_STATUS_MESSAGES.YEAR_OUT_OF_RANGE(year) };
   }
-  
+
   return { isValid: true };
 }
 
@@ -448,24 +458,24 @@ export function validateReportingDate(date: Date | string): { isValid: boolean; 
   if (!date) {
     return { isValid: false, message: ACCOUNT_STATUS_MESSAGES.DATE_REQUIRED };
   }
-  
+
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return { isValid: false, message: ACCOUNT_STATUS_MESSAGES.INVALID_DATE };
   }
-  
+
   const minDate = new Date('2020-01-01');
   const maxDate = new Date('2030-12-31');
-  
+
   if (dateObj < minDate) {
     return { isValid: false, message: ACCOUNT_STATUS_MESSAGES.DATE_TOO_EARLY };
   }
-  
+
   if (dateObj > maxDate) {
     return { isValid: false, message: ACCOUNT_STATUS_MESSAGES.DATE_TOO_LATE };
   }
-  
+
   return { isValid: true };
 }
 
@@ -480,7 +490,7 @@ export function getLoginErrorMessage(
   if (!isActive) {
     return ACCOUNT_STATUS_MESSAGES.ACCOUNT_DEACTIVATED;
   }
-  
+
   if (suspendedAt) {
     if (suspensionEndDate) {
       const endDate = new Date(suspensionEndDate).toLocaleDateString('en-US', {
@@ -493,7 +503,7 @@ export function getLoginErrorMessage(
       return ACCOUNT_STATUS_MESSAGES.ACCOUNT_SUSPENDED;
     }
   }
-  
+
   return 'Login failed. Please check your credentials and try again.';
 }
 
@@ -503,22 +513,22 @@ export default {
   // Enums
   AccountStatus,
   AccountStatusMessageType,
-  
+
   // Constants
   ACCOUNT_STATUS_MESSAGES,
-  
+
   // Message generation functions
   getAccountSuspendedMessage,
   getAccountDeactivatedMessage,
   getAccountReactivatedMessage,
   getSuspensionExpiringSoonMessage,
   getAutoReactivationMessage,
-  
+
   // Notification helpers
   getAccountStatusNotificationTitle,
   getNotificationType,
   getUserNotificationMessage,
-  
+
   // Helper functions
   calculateDaysRemaining,
   isSuspensionExpired,
@@ -526,7 +536,7 @@ export default {
   formatAccountStatus,
   getAccountStatusBadgeColor,
   getAdminActionMessage,
-  
+
   // Validation functions
   validateReportingYear,
   validateReportingDate,

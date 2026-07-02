@@ -1,0 +1,236 @@
+name: CI / CD — NBSAP Monitoring System
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Triggers
+#   push to main  → full CI + production deploy to Vercel
+#   PR to main    → full CI only (no deploy)
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Minimal default permissions — individual jobs grant only what they need
+permissions:
+  contents: read
+
+# Cancel a previous in-progress run for the same branch/PR.
+# Main branch runs are NOT cancelled so every merge deploys.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # ── 1. Lint & Format Check ─────────────────────────────────────────────────
+  quality:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ vars.NODE_VERSION || '22' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          # actions/setup-node caches ~/.npm keyed on package-lock.json hash.
+          # This avoids re-downloading packages on every run.
+          cache: 'npm'
+
+      - name: Install dependencies
+        # npm ci — installs exactly what is in package-lock.json.
+        # Fails if lock file is out of sync with package.json.
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier format check
+        # If this fails: run `npm run format` locally, then commit the changes.
+        run: npm run format:check
+
+  # ── 2. TypeScript Type Check ───────────────────────────────────────────────
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript compiler
+        run: npm run type-check
+
+  # ── 3. Unit Tests ──────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:run
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_ENV: test
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ github.sha }}
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ── 4a. Build (PR validation — no Vercel secrets needed) ──────────────────
+  build-check:
+    name: Build Check (PR)
+    runs-on: ubuntu-latest
+    # Runs only on pull requests so PRs don't require Vercel access
+    if: github.event_name == 'pull_request'
+    needs: [quality, type-check, test]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_URL: ${{ vars.VITE_APP_URL }}
+          VITE_APP_NAME: 'NBSAP Monitoring System'
+          VITE_APP_ENV: staging
+          VITE_ENABLE_AI_NARRATIVE: 'true'
+          VITE_ENABLE_REALTIME: 'true'
+          VITE_ENABLE_STORAGE: 'true'
+          VITE_RBIS_API_BASE_URL: ${{ vars.VITE_RBIS_API_BASE_URL }}
+          VITE_RBIS_API_TOKEN: ${{ secrets.VITE_RBIS_API_TOKEN }}
+          VITE_RBIS_API_TIMEOUT: '10000'
+          VITE_RBIS_CACHE_DURATION: '300000'
+          VITE_ENABLE_RBIS_INTEGRATION: 'true'
+          VITE_ENABLE_RBIS_SYNC: 'true'
+
+      - name: Verify dist/ was produced
+        run: test -f dist/index.html
+
+  # ── 4b. Build for Vercel deployment (main branch only) ────────────────────
+  build:
+    name: Build (Production)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [quality, type-check, test]
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # Pre-warm ~/.npm so that vercel build (which runs its own npm install) uses the cache
+        run: npm ci
+
+      - name: Pull Vercel project configuration
+        # Downloads vercel.json overrides and environment variables from the Vercel dashboard.
+        # Production env vars (VITE_SUPABASE_URL etc.) must be set in the Vercel project settings.
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build via Vercel build system
+        # Runs vite build internally (respects vercel.json framework: "vite").
+        # Creates .vercel/output/ in Vercel's File System API format — required for --prebuilt deploy.
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Upload Vercel build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-output-${{ github.sha }}
+          path: .vercel/output/
+          retention-days: 1
+          if-no-files-found: error
+
+  # ── 5. Deploy to Production (Vercel) ──────────────────────────────────────
+  deploy:
+    name: Deploy → Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: production
+      url: ${{ vars.VITE_APP_URL }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Download Vercel build output
+        uses: actions/download-artifact@v4
+        with:
+          name: vercel-output-${{ github.sha }}
+          path: .vercel/output/
+
+      - name: Deploy to Vercel (production)
+        # vercel CLI is invoked via npx — no node_modules needed in this job.
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(npx vercel deploy --prebuilt --prod \
+            --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$DEPLOYMENT_URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $DEPLOYMENT_URL"
+
+      - name: Announce deployment URL
+        run: echo "Production URL → ${{ steps.deploy.outputs.url }}"

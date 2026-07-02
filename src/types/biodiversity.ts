@@ -15,15 +15,15 @@ export interface BiodiversityData {
   districtId: number;
   districtName: string;
   province: string;
-  biodiversityIndex: number;  // 0-100
-  speciesRichness: number;    // count of unique species
+  biodiversityIndex: number; // 0-100
+  speciesRichness: number; // count of unique species
   speciesByKingdom: {
     [kingdom: string]: number;
   };
   occurrenceCount: number;
   lastUpdated: Date;
-  protectedAreaCoverage?: number;  // percentage of district covered by protected areas
-  wetlandCoverage?: number;        // percentage of district covered by wetlands
+  protectedAreaCoverage?: number; // percentage of district covered by protected areas
+  wetlandCoverage?: number; // percentage of district covered by wetlands
 }
 
 export interface ClusteredPoint {

@@ -7,11 +7,7 @@ interface LakePopupProps {
   onClose: () => void;
 }
 
-export const LakePopup: React.FC<LakePopupProps> = ({
-  lake,
-  position,
-  onClose
-}) => {
+export const LakePopup: React.FC<LakePopupProps> = ({ lake, position, onClose }) => {
   const { name, area_km2, max_depth_m, elevation_m, ecological_significance } = lake.properties;
 
   // Determine if popup should be positioned on left or right side
@@ -32,10 +28,10 @@ export const LakePopup: React.FC<LakePopupProps> = ({
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
           zIndex: 9998,
-          animation: 'fadeIn 0.2s ease-out'
+          animation: 'fadeIn 0.2s ease-out',
         }}
       />
-      
+
       {/* Popup */}
       <div
         style={{
@@ -52,7 +48,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
           borderRadius: 12,
           boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
           zIndex: 9999,
-          animation: 'scaleIn 0.2s ease-out'
+          animation: 'scaleIn 0.2s ease-out',
         }}
       >
         {/* Header */}
@@ -61,7 +57,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
             padding: '20px 20px 16px',
             borderBottom: '1px solid #e2e8f0',
             position: 'relative',
-            backgroundColor: '#eff6ff'
+            backgroundColor: '#eff6ff',
           }}
         >
           <button
@@ -77,10 +73,10 @@ export const LakePopup: React.FC<LakePopupProps> = ({
               color: '#64748b',
               padding: 4,
               lineHeight: 1,
-              transition: 'color 0.2s'
+              transition: 'color 0.2s',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#1e293b'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
+            onMouseEnter={e => (e.currentTarget.style.color = '#1e293b')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}
             aria-label="Close lake details"
           >
             ×
@@ -90,7 +86,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 10,
-              marginBottom: 4
+              marginBottom: 4,
             }}
           >
             <span style={{ fontSize: 24 }}>💧</span>
@@ -100,7 +96,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
                 fontSize: 22,
                 fontWeight: 700,
                 color: '#1e293b',
-                paddingRight: 32
+                paddingRight: 32,
               }}
             >
               {name}
@@ -111,7 +107,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
               fontSize: 13,
               color: '#3b82f6',
               fontWeight: 600,
-              letterSpacing: '0.5px'
+              letterSpacing: '0.5px',
             }}
           >
             MAJOR LAKE
@@ -124,7 +120,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
             padding: 20,
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: 16
+            gap: 16,
           }}
         >
           {/* Area */}
@@ -153,7 +149,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
                 fontSize: 14,
                 lineHeight: 1.6,
                 color: '#475569',
-                marginTop: 8
+                marginTop: 8,
               }}
             >
               {ecological_significance}
@@ -168,7 +164,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
             borderTop: '1px solid #e2e8f0',
             backgroundColor: '#f8fafc',
             borderBottomLeftRadius: 12,
-            borderBottomRightRadius: 12
+            borderBottomRightRadius: 12,
           }}
         >
           <div
@@ -177,7 +173,7 @@ export const LakePopup: React.FC<LakePopupProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               fontSize: 13,
-              color: '#475569'
+              color: '#475569',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -223,7 +219,7 @@ const metricCardStyle: React.CSSProperties = {
   padding: 12,
   backgroundColor: '#f8fafc',
   borderRadius: 8,
-  border: '1px solid #e2e8f0'
+  border: '1px solid #e2e8f0',
 };
 
 const metricLabelStyle: React.CSSProperties = {
@@ -231,11 +227,11 @@ const metricLabelStyle: React.CSSProperties = {
   fontWeight: 700,
   color: '#64748b',
   letterSpacing: '0.5px',
-  marginBottom: 6
+  marginBottom: 6,
 };
 
 const metricValueStyle: React.CSSProperties = {
   fontSize: 18,
   fontWeight: 600,
-  color: '#1e293b'
+  color: '#1e293b',
 };
