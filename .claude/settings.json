@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -v \"^\\\\s*//\")"
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(echo \"Lint: $?\")",
+      "Bash(echo \"Format: $?\")",
+      "Bash(echo \"Type: $?\")",
+      "Bash(echo \"Test exit: $?\")"
     ]
   }
 }

@@ -33,17 +33,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js ${{ vars.NODE_VERSION || '22' }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          # actions/setup-node caches ~/.npm keyed on package-lock.json hash.
-          # This avoids re-downloading packages on every run.
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
-        # npm ci — installs exactly what is in package-lock.json.
-        # Fails if lock file is out of sync with package.json.
         run: npm ci
 
       - name: Run ESLint
@@ -65,7 +61,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -86,7 +82,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -123,7 +119,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -167,7 +163,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -215,7 +211,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '22'
 
       - name: Download Vercel build output
         uses: actions/download-artifact@v4
