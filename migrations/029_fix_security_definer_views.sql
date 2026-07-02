@@ -7,19 +7,25 @@
 -- rather than the calling user's, which can silently bypass
 -- Row Level Security policies.
 --
--- Fix: recreate all 5 public views WITH (security_invoker = true)
+-- Fix: drop and recreate all 5 public views WITH (security_invoker = true)
 -- so they execute with the caller's permissions and respect RLS.
+--
+-- DROP ... CASCADE is used instead of CREATE OR REPLACE because
+-- PostgreSQL forbids renaming columns in-place; CASCADE is safe
+-- here as no other DB objects depend on these views.
 --
 -- Requires PostgreSQL 15+ (Supabase default since late 2023).
 -- ============================================================
 
 -- ── 1. target_progress_with_reports (migration 013) ──────────
-CREATE OR REPLACE VIEW public.target_progress_with_reports
+DROP VIEW IF EXISTS public.target_progress_with_reports CASCADE;
+
+CREATE VIEW public.target_progress_with_reports
   WITH (security_invoker = true)
 AS
 SELECT
   nt.*,
-  COALESCE(rs.total_reports, 0)   AS total_reports,
+  COALESCE(rs.total_reports, 0)    AS total_reports,
   COALESCE(rs.approved_reports, 0) AS approved_reports,
   COALESCE(rs.pending_reports, 0)  AS pending_reports,
   CASE
@@ -30,9 +36,9 @@ FROM public.nbsap_targets nt
 LEFT JOIN (
   SELECT
     nbsap_target_id,
-    COUNT(*)                                          AS total_reports,
-    COUNT(*) FILTER (WHERE status = 'approved')       AS approved_reports,
-    COUNT(*) FILTER (WHERE status = 'pending')        AS pending_reports
+    COUNT(*)                                        AS total_reports,
+    COUNT(*) FILTER (WHERE status = 'approved')     AS approved_reports,
+    COUNT(*) FILTER (WHERE status = 'pending')      AS pending_reports
   FROM public.toolkit_reports
   WHERE nbsap_target_id IS NOT NULL
   GROUP BY nbsap_target_id
@@ -40,7 +46,9 @@ LEFT JOIN (
 ORDER BY nt.id;
 
 -- ── 2. dashboard_metrics_live (migration 015) ────────────────
-CREATE OR REPLACE VIEW public.dashboard_metrics_live
+DROP VIEW IF EXISTS public.dashboard_metrics_live CASCADE;
+
+CREATE VIEW public.dashboard_metrics_live
   WITH (security_invoker = true)
 AS
 SELECT
@@ -73,7 +81,9 @@ SELECT
   (SELECT MAX(updated_at) FROM public.system_metrics) AS last_updated;
 
 -- ── 3. v_target_progress (migration 023) ─────────────────────
-CREATE OR REPLACE VIEW public.v_target_progress
+DROP VIEW IF EXISTS public.v_target_progress CASCADE;
+
+CREATE VIEW public.v_target_progress
   WITH (security_invoker = true)
 AS
 SELECT
@@ -90,7 +100,9 @@ SELECT
 FROM public.nbsap_targets t;
 
 -- ── 4. v_indicator_progress (migration 023) ──────────────────
-CREATE OR REPLACE VIEW public.v_indicator_progress
+DROP VIEW IF EXISTS public.v_indicator_progress CASCADE;
+
+CREATE VIEW public.v_indicator_progress
   WITH (security_invoker = true)
 AS
 SELECT
@@ -106,14 +118,16 @@ SELECT
   i.periodicity,
   i.data_source,
   i.responsible,
-  public.compute_indicator_progress(i.id)                     AS progress,
+  public.compute_indicator_progress(i.id)                  AS progress,
   public.compute_indicator_status(
     public.compute_indicator_progress(i.id)
-  )                                                            AS status
+  )                                                         AS status
 FROM public.indicators i;
 
 -- ── 5. v_system_metrics (migration 023) ──────────────────────
-CREATE OR REPLACE VIEW public.v_system_metrics
+DROP VIEW IF EXISTS public.v_system_metrics CASCADE;
+
+CREATE VIEW public.v_system_metrics
   WITH (security_invoker = true)
 AS
 SELECT * FROM public.compute_system_metrics();
@@ -127,6 +141,6 @@ GRANT SELECT ON public.v_system_metrics              TO authenticated;
 
 DO $$
 BEGIN
-  RAISE NOTICE 'Migration 029 complete: all 5 public views recreated with security_invoker = true.';
+  RAISE NOTICE 'Migration 029 complete: all 5 public views dropped and recreated with security_invoker = true.';
   RAISE NOTICE 'Views now execute with the calling user''s permissions and respect RLS policies.';
 END $$;
