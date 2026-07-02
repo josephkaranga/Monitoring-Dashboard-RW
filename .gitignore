@@ -64,3 +64,5 @@ IMPLEMENTATION_SUMMARY.md
 INTEGRATION_TEST_REPORT.md
 .vercel
 .env*
+.claude
+/docs/pdf
