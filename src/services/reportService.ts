@@ -74,36 +74,13 @@ export async function submitReport(
   formData: Record<string, unknown>,
   requireVerification: boolean = true,
   attachments: ReportAttachment[] = [],
-  nbsapTargetId?: number | null
+  nbsapTargetId?: number | null,
+  indicatorId?: number | null
 ): Promise<ApiResponse<ToolkitReport>> {
-  // Enhanced logging for data pipeline debugging
-  console.log('🔄 [submitReport] Starting report submission for data pipeline tracking');
-  console.log('📊 [submitReport] Pipeline parameters:', {
-    toolId,
-    toolName,
-    nbsapTargetId,
-    requireVerification,
-    attachmentCount: attachments.length,
-    timestamp: new Date().toISOString(),
-  });
-
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return { data: null, error: 'Not authenticated' };
 
   const userId = sessionData.session.user.id;
-
-  // Log target and indicator associations for debugging
-  const indicatorId = formData.indicator ? parseInt(formData.indicator as string, 10) : null;
-  const stakeholderId = formData.stakeholder || null;
-
-  console.log('🎯 [submitReport] Target and Indicator associations:', {
-    nbsapTargetId: nbsapTargetId || 'None selected',
-    indicatorId: indicatorId || 'None selected',
-    stakeholderId: stakeholderId || 'None selected',
-    targetInfo: formData.target_info || null,
-    indicatorInfo: formData.indicator_info || null,
-    stakeholderInfo: formData.stakeholder_info || null,
-  });
 
   // Upload attachments to Storage first
   const uploadedAttachments: ReportAttachment[] = [];
@@ -135,10 +112,6 @@ export async function submitReport(
     }
   }
 
-  // Attach tool weight info so the contribution this report makes toward
-  // its target's weighted progress is visible alongside the submission.
-  const toolWeightInfo = await fetchToolWeight(toolId);
-
   const reportData = {
     tool_id: toolId,
     tool_name: toolName,
@@ -147,24 +120,14 @@ export async function submitReport(
     reviewed_by: requireVerification ? null : userId,
     reviewed_at: requireVerification ? null : new Date().toISOString(),
     period: (formData.period as string) || null,
-    form_data: { ...formData, tool_weight_info: toolWeightInfo },
+    form_data: formData,
     attachments: uploadedAttachments,
     district: (formData.district as string) || null,
     institution: (formData.institution as string) || null,
     nbsap_target_id: nbsapTargetId || null,
+    indicator_id: indicatorId || null,
     submitted_at: new Date().toISOString(),
   };
-
-  // Log pipeline status for audit trail and debugging
-  console.log('📋 [submitReport] Pipeline status in audit entry:', {
-    reportStatus: reportData.status,
-    requiresVerification: requireVerification,
-    hasTargetAssociation: !!nbsapTargetId,
-    hasIndicatorAssociation: !!indicatorId,
-    pipelineState: requireVerification ? 'awaiting_verification' : 'direct_approval',
-    dataFlowComplete: !!(nbsapTargetId && indicatorId && stakeholderId),
-    attachmentCount: uploadedAttachments.length,
-  });
 
   const { data, error } = await supabase
     .from('toolkit_reports')
@@ -179,37 +142,7 @@ export async function submitReport(
     )
     .single();
 
-  if (error) {
-    console.error('❌ [submitReport] Database insertion failed:', {
-      error: error.message,
-      toolId,
-      nbsapTargetId,
-      indicatorId,
-      timestamp: new Date().toISOString(),
-    });
-    return { data: null, error: error.message };
-  }
-
-  // Log successful submission with target and indicator associations
-  console.log(
-    '✅ [submitReport] Report submitted successfully with target and indicator associations:',
-    {
-      reportId: data.id,
-      toolId: data.tool_id,
-      status: data.status,
-      nbsapTargetId: data.nbsap_target_id,
-      indicatorId: indicatorId,
-      stakeholderId: stakeholderId,
-      pipelineStatus: data.status === 'pending' ? 'queued_for_verification' : 'approved_direct',
-      submissionTime: data.submitted_at,
-      dataFlowIntegrityCheck: {
-        targetLinked: !!data.nbsap_target_id,
-        indicatorDataPresent: !!indicatorId,
-        stakeholderMapped: !!stakeholderId,
-        formDataComplete: Object.keys(formData).length > 0,
-      },
-    }
-  );
+  if (error) return { data: null, error: error.message };
 
   return { data: data as ToolkitReport, error: null };
 }

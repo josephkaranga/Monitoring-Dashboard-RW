@@ -39,10 +39,9 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
 
   // ── NBSAP linkage ───────────────────────────────────────
   nbsap_target: { section: 'NBSAP Linkage', label: 'NBSAP Target' },
-  related_indicator: { section: 'NBSAP Linkage', label: 'Related Indicator' },
   indicator: { section: 'NBSAP Linkage', label: 'Related Indicator' },
+  reported_value: { section: 'NBSAP Linkage', label: 'Reported Value' },
   current_status: { section: 'NBSAP Linkage', label: 'Current Status / Value' },
-  current_value: { section: 'NBSAP Linkage', label: 'Current Value' },
 
   // ── Biodiversity data ───────────────────────────────────
   forest_ha: { section: 'Biodiversity Data', label: 'Forest Restoration (ha)', format: 'number' },

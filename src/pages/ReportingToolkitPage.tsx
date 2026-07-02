@@ -666,8 +666,8 @@ const TOOLKIT_TOOLS = [
       { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
       { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
       {
-        key: 'current_status',
-        label: 'Current Status / Value',
+        key: 'reported_value',
+        label: 'Reported Value',
         type: 'number',
         placeholder: '0',
         required: true,
@@ -1532,40 +1532,18 @@ const ReportForm = ({
       }
       const requireVerification = true;
 
-      // Include NBSAP target ID, stakeholder, and indicator in the submission
       const nbsapTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
       const indicatorId = formData.indicator ? parseInt(formData.indicator, 10) : null;
       const stakeholderId = formData.stakeholder || null;
 
-      // Enhanced form data with pipeline information
-      const enhancedFormData = {
-        ...formData,
-        stakeholder_info: stakeholderId ? getStakeholderConfig(stakeholderId) : null,
-        target_info: nbsapTargetId ? filteredTargets.find(t => t.id === nbsapTargetId) : null,
-        indicator_info: indicatorId ? availableIndicators.find(i => i.id === indicatorId) : null,
-        submission_timestamp: new Date().toISOString(),
-        submitted_by: user?.id,
-        submitted_by_organization: user?.organization,
-      };
-
-      // Debug logging for data pipeline
-      console.log('Report submission pipeline data:', {
-        tool: tool.id,
-        stakeholderId,
-        nbsapTargetId,
-        indicatorId,
-        hasStakeholderInfo: !!enhancedFormData.stakeholder_info,
-        hasTargetInfo: !!enhancedFormData.target_info,
-        hasIndicatorInfo: !!enhancedFormData.indicator_info,
-      });
-
       const result = await submitReport(
         tool.id as ReportType,
         tool.name,
-        enhancedFormData,
+        formData,
         requireVerification,
         attachments,
-        nbsapTargetId
+        nbsapTargetId,
+        indicatorId
       );
 
       if (result.error) {
