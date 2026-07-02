@@ -627,7 +627,7 @@ const TOOLKIT_TOOLS = [
       },
       {
         key: 'institution',
-        label: 'Reporting Institution',
+        label: 'Lead Institution',
         type: 'institution_auto',
         required: true,
       },
@@ -684,7 +684,7 @@ const TOOLKIT_TOOLS = [
         label: 'Implementation Activities',
         type: 'textarea',
         placeholder: 'Describe completed activities...',
-        required: false,
+        required: true,
       },
       {
         key: 'challenges',
