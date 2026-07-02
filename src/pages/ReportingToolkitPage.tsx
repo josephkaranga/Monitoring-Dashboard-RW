@@ -27,6 +27,7 @@ import type {
   Indicator,
   District,
 } from '../types/index';
+import { supabase } from '../utils/supabase';
 import { formatFieldLabel, formatFieldValue } from '../utils/formData';
 import { validateYear } from '../utils/validation';
 
@@ -1532,6 +1533,53 @@ const ReportForm = ({
           return;
         }
       }
+
+      // ── Duplicate submission check ──────────────────────────────────────────
+      // Resolve the target ID early so we can query before setting submitting=true.
+      const checkTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
+
+      if (user?.id && formData.period && checkTargetId) {
+        // 1. Hard block: same user already has a non-rejected report for this combo.
+        const { data: selfDupe } = await supabase
+          .from('toolkit_reports')
+          .select('id, submitted_at')
+          .eq('submitted_by', user.id)
+          .eq('tool_id', tool.id)
+          .eq('period', formData.period)
+          .eq('nbsap_target_id', checkTargetId)
+          .neq('status', 'rejected')
+          .maybeSingle();
+
+        if (selfDupe) {
+          toast.error(
+            `You already submitted this report (${tool.id} · ${formData.period} · Target ${checkTargetId}). Ask your administrator to reject it before resubmitting.`
+          );
+          return;
+        }
+
+        // 2. Soft warning: someone else from the same institution already submitted.
+        const institution = formData.institution?.trim();
+        if (institution) {
+          const { data: orgDupe } = await supabase
+            .from('toolkit_reports')
+            .select('id, institution, submitted_at')
+            .eq('institution', institution)
+            .eq('tool_id', tool.id)
+            .eq('period', formData.period)
+            .eq('nbsap_target_id', checkTargetId)
+            .neq('status', 'rejected')
+            .neq('submitted_by', user.id)
+            .maybeSingle();
+
+          if (orgDupe) {
+            toast(
+              `Note: someone else from ${institution} has already submitted this report for ${formData.period} / Target ${checkTargetId}. Both submissions will be sent for review.`,
+              { icon: '⚠️', duration: 6000 }
+            );
+          }
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────────
 
       setSubmitting(true);
 
