@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Rwanda NBSAP Monitoring System - National Biodiversity Strategy & Action Plan 2025-2030",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

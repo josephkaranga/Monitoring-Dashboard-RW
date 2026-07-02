@@ -36,7 +36,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -61,7 +61,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -82,7 +82,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -119,7 +119,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -163,7 +163,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -171,13 +171,9 @@ jobs:
         run: npm ci
 
       - name: Pull Vercel project configuration
-        # Downloads vercel.json overrides and environment variables from the Vercel dashboard.
-        # Production env vars (VITE_SUPABASE_URL etc.) must be set in the Vercel project settings.
         run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build via Vercel build system
-        # Runs vite build internally (respects vercel.json framework: "vite").
-        # Creates .vercel/output/ in Vercel's File System API format — required for --prebuilt deploy.
         run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Upload Vercel build output
@@ -211,7 +207,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Download Vercel build output
         uses: actions/download-artifact@v4
@@ -220,7 +216,6 @@ jobs:
           path: .vercel/output/
 
       - name: Deploy to Vercel (production)
-        # vercel CLI is invoked via npx — no node_modules needed in this job.
         id: deploy
         run: |
           DEPLOYMENT_URL=$(npx vercel deploy --prebuilt --prod \
