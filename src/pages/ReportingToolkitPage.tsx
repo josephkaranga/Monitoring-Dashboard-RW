@@ -37,7 +37,6 @@ const STAKEHOLDER_RESPONSIBILITIES: Record<
   string,
   { name: string; responsibilities: string[]; targets: number[]; modules: string[] }
 > = {
-
   REMA: {
     name: 'Rwanda Environment Management Authority',
     responsibilities: [
@@ -1927,7 +1926,9 @@ const ReportForm = ({
                         }}
                       >
                         <option value="">
-                          {loadingDistricts ? 'Loading districts…' : '— Select Reporting District —'}
+                          {loadingDistricts
+                            ? 'Loading districts…'
+                            : '— Select Reporting District —'}
                         </option>
                         {['Kigali', 'North', 'South', 'East', 'West'].map(province => {
                           const provDistricts = allDistricts.filter(
@@ -2893,8 +2894,11 @@ export default function ReportingToolkitPage() {
                                       ? `: ${r.nbsap_target.title.length > 32 ? r.nbsap_target.title.slice(0, 32) + '…' : r.nbsap_target.title}`
                                       : ''}
                                   </div>
-                                  <div style={{ fontSize: '0.62rem', color: '#10b981', marginTop: 2 }}>
-                                    {r.nbsap_target?.goal ? `Goal ${r.nbsap_target.goal} · ` : ''}Linked
+                                  <div
+                                    style={{ fontSize: '0.62rem', color: '#10b981', marginTop: 2 }}
+                                  >
+                                    {r.nbsap_target?.goal ? `Goal ${r.nbsap_target.goal} · ` : ''}
+                                    Linked
                                   </div>
                                 </div>
                               </div>
@@ -2937,9 +2941,7 @@ export default function ReportingToolkitPage() {
                                   ]
                                 : null;
                               const indInfo = fd.indicator_info as
-                                | { name?: string }
-                                | null
-                                | undefined;
+                                { name?: string } | null | undefined;
                               const indName =
                                 indInfo?.name ||
                                 (fd.indicator ? `Indicator #${fd.indicator}` : null);
