@@ -30,7 +30,7 @@ export function formatFieldLabel(key: string): string {
 export function formatFieldValue(val: unknown): string {
   if (val === null || val === undefined || val === '') return '—';
   if (typeof val === 'boolean') return val ? 'Yes' : 'No';
-  if (typeof val === 'number') return val.toLocaleString();
+  if (typeof val === 'number') return val.toString();
   if (typeof val === 'string') return val;
   if (Array.isArray(val)) return val.map(formatFieldValue).join(', ');
   if (typeof val === 'object') {
@@ -70,11 +70,11 @@ export function applyDisplayFormat(
 function resolveField(
   key: string,
   val: unknown
-): { label: string; value: string; section: string } {
+): { label: string; value: string; section: string; hidden?: true } {
   const meta = lookupField(key);
   const coerced = formatFieldValue(val);
   const formatted = applyDisplayFormat(coerced, meta.format);
-  return { label: meta.label, value: formatted, section: meta.section };
+  return { label: meta.label, value: formatted, section: meta.section, hidden: meta.hidden };
 }
 
 // ── Flat list (tables, CSV) ─────────────────────────────────
@@ -86,6 +86,7 @@ export function flattenFormData(
   for (const [key, val] of Object.entries(data)) {
     if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
       const parent = lookupField(key);
+      if (parent.hidden) continue;
       for (const [subKey, subVal] of Object.entries(val as Record<string, unknown>)) {
         const child = resolveField(subKey, subVal);
         result.push({
@@ -96,6 +97,7 @@ export function flattenFormData(
       }
     } else {
       const resolved = resolveField(key, val);
+      if (resolved.hidden) continue;
       result.push({ key, label: resolved.label, value: resolved.value });
     }
   }
@@ -129,11 +131,13 @@ export function groupedFormData(data: Record<string, unknown>): FormSection[] {
   for (const [key, val] of Object.entries(data)) {
     if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
       const parent = lookupField(key);
+      if (parent.hidden) continue;
       const childEntries = Object.entries(val as Record<string, unknown>);
       const anyChildKnown = childEntries.some(([ck]) => lookupField(ck).section !== 'Other');
 
       for (const [subKey, subVal] of childEntries) {
         const child = resolveField(subKey, subVal);
+        if (child.hidden) continue;
         const sectionLabel = anyChildKnown ? child.section : parent.section;
         const label = anyChildKnown ? child.label : `${parent.label} — ${child.label}`;
         ensureSection(sectionLabel).fields.push({
@@ -144,6 +148,7 @@ export function groupedFormData(data: Record<string, unknown>): FormSection[] {
       }
     } else {
       const resolved = resolveField(key, val);
+      if (resolved.hidden) continue;
       ensureSection(resolved.section).fields.push({
         key,
         label: resolved.label,

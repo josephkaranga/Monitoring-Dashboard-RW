@@ -676,7 +676,8 @@ const TOOLKIT_TOOLS = [
         key: 'budget_utilized',
         label: 'Budget Utilized (RWF)',
         type: 'number',
-        placeholder: '0',
+        placeholder: 'e.g. 5000000 for 5M RWF',
+        hint: 'Enter the exact amount in Rwandan Francs (RWF)',
         required: true,
       },
       {
@@ -2015,6 +2016,18 @@ const ReportForm = ({
                       boxShadow: errors[f.key] ? '0 0 0 3px rgba(244,63,94,0.1)' : 'none',
                     }}
                   />
+                )}
+                {'hint' in f && f.hint && (
+                  <div
+                    style={{
+                      marginTop: 4,
+                      fontSize: '0.7rem',
+                      color: 'var(--text-3)',
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
+                    {String(f.hint)}
+                  </div>
                 )}
               </div>
             ))}

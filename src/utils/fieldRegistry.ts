@@ -11,6 +11,7 @@ export interface FieldMeta {
   section: string;
   label: string;
   format?: 'number' | 'currency' | 'percent' | 'text';
+  hidden?: true;
 }
 
 // ── Registry: string key → display metadata ─────────────────
@@ -38,8 +39,10 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
 
   // ── NBSAP linkage ───────────────────────────────────────
   nbsap_target: { section: 'NBSAP Linkage', label: 'NBSAP Target' },
+  related_indicator: { section: 'NBSAP Linkage', label: 'Related Indicator' },
   indicator: { section: 'NBSAP Linkage', label: 'Related Indicator' },
-  current_status: { section: 'NBSAP Linkage', label: 'Current Status / Value', format: 'number' },
+  current_status: { section: 'NBSAP Linkage', label: 'Current Status / Value' },
+  current_value: { section: 'NBSAP Linkage', label: 'Current Value' },
 
   // ── Biodiversity data ───────────────────────────────────
   forest_ha: { section: 'Biodiversity Data', label: 'Forest Restoration (ha)', format: 'number' },
@@ -118,6 +121,15 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
   challenges: { section: 'Narrative', label: 'Challenges Encountered' },
   observations: { section: 'Narrative', label: 'Field Observations' },
   notes: { section: 'Narrative', label: 'Additional Notes' },
+
+  // ── Internal / system fields — never shown in UI ────────
+  // These are either shown explicitly in the modal header/grid, or are
+  // raw system data that reviewers don't need to see.
+  submitted_by: { section: 'Other', label: 'Submitted By', hidden: true },
+  target_info: { section: 'Other', label: 'Target Info', hidden: true },
+  indicator_info: { section: 'Other', label: 'Indicator Info', hidden: true },
+  stakeholder_info: { section: 'Other', label: 'Stakeholder Info', hidden: true },
+  tool_weight_info: { section: 'Other', label: 'Tool Weight Info', hidden: true },
 };
 
 // ── Section display order ───────────────────────────────────

@@ -390,8 +390,14 @@ function ReportDetailModal({
   actioning: string | null;
 }) {
   const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
-  const sections = groupedFormData(report.form_data || {});
   const attachments = report.attachments || [];
+
+  // Strip fields already shown in the context strip (institution, period)
+  // so they don't appear twice inside the grouped form-data sections.
+  const displayData = Object.fromEntries(
+    Object.entries(report.form_data || {}).filter(([k]) => k !== 'institution' && k !== 'period')
+  );
+  const sections = groupedFormData(displayData);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -501,7 +507,7 @@ function ReportDetailModal({
 
         {/* Scrollable body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {/* Submission info */}
+          {/* Submission context strip */}
           <div
             style={{
               display: 'grid',
@@ -510,63 +516,93 @@ function ReportDetailModal({
               marginBottom: 20,
             }}
           >
-            {report.district && (
-              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+            {/* Submitted by */}
+            <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+              <div
+                style={{
+                  fontSize: '0.6rem',
+                  color: 'var(--text-3)',
+                  textTransform: 'uppercase',
+                  fontFamily: "'DM Mono', monospace",
+                  marginBottom: 2,
+                }}
+              >
+                Submitted By
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
+                {report.submitted_by_profile?.full_name || 'Unknown'}
+              </div>
+              {report.submitted_by_profile?.email && (
                 <div
                   style={{
-                    fontSize: '0.6rem',
+                    fontSize: '0.65rem',
                     color: 'var(--text-3)',
-                    textTransform: 'uppercase',
                     fontFamily: "'DM Mono', monospace",
-                    marginBottom: 2,
+                    marginTop: 2,
                   }}
                 >
-                  District
+                  {report.submitted_by_profile.email}
                 </div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
-                  {report.district}
-                </div>
+              )}
+            </div>
+
+            {/* Lead institution */}
+            <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+              <div
+                style={{
+                  fontSize: '0.6rem',
+                  color: 'var(--text-3)',
+                  textTransform: 'uppercase',
+                  fontFamily: "'DM Mono', monospace",
+                  marginBottom: 2,
+                }}
+              >
+                Lead Institution
               </div>
-            )}
-            {report.institution && (
-              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
+                {report.institution || '—'}
+              </div>
+            </div>
+
+            {/* NBSAP target */}
+            <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+              <div
+                style={{
+                  fontSize: '0.6rem',
+                  color: 'var(--text-3)',
+                  textTransform: 'uppercase',
+                  fontFamily: "'DM Mono', monospace",
+                  marginBottom: 2,
+                }}
+              >
+                NBSAP Target
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
+                {report.nbsap_target
+                  ? `T${report.nbsap_target.id}: ${report.nbsap_target.title}`
+                  : report.nbsap_target_id
+                    ? `Target ${report.nbsap_target_id}`
+                    : '—'}
+              </div>
+              {report.district && (
                 <div
                   style={{
-                    fontSize: '0.6rem',
+                    fontSize: '0.65rem',
                     color: 'var(--text-3)',
-                    textTransform: 'uppercase',
                     fontFamily: "'DM Mono', monospace",
-                    marginBottom: 2,
+                    marginTop: 2,
                   }}
                 >
-                  Institution
+                  District: {report.district}
                 </div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
-                  {report.institution}
-                </div>
-              </div>
-            )}
-            {report.submitted_by_profile?.organization && (
-              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
-                <div
-                  style={{
-                    fontSize: '0.6rem',
-                    color: 'var(--text-3)',
-                    textTransform: 'uppercase',
-                    fontFamily: "'DM Mono', monospace",
-                    marginBottom: 2,
-                  }}
-                >
-                  Organization
-                </div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
-                  {report.submitted_by_profile.organization}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Form data — grouped by section */}
+          {/* Form data — grouped by section.
+              Strip fields already shown in the context strip above so they
+              don't appear twice. Hidden fields (target_info, indicator_info,
+              submitted_by, etc.) are filtered by the field registry. */}
           {sections.map(sec => (
             <div key={sec.id} style={{ marginBottom: 20 }}>
               <h3
