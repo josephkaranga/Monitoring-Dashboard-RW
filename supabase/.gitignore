@@ -7,4 +7,4 @@
 .env.local
 .env.*.local
 /docs
-.claude
+.claude/settings.json

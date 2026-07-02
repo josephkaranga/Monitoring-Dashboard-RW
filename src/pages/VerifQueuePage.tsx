@@ -371,6 +371,102 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
   );
 }
 
+/* ── Report Detail Modal — helpers ──────────────────────── */
+
+interface EvalResult {
+  completion_pct: number | null;
+  performance_status: string | null;
+  trend_direction: string | null;
+  change_pct: number | null;
+  latest_period: string | null;
+}
+
+const PERF_CFG: Record<string, { bg: string; color: string; label: string }> = {
+  'on-track': { bg: '#dcfce7', color: '#166534', label: 'On Track' },
+  'at-risk': { bg: '#fef9c3', color: '#854d0e', label: 'At Risk' },
+  behind: { bg: '#fee2e2', color: '#991b1b', label: 'Behind' },
+};
+
+const TREND_ICON: Record<string, string> = {
+  improving: '↑',
+  declining: '↓',
+  stable: '→',
+  insufficient_data: '—',
+};
+
+// form_data keys displayed in dedicated sections — excluded from Reported Data
+const REPORTED_STRIP = new Set([
+  'institution',
+  'period',
+  'stakeholder',
+  'nbsap_target',
+  'indicator',
+  'district',
+]);
+
+const cLabel: React.CSSProperties = {
+  fontSize: '0.58rem',
+  color: 'var(--text-3)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  fontFamily: "'DM Mono', monospace",
+  marginBottom: 3,
+};
+const cValue: React.CSSProperties = {
+  fontSize: '0.82rem',
+  fontWeight: 600,
+  color: 'var(--text-1)',
+  wordBreak: 'break-word',
+};
+const cSub: React.CSSProperties = {
+  fontSize: '0.65rem',
+  color: 'var(--text-3)',
+  fontFamily: "'DM Mono', monospace",
+  marginTop: 2,
+};
+
+function InfoChip({
+  label,
+  primary,
+  sub,
+}: {
+  label: string;
+  primary: React.ReactNode;
+  sub?: React.ReactNode;
+}) {
+  return (
+    <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
+      <div style={cLabel}>{label}</div>
+      <div style={cValue}>{primary ?? '—'}</div>
+      {sub && <div style={cSub}>{sub}</div>}
+    </div>
+  );
+}
+
+function SectionHead({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div
+      style={{
+        fontSize: '0.62rem',
+        fontWeight: 700,
+        color: 'var(--text-3)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        fontFamily: "'DM Mono', monospace",
+        marginBottom: 10,
+        paddingBottom: 7,
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <i className={`fa-solid ${icon}`} />
+      {title}
+    </div>
+  );
+}
+
 /* ── Report Detail Modal ─────────────────────────────────── */
 function ReportDetailModal({
   report,
@@ -391,13 +487,7 @@ function ReportDetailModal({
 }) {
   const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
   const attachments = report.attachments || [];
-
-  // Strip fields already shown in the context strip (institution, period)
-  // so they don't appear twice inside the grouped form-data sections.
-  const displayData = Object.fromEntries(
-    Object.entries(report.form_data || {}).filter(([k]) => k !== 'institution' && k !== 'period')
-  );
-  const sections = groupedFormData(displayData);
+  const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -406,6 +496,39 @@ function ReportDetailModal({
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
+
+  // Load computed indicator performance when the modal opens
+  useEffect(() => {
+    const indId = report.indicator_id;
+    if (!indId) return;
+    setEvalResult(null);
+    supabase
+      .from('v_eval_performance_status')
+      .select('completion_pct, performance_status, trend_direction, change_pct, latest_period')
+      .eq('indicator_id', indId)
+      .maybeSingle()
+      .then(({ data }) => setEvalResult(data as EvalResult | null));
+  }, [report.id, report.indicator_id]);
+
+  // Reported data: strip keys shown in other sections so nothing appears twice
+  const reportedData = Object.fromEntries(
+    Object.entries(report.form_data || {}).filter(([k]) => !REPORTED_STRIP.has(k))
+  );
+  const dataSections = groupedFormData(reportedData);
+
+  const perfCfg = evalResult?.performance_status ? PERF_CFG[evalResult.performance_status] : null;
+  const trendIcon = evalResult?.trend_direction
+    ? (TREND_ICON[evalResult.trend_direction] ?? '—')
+    : null;
+
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div
@@ -434,7 +557,7 @@ function ReportDetailModal({
         style={{
           position: 'relative',
           width: '90%',
-          maxWidth: 800,
+          maxWidth: 840,
           maxHeight: '90vh',
           background: 'var(--surface)',
           borderRadius: 12,
@@ -444,7 +567,7 @@ function ReportDetailModal({
           overflow: 'hidden',
         }}
       >
-        {/* Modal header */}
+        {/* Header */}
         <div
           style={{
             padding: '16px 20px',
@@ -456,22 +579,19 @@ function ReportDetailModal({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.6rem' }}>{TOOL_EMOJI[report.tool_id] || ''}</span>
+            <span style={{ fontSize: '1.5rem' }}>{TOOL_EMOJI[report.tool_id] || ''}</span>
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-1)' }}>
                 {report.tool_name}
               </div>
               <div
                 style={{
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
                   color: 'var(--text-3)',
                   fontFamily: "'DM Mono', monospace",
                 }}
               >
-                {new Date(report.submitted_at).toLocaleString()}
-                {report.submitted_by_profile?.full_name &&
-                  ` · ${report.submitted_by_profile.full_name}`}
-                {report.period && ` · ${report.period}`}
+                {report.id.slice(0, 8).toUpperCase()}
               </div>
             </div>
           </div>
@@ -507,214 +627,290 @@ function ReportDetailModal({
 
         {/* Scrollable body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {/* Submission context strip */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
-            {/* Submitted by */}
-            <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
-              <div
-                style={{
-                  fontSize: '0.6rem',
-                  color: 'var(--text-3)',
-                  textTransform: 'uppercase',
-                  fontFamily: "'DM Mono', monospace",
-                  marginBottom: 2,
-                }}
-              >
-                Submitted By
-              </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
-                {report.submitted_by_profile?.full_name || 'Unknown'}
-              </div>
-              {report.submitted_by_profile?.email && (
-                <div
-                  style={{
-                    fontSize: '0.65rem',
-                    color: 'var(--text-3)',
-                    fontFamily: "'DM Mono', monospace",
-                    marginTop: 2,
-                  }}
-                >
-                  {report.submitted_by_profile.email}
-                </div>
-              )}
-            </div>
-
-            {/* Lead institution */}
-            <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
-              <div
-                style={{
-                  fontSize: '0.6rem',
-                  color: 'var(--text-3)',
-                  textTransform: 'uppercase',
-                  fontFamily: "'DM Mono', monospace",
-                  marginBottom: 2,
-                }}
-              >
-                Lead Institution
-              </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
-                {report.institution || '—'}
-              </div>
-            </div>
-
-            {/* NBSAP target */}
-            <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}>
-              <div
-                style={{
-                  fontSize: '0.6rem',
-                  color: 'var(--text-3)',
-                  textTransform: 'uppercase',
-                  fontFamily: "'DM Mono', monospace",
-                  marginBottom: 2,
-                }}
-              >
-                NBSAP Target
-              </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-1)' }}>
-                {report.nbsap_target
-                  ? `T${report.nbsap_target.id}: ${report.nbsap_target.title}`
-                  : report.nbsap_target_id
-                    ? `Target ${report.nbsap_target_id}`
-                    : '—'}
-              </div>
-              {report.district && (
-                <div
-                  style={{
-                    fontSize: '0.65rem',
-                    color: 'var(--text-3)',
-                    fontFamily: "'DM Mono', monospace",
-                    marginTop: 2,
-                  }}
-                >
-                  District: {report.district}
-                </div>
-              )}
+          {/* ── §1  Submission Details ─────────────────────── */}
+          <div style={{ marginBottom: 24 }}>
+            <SectionHead icon="fa-inbox" title="Submission Details" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <InfoChip
+                label="Submitted By"
+                primary={report.submitted_by_profile?.full_name || 'Unknown'}
+                sub={report.submitted_by_profile?.email}
+              />
+              <InfoChip label="Institution" primary={report.institution} />
+              <InfoChip
+                label="Submitted At"
+                primary={fmtDate(report.submitted_at)}
+                sub={fmtTime(report.submitted_at)}
+              />
+              <InfoChip label="Reporting Period" primary={report.period} />
+              <InfoChip
+                label="Stakeholder"
+                primary={(report.form_data?.stakeholder as string) || '—'}
+              />
+              <InfoChip label="Module" primary={report.tool_id} sub={report.tool_name} />
             </div>
           </div>
 
-          {/* Form data — grouped by section.
-              Strip fields already shown in the context strip above so they
-              don't appear twice. Hidden fields (target_info, indicator_info,
-              submitted_by, etc.) are filtered by the field registry. */}
-          {sections.map(sec => (
-            <div key={sec.id} style={{ marginBottom: 20 }}>
-              <h3
+          {/* ── §2  Reported Data ──────────────────────────── */}
+          <div style={{ marginBottom: 24 }}>
+            <SectionHead icon="fa-pen-to-square" title="Reported Data" />
+            {dataSections.length === 0 ? (
+              <p
                 style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  color: 'var(--sky-dim)',
-                  marginBottom: 8,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  fontFamily: "'DM Mono', monospace",
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
+                  fontSize: '0.8rem',
+                  color: 'var(--text-3)',
+                  fontStyle: 'italic',
+                  margin: 0,
                 }}
               >
-                {sec.label}
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                {sec.fields.map(f => (
+                No data fields recorded.
+              </p>
+            ) : (
+              dataSections.map(sec => (
+                <div key={sec.id} style={{ marginBottom: 14 }}>
                   <div
-                    key={f.key}
-                    style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 12px' }}
+                    style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      color: 'var(--sky-dim)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      fontFamily: "'DM Mono', monospace",
+                      marginBottom: 6,
+                    }}
                   >
+                    {sec.label}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                    {sec.fields.map(f => (
+                      <div
+                        key={f.key}
+                        style={{
+                          background: 'var(--surface-2)',
+                          borderRadius: 8,
+                          padding: '8px 12px',
+                        }}
+                      >
+                        <div style={cLabel}>{f.label}</div>
+                        <div style={cValue}>{f.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+
+            {attachments.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div
+                  style={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    color: 'var(--sky-dim)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    fontFamily: "'DM Mono', monospace",
+                    marginBottom: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <i className="fa-solid fa-paperclip" />
+                  Attachments ({attachments.length})
+                </div>
+                {attachments.map((att, i) => (
+                  <AttachmentPreview key={att.storage_path || i} att={att} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── §3  Reference Information ──────────────────── */}
+          {(report.nbsap_target || report.nbsap_indicator) && (
+            <div style={{ marginBottom: 24 }}>
+              <SectionHead icon="fa-book-open" title="Reference Information" />
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    report.nbsap_target && report.nbsap_indicator ? '1fr 1fr' : '1fr',
+                  gap: 10,
+                }}
+              >
+                {report.nbsap_target && (
+                  <div
+                    style={{
+                      background: 'var(--surface-2)',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                    }}
+                  >
+                    <div style={{ ...cLabel, marginBottom: 5 }}>NBSAP Target</div>
                     <div
                       style={{
-                        fontSize: '0.6rem',
-                        color: 'var(--text-3)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        fontFamily: "'DM Mono', monospace",
-                        marginBottom: 3,
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        color: 'var(--text-1)',
+                        marginBottom: 4,
                       }}
                     >
-                      {f.label}
+                      T{report.nbsap_target.id}: {report.nbsap_target.title}
                     </div>
+                    <div style={cSub}>Goal {report.nbsap_target.goal}</div>
+                    {report.district && <div style={cSub}>District: {report.district}</div>}
+                  </div>
+                )}
+
+                {report.nbsap_indicator && (
+                  <div
+                    style={{
+                      background: 'var(--surface-2)',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                    }}
+                  >
+                    <div style={{ ...cLabel, marginBottom: 5 }}>Indicator</div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        color: 'var(--text-1)',
+                        marginBottom: 4,
+                      }}
+                    >
+                      {report.nbsap_indicator.id}: {report.nbsap_indicator.name}
+                    </div>
+                    <div style={cSub}>
+                      Tier {report.nbsap_indicator.tier}
+                      {report.nbsap_indicator.periodicity &&
+                        ` · ${report.nbsap_indicator.periodicity}`}
+                    </div>
+                    <div style={{ ...cSub, marginTop: 3 }}>
+                      Baseline: {report.nbsap_indicator.baseline || '—'} · 2030 Target:{' '}
+                      {report.nbsap_indicator.target_2030 || '—'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── §4  Computed Results ───────────────────────── */}
+          {evalResult && (
+            <div style={{ marginBottom: 24 }}>
+              <SectionHead icon="fa-chart-line" title="Computed Results" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {evalResult.completion_pct != null && (
+                  <InfoChip label="Completion" primary={`${evalResult.completion_pct}%`} />
+                )}
+
+                {evalResult.performance_status && perfCfg && (
+                  <div
+                    style={{
+                      background: perfCfg.bg,
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <div style={{ ...cLabel, color: perfCfg.color }}>Performance</div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: perfCfg.color }}>
+                      {perfCfg.label}
+                    </div>
+                  </div>
+                )}
+
+                {evalResult.trend_direction && trendIcon && (
+                  <div
+                    style={{
+                      background: 'var(--surface-2)',
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <div style={cLabel}>Trend</div>
                     <div
                       style={{
                         fontSize: '0.82rem',
-                        fontWeight: 600,
-                        color: 'var(--text-1)',
-                        wordBreak: 'break-word',
+                        fontWeight: 700,
+                        color:
+                          evalResult.trend_direction === 'improving'
+                            ? '#16a34a'
+                            : evalResult.trend_direction === 'declining'
+                              ? '#dc2626'
+                              : 'var(--text-1)',
                       }}
                     >
-                      {f.value}
+                      {trendIcon}{' '}
+                      {evalResult.change_pct != null
+                        ? `${evalResult.change_pct > 0 ? '+' : ''}${evalResult.change_pct}%`
+                        : evalResult.trend_direction}
                     </div>
+                    {evalResult.latest_period && (
+                      <div style={cSub}>since {evalResult.latest_period}</div>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          ))}
-
-          {/* Attachments */}
-          {attachments.length > 0 && (
-            <>
-              <h3
-                style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: 'var(--text-1)',
-                  marginBottom: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <i className="fa-solid fa-paperclip" style={{ color: 'var(--sky-dim)' }} />{' '}
-                Attachments ({attachments.length})
-              </h3>
-              {attachments.map((att, i) => (
-                <AttachmentPreview key={att.storage_path || i} att={att} />
-              ))}
-            </>
           )}
 
-          {/* Review note from previous reviewer */}
-          {report.review_note && (
-            <div
-              style={{
-                marginBottom: 16,
-                padding: '10px 14px',
-                background: '#fffbeb',
-                border: '1px solid #fde68a',
-                borderRadius: 8,
-              }}
-            >
+          {/* ── §5  Workflow ───────────────────────────────── */}
+          <div style={{ marginBottom: 8 }}>
+            <SectionHead icon="fa-arrows-spin" title="Workflow" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ background: st.bg, borderRadius: 8, padding: '8px 12px' }}>
+                <div style={{ ...cLabel, color: st.color }}>Status</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: st.color }}>
+                  {st.label}
+                </div>
+              </div>
+
+              {report.reviewed_by_profile ? (
+                <InfoChip
+                  label="Reviewed By"
+                  primary={report.reviewed_by_profile.full_name}
+                  sub={report.reviewed_at ? fmtDate(report.reviewed_at) : undefined}
+                />
+              ) : (
+                <InfoChip
+                  label="Reviewed By"
+                  primary={report.reviewed_at ? fmtDate(report.reviewed_at) : 'Not yet reviewed'}
+                />
+              )}
+
+              <InfoChip
+                label="Report ID"
+                primary={report.id.slice(0, 8).toUpperCase()}
+                sub={report.id.slice(8).toUpperCase()}
+              />
+            </div>
+
+            {report.review_note && (
               <div
                 style={{
-                  fontSize: '0.65rem',
-                  color: '#92400e',
-                  fontWeight: 700,
-                  marginBottom: 4,
-                  fontFamily: "'DM Mono', monospace",
+                  marginTop: 10,
+                  padding: '10px 14px',
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  borderRadius: 8,
                 }}
               >
-                REVIEWER NOTE
-              </div>
-              <div style={{ fontSize: '0.82rem', color: '#78350f' }}>{report.review_note}</div>
-              {report.reviewed_at && (
                 <div
                   style={{
                     fontSize: '0.65rem',
-                    color: '#a16207',
-                    marginTop: 4,
+                    color: '#92400e',
+                    fontWeight: 700,
+                    marginBottom: 4,
                     fontFamily: "'DM Mono', monospace",
                   }}
                 >
-                  {new Date(report.reviewed_at).toLocaleString()}
+                  REVIEWER NOTE
                 </div>
-              )}
-            </div>
-          )}
+                <div style={{ fontSize: '0.82rem', color: '#78350f' }}>{report.review_note}</div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer — actions */}

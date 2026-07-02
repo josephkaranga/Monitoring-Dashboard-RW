@@ -189,8 +189,14 @@ export async function fetchReports(
       submitted_by_profile:profiles!toolkit_reports_submitted_by_fkey(
         id, full_name, email, role, organization
       ),
+      reviewed_by_profile:profiles!toolkit_reports_reviewed_by_fkey(
+        id, full_name, email, role, organization
+      ),
       nbsap_target:nbsap_targets(
         id, title, progress, goal
+      ),
+      nbsap_indicator:indicators!toolkit_reports_indicator_id_fkey(
+        id, name, tier, baseline, target_2030, definition, periodicity
       )
     `,
       { count: 'exact' }
