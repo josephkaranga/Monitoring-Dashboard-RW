@@ -65,4 +65,6 @@ INTEGRATION_TEST_REPORT.md
 .vercel
 .env*
 .claude
-/docs/pdf
+docs/pdf
+docs/
+docs/pdfi/

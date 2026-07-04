@@ -8,3 +8,4 @@
 .env.*.local
 /docs
 .claude/settings.json
+.claude/
