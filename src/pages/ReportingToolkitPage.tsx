@@ -2263,7 +2263,15 @@ const ReportForm = ({
                 marginBottom: 6,
               }}
             >
-              <span style={{ fontSize: '0.82rem' }}>📄</span>
+              {['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(att.ext) ? (
+                <img
+                  src={att.data_url}
+                  alt={att.name}
+                  style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+                />
+              ) : (
+                <span style={{ fontSize: '0.82rem' }}>📄</span>
+              )}
               <span
                 style={{
                   flex: 1,
