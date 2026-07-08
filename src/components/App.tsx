@@ -8,6 +8,7 @@ import AuthPage from './AuthPage';
 // ── Lazy-loaded pages ─────────────────────────────────────────
 const DashboardLayout = lazy(() => import('./DashboardLayout'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
+const DashboardPageRedesign = lazy(() => import('../pages/DashboardPageRedesign'));
 const IndicatorsPage = lazy(() => import('../pages/IndicatorsPage'));
 const NationalTargetsPage = lazy(() => import('../pages/NationalTargetsPage'));
 const AdaptiveManagementPage = lazy(() => import('../pages/AdaptiveManagementPage'));
@@ -158,7 +159,8 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                   {/* All authenticated users */}
-                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/dashboard" element={<DashboardPageRedesign />} />
+                  <Route path="/dashboard-preview" element={<DashboardPage />} />
                   <Route path="/indicators" element={<IndicatorsPage />} />
                   <Route path="/targets" element={<NationalTargetsPage />} />
                   <Route path="/adaptive-management" element={<AdaptiveManagementPage />} />
