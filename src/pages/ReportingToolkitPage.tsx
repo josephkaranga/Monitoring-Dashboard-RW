@@ -1458,6 +1458,12 @@ const ReportForm = ({
         return;
       }
 
+      // Require at least one supporting file (document or image)
+      if (attachments.length === 0) {
+        toast.error('Please attach at least one supporting document or image');
+        return;
+      }
+
       // Validate year fields
       const yearField = tool.fields.find(f => f.key === 'year');
       if (yearField && formData.year) {
@@ -1607,7 +1613,15 @@ const ReportForm = ({
     if (!files) return;
     Array.from(files).forEach(file => {
       const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      if (!['pdf', 'xlsx', 'xls', 'doc', 'docx'].includes(ext)) return;
+      const allowed = ['pdf', 'xlsx', 'xls', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
+      if (!allowed.includes(ext)) {
+        toast.error(`${file.name}: unsupported file type`);
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name}: file is larger than 10 MB`);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = e => {
         setAttachments(prev => [
@@ -2194,6 +2208,9 @@ const ReportForm = ({
           )}
 
           {/* File drop zone */}
+          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+            Supporting evidence <span style={{ color: '#f43f5e' }}>*</span>
+          </div>
           <div
             onClick={() => fileInputRef.current?.click()}
             onDragOver={e => e.preventDefault()}
@@ -2217,7 +2234,7 @@ const ReportForm = ({
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".pdf,.xlsx,.xls,.doc,.docx"
+              accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
               style={{ display: 'none' }}
               onChange={e => handleFiles(e.target.files)}
             />
@@ -2227,7 +2244,7 @@ const ReportForm = ({
               <span style={{ color: tool.accent, textDecoration: 'underline' }}>browse</span>
             </div>
             <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 3 }}>
-              PDF · Excel (.xlsx) · Word (.docx)
+              PDF · Excel · Word · Images (PNG, JPG, GIF) — at least one required · max 10 MB each
             </div>
           </div>
 
