@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useRisks } from '../hooks/useData';
 import { fetchSystemMetrics, type SystemMetrics } from '../services/systemMetricsService';
 import toast from 'react-hot-toast';
@@ -22,11 +23,18 @@ const CAT_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 export function RiskPage() {
+  const [searchParams] = useSearchParams();
   const [levelFilter, setLevelFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('search') ?? '');
   const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Deep-linked from the dashboard's "Requires attention" panel
+  useEffect(() => {
+    const q = searchParams.get('search');
+    if (q) setSearch(q);
+  }, [searchParams]);
 
   // Load automated system metrics for HWC incidents tracking
   useEffect(() => {
@@ -91,9 +99,9 @@ export function RiskPage() {
       {systemMetrics && systemMetrics.totalHwcIncidents > 0 && (
         <div
           style={{
-            background: 'var(--surface)',
-            borderRadius: 'var(--radius)',
-            border: '1px solid var(--border)',
+            background: '#fff',
+            borderRadius: 12,
+            border: '1px solid #e2e8f0',
             marginBottom: 16,
             padding: '12px 16px',
             display: 'flex',
@@ -102,7 +110,7 @@ export function RiskPage() {
           }}
         >
           <i className="fa-solid fa-shield-exclamation" style={{ color: '#f59e0b' }} />
-          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-1)' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0f172a' }}>
             HWC Incidents Monitoring: {systemMetrics.totalHwcIncidents} incidents tracked
             automatically
           </span>
@@ -112,7 +120,6 @@ export function RiskPage() {
               padding: '3px 8px',
               borderRadius: 12,
               fontWeight: 700,
-              fontFamily: "'DM Mono', monospace",
               background: '#ffedd5',
               color: '#9a3412',
             }}
@@ -123,8 +130,7 @@ export function RiskPage() {
             style={{
               marginLeft: 'auto',
               fontSize: '0.7rem',
-              color: 'var(--text-3)',
-              fontFamily: "'DM Mono', monospace",
+              color: '#94a3b8',
             }}
           >
             From T03 & T04 reports
@@ -150,7 +156,7 @@ export function RiskPage() {
               left: 11,
               top: '50%',
               transform: 'translateY(-50%)',
-              color: 'var(--text-3)',
+              color: '#94a3b8',
               fontSize: '0.8rem',
             }}
           />
@@ -161,10 +167,9 @@ export function RiskPage() {
             onChange={e => setSearch(e.target.value)}
             style={{
               padding: '7px 10px 7px 32px',
-              border: '1px solid var(--border)',
+              border: '1px solid #e2e8f0',
               borderRadius: 9,
               fontSize: '0.82rem',
-              fontFamily: "'DM Sans', sans-serif",
               outline: 'none',
               width: '100%',
             }}
@@ -178,13 +183,12 @@ export function RiskPage() {
               style={{
                 padding: '5px 12px',
                 borderRadius: 20,
-                border: '1px solid var(--border)',
+                border: '1px solid #e2e8f0',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
-                background: levelFilter === l ? 'var(--navy)' : 'var(--surface)',
-                color: levelFilter === l ? '#fff' : 'var(--text-2)',
+                background: levelFilter === l ? '#14385c' : '#fff',
+                color: levelFilter === l ? '#fff' : '#475569',
                 transition: '0.2s',
               }}
             >
@@ -197,12 +201,11 @@ export function RiskPage() {
           onChange={e => setCatFilter(e.target.value)}
           style={{
             padding: '6px 10px',
-            border: '1px solid var(--border)',
+            border: '1px solid #e2e8f0',
             borderRadius: 8,
             fontSize: '0.78rem',
-            fontFamily: "'DM Sans', sans-serif",
             outline: 'none',
-            background: 'var(--surface)',
+            background: '#fff',
           }}
         >
           <option value="all">All Categories</option>
@@ -228,14 +231,13 @@ export function RiskPage() {
             alignItems: 'center',
             gap: 6,
             padding: '7px 14px',
-            border: '1.5px solid var(--sky-dim)',
+            border: '1.5px solid #1f6cb4',
             borderRadius: 8,
-            color: 'var(--sky-dim)',
+            color: '#1f6cb4',
             background: 'transparent',
             fontSize: '0.8rem',
             fontWeight: 600,
             cursor: 'pointer',
-            fontFamily: "'DM Sans', sans-serif",
           }}
         >
           <i className="fa-solid fa-download" /> Export CSV
@@ -255,28 +257,28 @@ export function RiskPage() {
           {
             label: 'High Risks',
             val: high,
-            gradient: 'linear-gradient(135deg,#be123c,#f43f5e)',
+            color: '#dc2626',
             icon: 'fa-circle-exclamation',
             sub: 'Requires immediate action',
           },
           {
             label: 'Medium Risks',
             val: med,
-            gradient: 'linear-gradient(135deg,#d97706,#f59e0b)',
+            color: '#d97706',
             icon: 'fa-triangle-exclamation',
             sub: 'Mitigation plans active',
           },
           {
             label: 'Low Risks',
             val: low,
-            gradient: 'linear-gradient(135deg,#0284c7,#38bdf8)',
+            color: '#1f6cb4',
             icon: 'fa-circle-info',
             sub: 'Monitored quarterly',
           },
           {
             label: 'Total Tracked',
             val: risks.length,
-            gradient: 'linear-gradient(135deg,#059669,#10b981)',
+            color: '#16a34a',
             icon: 'fa-shield-check',
             sub: 'Across 7 categories',
           },
@@ -285,7 +287,7 @@ export function RiskPage() {
                 {
                   label: 'HWC Incidents',
                   val: systemMetrics.totalHwcIncidents,
-                  gradient: 'linear-gradient(135deg,#9333ea,#a855f7)',
+                  color: '#7c3aed',
                   icon: 'fa-paw',
                   sub: 'Auto-tracked from T03/T04',
                 },
@@ -295,37 +297,40 @@ export function RiskPage() {
           <div
             key={c.label}
             style={{
-              background: c.gradient,
-              borderRadius: 'var(--radius)',
-              padding: 20,
-              color: '#fff',
-              position: 'relative',
-              overflow: 'hidden',
+              background: '#fff',
+              border: '1px solid #eef2f6',
+              borderTop: `3px solid ${c.color}`,
+              borderRadius: 10,
+              padding: '14px 16px',
             }}
           >
-            <div style={{ fontSize: '0.72rem', opacity: 0.8, marginBottom: 4 }}>{c.label}</div>
             <div
               style={{
-                fontSize: '2rem',
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                background: `${c.color}14`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <i className={`fa-solid ${c.icon}`} style={{ color: c.color, fontSize: '0.9rem' }} />
+            </div>
+            <div style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 500 }}>{c.label}</div>
+            <div
+              style={{
+                fontSize: '1.7rem',
                 fontWeight: 700,
-                fontFamily: "'Playfair Display', serif",
-                lineHeight: 1,
+                color: '#0f172a',
+                lineHeight: 1.1,
+                marginTop: 2,
               }}
             >
               {c.val}
             </div>
-            <div style={{ fontSize: '0.7rem', opacity: 0.75, marginTop: 8 }}>{c.sub}</div>
-            <i
-              className={`fa-solid ${c.icon}`}
-              style={{
-                position: 'absolute',
-                right: 16,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '2rem',
-                opacity: 0.2,
-              }}
-            />
+            <div style={{ fontSize: '0.66rem', color: '#94a3b8', marginTop: 4 }}>{c.sub}</div>
           </div>
         ))}
       </div>
@@ -333,18 +338,18 @@ export function RiskPage() {
       {/* Risk table */}
       <div
         style={{
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius)',
-          border: '1px solid var(--border)',
+          background: '#fff',
+          borderRadius: 12,
+          border: '1px solid #e2e8f0',
           overflow: 'hidden',
-          boxShadow: 'var(--shadow-sm)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           marginBottom: 24,
         }}
       >
         <div
           style={{
             padding: '14px 18px',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -359,7 +364,7 @@ export function RiskPage() {
               fontWeight: 700,
             }}
           >
-            <i className="fa-solid fa-table-cells" style={{ color: 'var(--sky-dim)' }} />
+            <i className="fa-solid fa-table-cells" style={{ color: '#1f6cb4' }} />
             Risk Mitigation Matrix
           </div>
           <span
@@ -370,7 +375,6 @@ export function RiskPage() {
               padding: '3px 8px',
               borderRadius: 10,
               fontWeight: 700,
-              fontFamily: "'DM Mono', monospace",
             }}
           >
             {risks.length} Identified Risks
@@ -399,8 +403,8 @@ export function RiskPage() {
                       fontWeight: 600,
                       letterSpacing: '0.06em',
                       textTransform: 'uppercase',
-                      color: 'var(--text-3)',
-                      background: 'var(--surface-2)',
+                      color: '#94a3b8',
+                      background: '#f8fafc',
                     }}
                   >
                     {h}
@@ -411,19 +415,13 @@ export function RiskPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}
-                  >
+                  <td colSpan={8} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>
                     Loading…
                   </td>
                 </tr>
               ) : risks.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}
-                  >
+                  <td colSpan={8} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>
                     No risks match your filters.
                   </td>
                 </tr>
@@ -432,13 +430,12 @@ export function RiskPage() {
                   const ls = LEVEL_STYLE[r.level] || LEVEL_STYLE.Low;
                   const cs = CAT_STYLE[r.category] || { bg: '#f1f5f9', color: '#475569' };
                   return (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--surface-3)' }}>
+                    <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td
                         style={{
                           padding: '11px 14px',
                           fontWeight: 700,
-                          fontFamily: "'DM Mono', monospace",
-                          color: 'var(--text-3)',
+                          color: '#94a3b8',
                           fontSize: '0.72rem',
                         }}
                       >
@@ -456,7 +453,6 @@ export function RiskPage() {
                             padding: '2px 8px',
                             borderRadius: 8,
                             fontWeight: 700,
-                            fontFamily: "'DM Mono', monospace",
                           }}
                         >
                           {r.category}
@@ -466,7 +462,6 @@ export function RiskPage() {
                         style={{
                           padding: '11px 14px',
                           fontSize: '0.75rem',
-                          fontFamily: "'DM Mono', monospace",
                         }}
                       >
                         {r.likelihood}
@@ -475,7 +470,6 @@ export function RiskPage() {
                         style={{
                           padding: '11px 14px',
                           fontSize: '0.75rem',
-                          fontFamily: "'DM Mono', monospace",
                         }}
                       >
                         {r.impact}
@@ -489,7 +483,6 @@ export function RiskPage() {
                             padding: '2px 8px',
                             borderRadius: 8,
                             fontWeight: 700,
-                            fontFamily: "'DM Mono', monospace",
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 4,
@@ -510,7 +503,7 @@ export function RiskPage() {
                       <td
                         style={{
                           padding: '11px 14px',
-                          color: 'var(--text-2)',
+                          color: '#475569',
                           fontSize: '0.77rem',
                           maxWidth: 220,
                           lineHeight: 1.4,
@@ -521,7 +514,7 @@ export function RiskPage() {
                       <td
                         style={{
                           padding: '11px 14px',
-                          color: 'var(--text-3)',
+                          color: '#94a3b8',
                           fontSize: '0.75rem',
                         }}
                       >
@@ -539,11 +532,11 @@ export function RiskPage() {
       {/* Risk Heat Map */}
       <div
         style={{
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius)',
-          border: '1px solid var(--border)',
+          background: '#fff',
+          borderRadius: 12,
+          border: '1px solid #e2e8f0',
           padding: 18,
-          boxShadow: 'var(--shadow-sm)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
         <div
@@ -575,9 +568,8 @@ export function RiskPage() {
                 textAlign: 'center',
                 fontSize: '0.65rem',
                 fontWeight: 700,
-                color: 'var(--text-3)',
+                color: '#94a3b8',
                 padding: 8,
-                fontFamily: "'DM Mono', monospace",
               }}
             >
               {h}
@@ -616,9 +608,8 @@ export function RiskPage() {
                   alignItems: 'center',
                   fontSize: '0.62rem',
                   fontWeight: 700,
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   paddingRight: 10,
-                  fontFamily: "'DM Mono', monospace",
                 }}
               >
                 {row}

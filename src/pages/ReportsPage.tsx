@@ -18,6 +18,7 @@ import {
 import { Bar, Doughnut, Line, Pie } from 'react-chartjs-2';
 import { jsPDF } from 'jspdf';
 import { format, parseISO, startOfMonth } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../services/AuthContext';
 import { checkAccountStatus } from '../services/AuthContext';
@@ -67,7 +68,7 @@ const TABS = [
   'Overview',
   'Targets & Indicators',
   'Financial',
-  'Compliance',
+  'Reporting Status',
   'Evidence & Activities',
   'Trends',
   'Submissions',
@@ -109,10 +110,10 @@ function resolveInstitution(r: {
 }
 
 const card: React.CSSProperties = {
-  background: 'var(--surface)',
-  borderRadius: 'var(--radius)',
-  border: '1px solid var(--border)',
-  boxShadow: 'var(--shadow-sm)',
+  background: '#fff',
+  borderRadius: 12,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
 };
 
 const chartDefaults = {
@@ -121,7 +122,7 @@ const chartDefaults = {
   plugins: {
     legend: {
       position: 'bottom' as const,
-      labels: { font: { family: "'DM Sans', sans-serif", size: 11 }, padding: 12 },
+      labels: { font: { family: 'Arial, Helvetica, sans-serif', size: 11 }, padding: 12 },
     },
   },
 };
@@ -130,10 +131,10 @@ const chartDefaults = {
 function SectionHead({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-      <i className={`fa-solid ${icon}`} style={{ color: 'var(--sky-dim)', fontSize: '1rem' }} />
+      <i className={`fa-solid ${icon}`} style={{ color: '#1f6cb4', fontSize: '1rem' }} />
       <div>
-        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-1)' }}>{title}</div>
-        {sub && <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{sub}</div>}
+        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>{title}</div>
+        {sub && <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{sub}</div>}
       </div>
     </div>
   );
@@ -151,9 +152,7 @@ function ChartBox({
 }) {
   return (
     <div style={{ ...card, padding: 16 }}>
-      <div
-        style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-2)', marginBottom: 10 }}
-      >
+      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 10 }}>
         {title}
       </div>
       <div style={{ height }}>{children}</div>
@@ -198,7 +197,7 @@ function KpiCard({
           style={{
             fontSize: '0.65rem',
             fontWeight: 600,
-            color: 'var(--text-3)',
+            color: '#94a3b8',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
           }}
@@ -209,14 +208,13 @@ function KpiCard({
           style={{
             fontSize: '1.4rem',
             fontWeight: 700,
-            color: 'var(--text-1)',
-            fontFamily: "'Playfair Display', serif",
+            color: '#0f172a',
             lineHeight: 1.2,
           }}
         >
           {value}
         </div>
-        {sub && <div style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>{sub}</div>}
+        {sub && <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{sub}</div>}
       </div>
     </div>
   );
@@ -224,6 +222,7 @@ function KpiCard({
 
 // ── Main page ─────────────────────────────────────────────────
 export function ReportsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -728,13 +727,13 @@ export function ReportsPage() {
           style={{
             width: 40,
             height: 40,
-            border: '4px solid var(--surface-3)',
-            borderTop: '4px solid var(--sky-dim)',
+            border: '4px solid #f1f5f9',
+            borderTop: '4px solid #1f6cb4',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
           }}
         />
-        <p style={{ color: 'var(--text-3)' }}>Verifying access…</p>
+        <p style={{ color: '#94a3b8' }}>Verifying access…</p>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
@@ -758,9 +757,7 @@ export function ReportsPage() {
           <i className="fa-solid fa-lock" style={{ color: '#dc2626', fontSize: '1.8rem' }} />
         </div>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 12 }}>Access Restricted</h2>
-        <p
-          style={{ fontSize: '0.9rem', color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.6 }}
-        >
+        <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: 16, lineHeight: 1.6 }}>
           {accessMessage}
         </p>
       </div>
@@ -789,12 +786,10 @@ export function ReportsPage() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
-            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-1)' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
               Reports &amp; Analytics
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-              {reports.length} reports
-            </div>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{reports.length} reports</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -805,14 +800,13 @@ export function ReportsPage() {
               alignItems: 'center',
               gap: 6,
               padding: '7px 14px',
-              border: '1.5px solid var(--border)',
+              border: '1.5px solid #e2e8f0',
               borderRadius: 8,
-              background: showFilters ? 'var(--navy)' : 'var(--surface)',
-              color: showFilters ? '#fff' : 'var(--text-2)',
+              background: showFilters ? '#14385c' : '#fff',
+              color: showFilters ? '#fff' : '#475569',
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
             }}
           >
             <i className="fa-solid fa-filter" /> Filters
@@ -824,14 +818,13 @@ export function ReportsPage() {
               alignItems: 'center',
               gap: 6,
               padding: '7px 14px',
-              border: '1.5px solid var(--sky-dim)',
+              border: '1.5px solid #1f6cb4',
               borderRadius: 8,
               background: 'transparent',
-              color: 'var(--sky-dim)',
+              color: '#1f6cb4',
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
             }}
           >
             <i className="fa-solid fa-file-csv" /> CSV
@@ -850,7 +843,6 @@ export function ReportsPage() {
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
             }}
           >
             <i className="fa-solid fa-file-pdf" /> PDF
@@ -862,14 +854,13 @@ export function ReportsPage() {
               alignItems: 'center',
               gap: 6,
               padding: '7px 14px',
-              border: '1.5px solid var(--border)',
+              border: '1.5px solid #e2e8f0',
               borderRadius: 8,
               background: 'transparent',
-              color: 'var(--text-2)',
+              color: '#475569',
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
             }}
           >
             <i className="fa-solid fa-print" /> Print
@@ -928,7 +919,7 @@ export function ReportsPage() {
                   display: 'block',
                   fontSize: '0.65rem',
                   fontWeight: 600,
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   textTransform: 'uppercase',
                   marginBottom: 4,
                 }}
@@ -941,11 +932,10 @@ export function ReportsPage() {
                 style={{
                   width: '100%',
                   padding: '7px 10px',
-                  border: '1px solid var(--border)',
+                  border: '1px solid #e2e8f0',
                   borderRadius: 7,
                   fontSize: '0.8rem',
-                  fontFamily: "'DM Sans', sans-serif",
-                  background: 'var(--surface)',
+                  background: '#fff',
                   outline: 'none',
                 }}
               >
@@ -965,14 +955,13 @@ export function ReportsPage() {
               style={{
                 width: '100%',
                 padding: '7px',
-                border: '1px solid var(--border)',
+                border: '1px solid #e2e8f0',
                 borderRadius: 7,
-                background: 'var(--surface-2)',
+                background: '#f8fafc',
                 fontSize: '0.78rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
-                color: 'var(--text-2)',
+                color: '#475569',
               }}
             >
               Reset
@@ -986,7 +975,7 @@ export function ReportsPage() {
         style={{
           display: 'flex',
           gap: 2,
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid #e2e8f0',
           marginBottom: 18,
           overflowX: 'auto',
         }}
@@ -998,14 +987,13 @@ export function ReportsPage() {
             style={{
               padding: '9px 16px',
               border: 'none',
-              borderBottom: activeTab === i ? '2px solid var(--sky-dim)' : '2px solid transparent',
+              borderBottom: activeTab === i ? '2px solid #1f6cb4' : '2px solid transparent',
               marginBottom: -1,
               background: 'none',
               fontSize: '0.8rem',
               fontWeight: 600,
               cursor: 'pointer',
-              color: activeTab === i ? 'var(--sky-dim)' : 'var(--text-3)',
-              fontFamily: "'DM Sans', sans-serif",
+              color: activeTab === i ? '#1f6cb4' : '#94a3b8',
               whiteSpace: 'nowrap',
             }}
           >
@@ -1151,7 +1139,7 @@ export function ReportsPage() {
                 style={{
                   fontSize: '0.78rem',
                   fontWeight: 700,
-                  color: 'var(--text-2)',
+                  color: '#475569',
                   marginBottom: 10,
                 }}
               >
@@ -1181,13 +1169,12 @@ export function ReportsPage() {
                   fontSize: '2rem',
                   fontWeight: 700,
                   color: C.green,
-                  fontFamily: "'Playfair Display', serif",
                   marginTop: -120,
                 }}
               >
                 {kpis.overallProgress}%
               </div>
-              <div style={{ marginTop: 110, fontSize: '0.68rem', color: 'var(--text-3)' }}>
+              <div style={{ marginTop: 110, fontSize: '0.68rem', color: '#94a3b8' }}>
                 National NBSAP 2025–2030
               </div>
             </div>
@@ -1297,7 +1284,7 @@ export function ReportsPage() {
                       style={{
                         width: 200,
                         fontSize: '0.7rem',
-                        color: 'var(--text-2)',
+                        color: '#475569',
                         flexShrink: 0,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -1310,7 +1297,7 @@ export function ReportsPage() {
                     <div
                       style={{
                         flex: 1,
-                        background: 'var(--surface-3)',
+                        background: '#f1f5f9',
                         borderRadius: 4,
                         height: 14,
                         minWidth: 100,
@@ -1344,7 +1331,6 @@ export function ReportsPage() {
                         background: `${color}22`,
                         color,
                         fontWeight: 700,
-                        fontFamily: "'DM Mono', monospace",
                         flexShrink: 0,
                       }}
                     >
@@ -1381,7 +1367,7 @@ export function ReportsPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   gap: 8,
                 }}
               >
@@ -1402,7 +1388,7 @@ export function ReportsPage() {
                 style={{
                   fontSize: '0.78rem',
                   fontWeight: 700,
-                  color: 'var(--text-2)',
+                  color: '#475569',
                   marginBottom: 12,
                 }}
               >
@@ -1449,19 +1435,16 @@ export function ReportsPage() {
                           display: 'flex',
                           justifyContent: 'space-between',
                           padding: '8px 12px',
-                          background: 'var(--surface-2)',
+                          background: '#f8fafc',
                           borderRadius: 8,
                         }}
                       >
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>
-                          {item.label}
-                        </span>
+                        <span style={{ fontSize: '0.78rem', color: '#475569' }}>{item.label}</span>
                         <span
                           style={{
                             fontSize: '0.82rem',
                             fontWeight: 700,
                             color: item.color,
-                            fontFamily: "'DM Mono', monospace",
                           }}
                         >
                           {item.val}
@@ -1499,15 +1482,39 @@ export function ReportsPage() {
         </div>
       )}
 
-      {/* ── TAB 3: Compliance ── */}
+      {/* ── TAB 3: Reporting Status ── */}
       {activeTab === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div
+            onClick={() => navigate('/compliance')}
+            style={{
+              ...card,
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              background: '#f0f7ff',
+              borderColor: '#bfdbfe',
+            }}
+          >
+            <i className="fa-solid fa-circle-info" style={{ color: '#1f6cb4' }} />
+            <span style={{ fontSize: '0.78rem', color: '#334155' }}>
+              This tab tracks <b>submission coverage</b> (which reports came in, from where, on time
+              or not) — not regulatory or EIA compliance. For that, see the{' '}
+              <span style={{ color: '#1f6cb4', fontWeight: 700 }}>Compliance</span> page.
+            </span>
+            <i
+              className="fa-solid fa-arrow-right"
+              style={{ color: '#1f6cb4', marginLeft: 'auto' }}
+            />
+          </div>
           <SectionHead
-            icon="fa-shield-check"
-            title="Reporting Compliance"
+            icon="fa-table-list"
+            title="Reporting Status by Tool"
             sub="Approved vs pending submissions by reporting tool"
           />
-          <ChartBox title="Reporting Compliance by Tool" height={300}>
+          <ChartBox title="Reporting Status by Tool" height={300}>
             <Bar
               data={complianceData}
               options={{ ...barOpts(), plugins: { ...chartDefaults.plugins } }}
@@ -1540,7 +1547,7 @@ export function ReportsPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   gap: 8,
                 }}
               >
@@ -1560,7 +1567,7 @@ export function ReportsPage() {
           <div style={{ ...card, padding: 16, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
               <thead>
-                <tr style={{ background: 'var(--surface-2)' }}>
+                <tr style={{ background: '#f8fafc' }}>
                   {['Tool', 'Target', 'District', 'Date', 'Status', 'Submitted By'].map(h => (
                     <th
                       key={h}
@@ -1571,8 +1578,8 @@ export function ReportsPage() {
                         fontWeight: 600,
                         letterSpacing: '0.05em',
                         textTransform: 'uppercase',
-                        color: 'var(--text-3)',
-                        borderBottom: '1px solid var(--border)',
+                        color: '#94a3b8',
+                        borderBottom: '1px solid #e2e8f0',
                       }}
                     >
                       {h}
@@ -1588,27 +1595,23 @@ export function ReportsPage() {
                     rejected: { bg: '#fee2e2', c: '#991b1b', l: '✕ Rejected' },
                   }[r.status] || { bg: '#f1f5f9', c: '#475569', l: r.status };
                   return (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--surface-3)' }}>
+                    <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '9px 12px', fontWeight: 600 }}>
                         {r.tool_id} – {TOOL_LABELS[r.tool_id]?.split(' ')[0]}
                       </td>
                       <td
                         style={{
                           padding: '9px 12px',
-                          color: 'var(--text-3)',
-                          fontFamily: "'DM Mono', monospace",
+                          color: '#94a3b8',
                         }}
                       >
                         {r.nbsap_target_id ? `T${r.nbsap_target_id}` : '—'}
                       </td>
-                      <td style={{ padding: '9px 12px', color: 'var(--text-2)' }}>
-                        {r.district || '—'}
-                      </td>
+                      <td style={{ padding: '9px 12px', color: '#475569' }}>{r.district || '—'}</td>
                       <td
                         style={{
                           padding: '9px 12px',
-                          color: 'var(--text-3)',
-                          fontFamily: "'DM Mono', monospace",
+                          color: '#94a3b8',
                           fontSize: '0.72rem',
                         }}
                       >
@@ -1623,15 +1626,12 @@ export function ReportsPage() {
                             padding: '2px 7px',
                             borderRadius: 8,
                             fontWeight: 700,
-                            fontFamily: "'DM Mono', monospace",
                           }}
                         >
                           {sc.l}
                         </span>
                       </td>
-                      <td
-                        style={{ padding: '9px 12px', color: 'var(--text-3)', fontSize: '0.72rem' }}
-                      >
+                      <td style={{ padding: '9px 12px', color: '#94a3b8', fontSize: '0.72rem' }}>
                         {r.submitted_by_profile?.full_name || r.submitted_by_profile?.email || '—'}
                       </td>
                     </tr>
@@ -1645,7 +1645,7 @@ export function ReportsPage() {
                   textAlign: 'center',
                   padding: 10,
                   fontSize: '0.75rem',
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                 }}
               >
                 Showing 50 of {reports.length} — export CSV for full dataset
@@ -1656,7 +1656,7 @@ export function ReportsPage() {
                 style={{
                   padding: 32,
                   textAlign: 'center',
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   fontSize: '0.82rem',
                 }}
               >
@@ -1682,7 +1682,7 @@ export function ReportsPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     height: '100%',
-                    color: 'var(--text-3)',
+                    color: '#94a3b8',
                     gap: 8,
                   }}
                 >
@@ -1722,7 +1722,7 @@ export function ReportsPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   gap: 8,
                 }}
               >
@@ -1742,7 +1742,7 @@ export function ReportsPage() {
                 style={{
                   fontSize: '0.78rem',
                   fontWeight: 700,
-                  color: 'var(--text-2)',
+                  color: '#475569',
                   marginBottom: 12,
                 }}
               >
@@ -1762,7 +1762,6 @@ export function ReportsPage() {
                         fontWeight: freq / max > 0.5 ? 700 : 500,
                         color: C.red,
                         opacity,
-                        fontFamily: "'DM Mono', monospace",
                         cursor: 'default',
                       }}
                       title={`Frequency: ${freq}`}
@@ -1800,7 +1799,7 @@ export function ReportsPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       height: '100%',
-                      color: 'var(--text-3)',
+                      color: '#94a3b8',
                       flexDirection: 'column',
                       gap: 8,
                     }}
@@ -1932,7 +1931,7 @@ export function ReportsPage() {
               style={{
                 fontSize: '0.78rem',
                 fontWeight: 700,
-                color: 'var(--text-2)',
+                color: '#475569',
                 marginBottom: 10,
               }}
             >
@@ -1952,8 +1951,8 @@ export function ReportsPage() {
                   <div
                     key={yr}
                     style={{
-                      background: 'var(--surface-2)',
-                      border: '1px solid var(--border)',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
                       borderRadius: 10,
                       padding: 12,
                       textAlign: 'center',
@@ -1963,13 +1962,12 @@ export function ReportsPage() {
                       style={{
                         fontSize: '1.2rem',
                         fontWeight: 700,
-                        fontFamily: "'Playfair Display', serif",
                         color: C.blue,
                       }}
                     >
                       {yrReports.length}
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 2 }}>
+                    <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: 2 }}>
                       {yr} Total Reports
                     </div>
                     <div
@@ -2131,14 +2129,14 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
     fontWeight: 700,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
-    color: 'var(--text-3)',
-    borderBottom: '1px solid var(--border)',
-    background: 'var(--surface-2)',
+    color: '#94a3b8',
+    borderBottom: '1px solid #e2e8f0',
+    background: '#f8fafc',
   };
   const td: React.CSSProperties = {
     padding: '9px 12px',
     fontSize: '0.75rem',
-    borderBottom: '1px solid var(--surface-3)',
+    borderBottom: '1px solid #f1f5f9',
     verticalAlign: 'middle' as const,
   };
 
@@ -2221,7 +2219,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                 style={{
                   fontSize: '0.62rem',
                   fontWeight: 600,
-                  color: 'var(--text-3)',
+                  color: '#94a3b8',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                 }}
@@ -2232,8 +2230,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                 style={{
                   fontSize: '1.3rem',
                   fontWeight: 700,
-                  fontFamily: "'Playfair Display',serif",
-                  color: 'var(--text-1)',
+                  color: '#0f172a',
                   lineHeight: 1.2,
                 }}
               >
@@ -2257,7 +2254,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
               style={{
                 padding: 24,
                 textAlign: 'center',
-                color: 'var(--text-3)',
+                color: '#94a3b8',
                 fontSize: '0.8rem',
               }}
             >
@@ -2286,10 +2283,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
               </thead>
               <tbody>
                 {submitterMap.map((s, i) => (
-                  <tr
-                    key={i}
-                    style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}
-                  >
+                  <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : '#f8fafc' }}>
                     <td style={td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div
@@ -2297,7 +2291,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                             width: 30,
                             height: 30,
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg,#1B6CA8,#0ea5e9)',
+                            background: '#1f6cb4',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -2310,14 +2304,12 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                           {s.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{s.name}</div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>
-                            {s.email}
-                          </div>
+                          <div style={{ fontWeight: 600, color: '#0f172a' }}>{s.name}</div>
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{s.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{ ...td, color: 'var(--text-2)' }}>{s.org}</td>
+                    <td style={{ ...td, color: '#475569' }}>{s.org}</td>
                     <td style={{ ...td }}>
                       <span
                         style={{
@@ -2364,8 +2356,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                               fontSize: '0.6rem',
                               padding: '1px 5px',
                               borderRadius: 4,
-                              background: 'var(--surface-3)',
-                              fontFamily: "'DM Mono',monospace",
+                              background: '#f1f5f9',
                               fontWeight: 600,
                             }}
                           >
@@ -2395,8 +2386,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                     <td
                       style={{
                         ...td,
-                        color: 'var(--text-3)',
-                        fontFamily: "'DM Mono',monospace",
+                        color: '#94a3b8',
                         fontSize: '0.7rem',
                       }}
                     >
@@ -2418,7 +2408,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
           sub="Reports submitted more than 30 days after the period end date"
         />
         {lateReports.length === 0 ? (
-          <div style={{ ...card, padding: 20, textAlign: 'center', color: 'var(--text-3)' }}>
+          <div style={{ ...card, padding: 20, textAlign: 'center', color: '#94a3b8' }}>
             <i
               className="fa-solid fa-circle-check"
               style={{
@@ -2459,25 +2449,18 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                   const due = periodEndDate(r.period);
                   const dl = daysLate(r);
                   return (
-                    <tr
-                      key={r.id}
-                      style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}
-                    >
+                    <tr key={r.id} style={{ background: i % 2 === 0 ? 'transparent' : '#f8fafc' }}>
                       <td style={td}>
                         <span style={{ fontWeight: 700 }}>{r.tool_id}</span>{' '}
-                        <span style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
                           {TOOL_LABELS[r.tool_id]?.split(' ')[0]}
                         </span>
                       </td>
-                      <td style={{ ...td, fontFamily: "'DM Mono',monospace" }}>
-                        {r.period ?? '—'}
-                      </td>
-                      <td style={{ ...td, fontFamily: "'DM Mono',monospace", color: '#854d0e' }}>
+                      <td style={{ ...td }}>{r.period ?? '—'}</td>
+                      <td style={{ ...td, color: '#854d0e' }}>
                         {due ? format(due, 'dd MMM yyyy') : '—'}
                       </td>
-                      <td style={{ ...td, fontFamily: "'DM Mono',monospace" }}>
-                        {format(parseISO(r.submitted_at), 'dd MMM yyyy')}
-                      </td>
+                      <td style={{ ...td }}>{format(parseISO(r.submitted_at), 'dd MMM yyyy')}</td>
                       <td style={{ ...td, textAlign: 'center' as const }}>
                         <span
                           style={{
@@ -2492,10 +2475,10 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                           +{dl}d
                         </span>
                       </td>
-                      <td style={{ ...td, color: 'var(--text-2)' }}>
+                      <td style={{ ...td, color: '#475569' }}>
                         {r.submitted_by_profile?.full_name || r.submitted_by_profile?.email || '—'}
                       </td>
-                      <td style={{ ...td, color: 'var(--text-2)' }}>{resolveInstitution(r)}</td>
+                      <td style={{ ...td, color: '#475569' }}>{resolveInstitution(r)}</td>
                       <td style={td}>
                         <span
                           style={{
@@ -2542,7 +2525,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
               style={{
                 padding: 24,
                 textAlign: 'center',
-                color: 'var(--text-3)',
+                color: '#94a3b8',
                 fontSize: '0.8rem',
               }}
             >
@@ -2570,10 +2553,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
               </thead>
               <tbody>
                 {institutionMap.map((inst, i) => (
-                  <tr
-                    key={i}
-                    style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)' }}
-                  >
+                  <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : '#f8fafc' }}>
                     <td style={{ ...td, fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div
@@ -2622,7 +2602,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                           style={{
                             flex: 1,
                             height: 6,
-                            background: 'var(--surface-3)',
+                            background: '#f1f5f9',
                             borderRadius: 3,
                             minWidth: 60,
                           }}
@@ -2645,7 +2625,6 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                           style={{
                             fontSize: '0.7rem',
                             fontWeight: 700,
-                            fontFamily: "'DM Mono',monospace",
                             width: 34,
                           }}
                         >
@@ -2676,7 +2655,6 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                                   prog >= 60 ? '#dcfce7' : prog >= 35 ? '#fef9c3' : '#fee2e2',
                                 color: prog >= 60 ? '#166534' : prog >= 35 ? '#854d0e' : '#991b1b',
                                 fontWeight: 700,
-                                fontFamily: "'DM Mono',monospace",
                               }}
                             >
                               T{t}
@@ -2684,7 +2662,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                           );
                         })}
                         {inst.targets.size > 5 && (
-                          <span style={{ fontSize: '0.58rem', color: 'var(--text-3)' }}>
+                          <span style={{ fontSize: '0.58rem', color: '#94a3b8' }}>
                             +{inst.targets.size - 5}
                           </span>
                         )}
@@ -2699,8 +2677,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                               fontSize: '0.6rem',
                               padding: '1px 5px',
                               borderRadius: 4,
-                              background: 'var(--surface-3)',
-                              fontFamily: "'DM Mono',monospace",
+                              background: '#f1f5f9',
                               fontWeight: 600,
                             }}
                           >
@@ -2712,8 +2689,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                     <td
                       style={{
                         ...td,
-                        color: 'var(--text-3)',
-                        fontFamily: "'DM Mono',monospace",
+                        color: '#94a3b8',
                         fontSize: '0.7rem',
                       }}
                     >
@@ -2742,7 +2718,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
               style={{
                 padding: 24,
                 textAlign: 'center',
-                color: 'var(--text-3)',
+                color: '#94a3b8',
                 fontSize: '0.8rem',
               }}
             >
@@ -2775,7 +2751,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                     alignItems: 'center',
                     gap: 12,
                     padding: '11px 16px',
-                    borderBottom: i < recentFeed.length - 1 ? '1px solid var(--surface-3)' : 'none',
+                    borderBottom: i < recentFeed.length - 1 ? '1px solid #f1f5f9' : 'none',
                     background: isLate ? '#fffbeb' : 'transparent',
                   }}
                 >
@@ -2802,12 +2778,10 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
                     >
-                      <span
-                        style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-1)' }}
-                      >
+                      <span style={{ fontWeight: 700, fontSize: '0.78rem', color: '#0f172a' }}>
                         {r.tool_id}
                       </span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#475569' }}>
                         {TOOL_LABELS[r.tool_id]}
                       </span>
                       {r.nbsap_target_id && (
@@ -2839,7 +2813,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: 2 }}>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 2 }}>
                       {r.submitted_by_profile?.full_name ||
                         r.submitted_by_profile?.email ||
                         'Unknown'}{' '}
@@ -2851,13 +2825,12 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
                     <div
                       style={{
                         fontSize: '0.68rem',
-                        fontFamily: "'DM Mono',monospace",
-                        color: 'var(--text-3)',
+                        color: '#94a3b8',
                       }}
                     >
                       {format(parseISO(r.submitted_at), 'dd MMM yyyy')}
                     </div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', marginTop: 1 }}>
+                    <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: 1 }}>
                       {format(parseISO(r.submitted_at), 'HH:mm')}
                     </div>
                   </div>
@@ -2904,7 +2877,7 @@ function NoData() {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
-        color: 'var(--text-3)',
+        color: '#94a3b8',
         gap: 8,
       }}
     >

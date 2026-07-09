@@ -2267,7 +2267,13 @@ const ReportForm = ({
                 <img
                   src={att.data_url}
                   alt={att.name}
-                  style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    objectFit: 'cover',
+                    borderRadius: 6,
+                    flexShrink: 0,
+                  }}
                 />
               ) : (
                 <span style={{ fontSize: '0.82rem' }}>📄</span>

@@ -35,6 +35,26 @@ type StatusKey = 'on-track' | 'at-risk' | 'behind';
 type OpenFn = (kind: 'target' | 'indicator', id: number) => void;
 type Entity = { type: 'target'; data: NBSAPTarget } | { type: 'indicator'; data: Indicator };
 
+// Targets the standalone Compliance page tracks under "Regulatory & thematic
+// implementation" — keep in sync with `complianceTargets` in CompliancePage.tsx
+const COMPLIANCE_TARGET_IDS = [3, 4, 7, 13, 15];
+
+const secondaryLinkBtn: React.CSSProperties = {
+  flex: 1,
+  padding: '9px 8px',
+  borderRadius: 8,
+  border: '1.5px solid #cbd5e1',
+  background: '#fff',
+  color: '#334155',
+  fontSize: '0.7rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+};
+
 const goalChip: Record<string, { bg: string; color: string }> = {
   A: { bg: '#dcfce7', color: '#166534' },
   B: { bg: '#dbeafe', color: '#1e40af' },
@@ -1191,6 +1211,42 @@ function EntityDetailPanel({
 }) {
   const isTarget = entity.type === 'target';
   const pc = progressColor(entity.data.progress);
+  const needsAttention = pc.label !== 'On Track';
+  const relatedTargetId = isTarget
+    ? (entity.data as NBSAPTarget).id
+    : (entity.data as Indicator).nbsap_target_id;
+  const showComplianceLink =
+    relatedTargetId != null && COMPLIANCE_TARGET_IDS.includes(relatedTargetId);
+  const riskSearchTerm = isTarget
+    ? (entity.data as NBSAPTarget).title
+    : (entity.data as Indicator).name;
+
+  const crossLinks = needsAttention ? (
+    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <button
+        onClick={() => {
+          navigate(`/risk?search=${encodeURIComponent(riskSearchTerm)}`);
+          onClose();
+        }}
+        style={secondaryLinkBtn}
+      >
+        <i className="fa-solid fa-shield-halved" />
+        View in Risk Register
+      </button>
+      {showComplianceLink && (
+        <button
+          onClick={() => {
+            navigate(`/compliance?target=${relatedTargetId}`);
+            onClose();
+          }}
+          style={secondaryLinkBtn}
+        >
+          <i className="fa-solid fa-scale-balanced" />
+          View in Compliance
+        </button>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
@@ -1433,6 +1489,7 @@ function EntityDetailPanel({
                       <i className="fa-solid fa-up-right-from-square" />
                       Open on Targets page
                     </button>
+                    {crossLinks}
                   </>
                 );
               })()
@@ -1499,6 +1556,7 @@ function EntityDetailPanel({
                       <i className="fa-solid fa-up-right-from-square" />
                       Open on Indicators page
                     </button>
+                    {crossLinks}
                   </>
                 );
               })()}

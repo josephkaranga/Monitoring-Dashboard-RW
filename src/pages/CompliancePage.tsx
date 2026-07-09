@@ -1,17 +1,18 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReports } from '../hooks/useData';
 import { fetchSystemMetrics, type SystemMetrics } from '../services/systemMetricsService';
-import {
-  useEIAComplianceTracking,
-  getCurrentQuarterLabel,
-} from '../hooks/useEIAComplianceTracking';
+import { useEIAComplianceTracking } from '../hooks/useEIAComplianceTracking';
+import { fetchTargets, fetchIndicators } from '../services/dataService';
+import { progressColor } from '../utils/progressColors';
+import type { NBSAPTarget, Indicator } from '../types/index';
 import toast from 'react-hot-toast';
 
 const card: React.CSSProperties = {
-  background: 'var(--surface)',
-  borderRadius: 'var(--radius)',
-  border: '1px solid var(--border)',
-  boxShadow: 'var(--shadow-sm)',
+  background: '#fff',
+  borderRadius: 12,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
 };
 
 export function CompliancePage() {
@@ -20,6 +21,24 @@ export function CompliancePage() {
   const [metricsLoading, setMetricsLoading] = useState(false);
   const { eiaMetrics } = useEIAComplianceTracking();
   const eiaLive = eiaMetrics.totalReports > 0;
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightTargetId = searchParams.get('target') ? Number(searchParams.get('target')) : null;
+  const [targets, setTargets] = useState<NBSAPTarget[]>([]);
+  const [indicators, setIndicators] = useState<Indicator[]>([]);
+
+  useEffect(() => {
+    fetchTargets().then(setTargets).catch(console.error);
+    fetchIndicators({ pageSize: 200 }).then(setIndicators).catch(console.error);
+  }, []);
+
+  // Deep-linked from the dashboard's "Requires attention" panel
+  useEffect(() => {
+    if (highlightTargetId == null || targets.length === 0) return;
+    document
+      .getElementById(`compliance-target-${highlightTargetId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlightTargetId, targets]);
 
   // Load automated system metrics
   useEffect(() => {
@@ -55,7 +74,7 @@ export function CompliancePage() {
               t06.length) *
               100
           )
-        : 92;
+        : 0;
 
   const disbPct = useMemo(() => {
     // Use automated metrics if available
@@ -67,7 +86,7 @@ export function CompliancePage() {
     // Fallback to legacy calculation
     const alloc = t05.reduce((a, r) => a + (Number(r.form_data?.budget_allocated) || 0), 0);
     const disb = t05.reduce((a, r) => a + (Number(r.form_data?.budget_disbursed) || 0), 0);
-    return alloc > 0 ? Math.round((disb / alloc) * 100) : 100;
+    return alloc > 0 ? Math.round((disb / alloc) * 100) : 0;
   }, [t05, systemMetrics]);
 
   const districtPct = useMemo(() => {
@@ -96,9 +115,6 @@ export function CompliancePage() {
       color: eiaScore >= 80 ? '#10b981' : '#f59e0b',
       isAutomated: eiaLive || !!systemMetrics,
     },
-    { label: 'Protected Area Regulations', score: 88, color: '#10b981' },
-    { label: 'ABS Rules Compliance', score: 75, color: '#f59e0b' },
-    { label: 'Species Protection Laws', score: 68, color: '#f43f5e' },
     ...(systemMetrics || t02.length
       ? [
           {
@@ -151,71 +167,47 @@ export function CompliancePage() {
       ? systemMetrics.eiaFullCompliance
       : t06.filter(r => r.form_data?.eia_compliance === 'Full compliance').length;
 
+  const trackingLabel = eiaLive
+    ? 'Real-time T06 tracking'
+    : systemMetrics
+      ? 'Automated T06 tracking'
+      : 'Live T06 data';
+
   const issues = [
-    nonCompliant > 0
-      ? {
-          sev: 'High',
-          sevBg: '#fee2e2',
-          sevColor: '#991b1b',
-          title: `EIA Non-Compliance — ${nonCompliant} firm(s) flagged`,
-          sub: eiaLive
-            ? 'Real-time T06 tracking · Requires immediate action'
-            : systemMetrics
-              ? 'Automated T06 tracking · Requires immediate action'
-              : 'Live T06 data · Requires immediate action',
-          bg: '#fef2f2',
-          border: '#fecaca',
-        }
-      : {
-          sev: 'High',
-          sevBg: '#fee2e2',
-          sevColor: '#991b1b',
-          title: 'EIA Missing Documentation — Northern Province',
-          sub: 'Flagged 1 day ago',
-          bg: '#fef2f2',
-          border: '#fecaca',
-        },
-    partial > 0
-      ? {
-          sev: 'Medium',
-          sevBg: '#ffedd5',
-          sevColor: '#9a3412',
-          title: `EIA Partial Compliance — ${partial} firm(s) need improvement`,
-          sub: eiaLive
-            ? 'Real-time T06 tracking · Monitoring required'
-            : systemMetrics
-              ? 'Automated T06 tracking · Monitoring required'
-              : 'Live T06 data · Monitoring required',
-          bg: '#fff7ed',
-          border: '#fed7aa',
-        }
-      : {
-          sev: 'Medium',
-          sevBg: '#ffedd5',
-          sevColor: '#9a3412',
-          title: 'Late Data Submission',
-          sub: '2 districts pending · Deadline passed',
-          bg: '#fff7ed',
-          border: '#fed7aa',
-        },
-    {
-      sev: 'Low',
-      sevBg: '#fef9c3',
-      sevColor: '#854d0e',
-      title: 'Incomplete Indicator Data',
-      sub: 'Sector: Fisheries · Partial submission',
-      bg: '#fefce8',
-      border: '#fef08a',
-    },
-    {
-      sev: 'Low',
-      sevBg: '#fef9c3',
-      sevColor: '#854d0e',
-      title: 'ABS Documentation Gap',
-      sub: '3 enterprises missing Access & Benefit Sharing docs',
-      bg: '#fefce8',
-      border: '#fef08a',
-    },
+    ...(nonCompliant > 0
+      ? [
+          {
+            sev: 'High',
+            sevBg: '#fee2e2',
+            sevColor: '#991b1b',
+            title: `EIA Non-Compliance — ${nonCompliant} firm(s) flagged`,
+            sub: `${trackingLabel} · Requires immediate action`,
+            bg: '#fef2f2',
+            border: '#fecaca',
+          },
+        ]
+      : []),
+    ...(partial > 0
+      ? [
+          {
+            sev: 'Medium',
+            sevBg: '#ffedd5',
+            sevColor: '#9a3412',
+            title: `EIA Partial Compliance — ${partial} firm(s) need improvement`,
+            sub: `${trackingLabel} · Monitoring required`,
+            bg: '#fff7ed',
+            border: '#fed7aa',
+          },
+        ]
+      : []),
+  ];
+
+  const complianceTargets = [
+    { id: 3, label: 'Protected Area Regulations' },
+    { id: 4, label: 'Species Protection' },
+    { id: 7, label: 'Pollution & EIA Control' },
+    { id: 13, label: 'Access & Benefit Sharing (ABS)' },
+    { id: 15, label: 'Business & Financial Disclosure' },
   ];
 
   return (
@@ -228,20 +220,20 @@ export function CompliancePage() {
             alignItems: 'center',
             gap: 10,
             padding: '12px 16px',
-            background: 'var(--surface)',
-            borderRadius: 'var(--radius)',
-            border: '1px solid var(--border)',
+            background: '#fff',
+            borderRadius: 12,
+            border: '1px solid #e2e8f0',
             marginBottom: 16,
             fontSize: '0.82rem',
-            color: 'var(--text-3)',
+            color: '#94a3b8',
           }}
         >
           <div
             style={{
               width: 16,
               height: 16,
-              border: '2px solid var(--border)',
-              borderTopColor: 'var(--sky-dim)',
+              border: '2px solid #e2e8f0',
+              borderTopColor: '#1f6cb4',
               borderRadius: '50%',
               animation: 'spin 0.7s linear infinite',
               flexShrink: 0,
@@ -258,7 +250,7 @@ export function CompliancePage() {
           style={{
             ...card,
             marginBottom: 16,
-            background: 'linear-gradient(135deg, #dcfce7, #f0fdf4)',
+            background: '#f0fdf4',
             borderColor: '#16a34a',
           }}
         >
@@ -273,7 +265,6 @@ export function CompliancePage() {
                 padding: '3px 8px',
                 borderRadius: 12,
                 fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
                 background: '#dcfce7',
                 color: '#166534',
               }}
@@ -285,7 +276,6 @@ export function CompliancePage() {
                 marginLeft: 'auto',
                 fontSize: '0.7rem',
                 color: '#166534',
-                fontFamily: "'DM Mono', monospace",
               }}
             >
               Last updated: {new Date(systemMetrics.lastUpdated).toLocaleString()}
@@ -307,7 +297,7 @@ export function CompliancePage() {
               fontWeight: 700,
             }}
           >
-            <i className="fa-solid fa-scale-balanced" style={{ color: 'var(--sky-dim)' }} />
+            <i className="fa-solid fa-scale-balanced" style={{ color: '#1f6cb4' }} />
             Compliance Overview
           </div>
           {bars.map(b => (
@@ -320,9 +310,7 @@ export function CompliancePage() {
                   marginBottom: 5,
                 }}
               >
-                <span
-                  style={{ color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6 }}
-                >
+                <span style={{ color: '#475569', display: 'flex', alignItems: 'center', gap: 6 }}>
                   {b.label}
                   {b.isAutomated && (
                     <span
@@ -331,7 +319,6 @@ export function CompliancePage() {
                         padding: '2px 6px',
                         borderRadius: 8,
                         fontWeight: 700,
-                        fontFamily: "'DM Mono', monospace",
                         background: '#dcfce7',
                         color: '#166534',
                       }}
@@ -345,7 +332,7 @@ export function CompliancePage() {
               <div
                 style={{
                   height: 7,
-                  background: 'var(--surface-3)',
+                  background: '#f1f5f9',
                   borderRadius: 4,
                   overflow: 'hidden',
                 }}
@@ -367,8 +354,7 @@ export function CompliancePage() {
               style={{
                 marginTop: 8,
                 fontSize: '0.68rem',
-                color: 'var(--text-3)',
-                fontFamily: "'DM Mono', monospace",
+                color: '#94a3b8',
               }}
             >
               ✓ {fullCompliant} full · ⚠ {partial} partial · ✗ {nonCompliant} non-compliant (
@@ -379,8 +365,7 @@ export function CompliancePage() {
               style={{
                 marginTop: 8,
                 fontSize: '0.68rem',
-                color: 'var(--text-3)',
-                fontFamily: "'DM Mono', monospace",
+                color: '#94a3b8',
               }}
             >
               ✓ {fullCompliant} full · ⚠ {partial} partial · ✗ {nonCompliant} non-compliant
@@ -403,6 +388,22 @@ export function CompliancePage() {
             <i className="fa-solid fa-triangle-exclamation" style={{ color: '#f59e0b' }} />
             Active Issues
           </div>
+          {issues.length === 0 && (
+            <div
+              style={{
+                padding: '24px 12px',
+                textAlign: 'center',
+                color: '#94a3b8',
+                fontSize: '0.8rem',
+              }}
+            >
+              <i
+                className="fa-solid fa-circle-check"
+                style={{ color: '#16a34a', fontSize: '1.4rem', display: 'block', marginBottom: 8 }}
+              />
+              No compliance issues flagged from current reports.
+            </div>
+          )}
           {issues.map((iss, i) => (
             <div
               key={i}
@@ -428,7 +429,6 @@ export function CompliancePage() {
                     padding: '2px 7px',
                     borderRadius: 6,
                     fontWeight: 700,
-                    fontFamily: "'DM Mono', monospace",
                     background: iss.sevBg,
                     color: iss.sevColor,
                     flexShrink: 0,
@@ -438,68 +438,175 @@ export function CompliancePage() {
                   {iss.sev}
                 </span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-2)', marginTop: 2 }}>
-                {iss.sub}
-              </div>
+              <div style={{ fontSize: '0.72rem', color: '#475569', marginTop: 2 }}>{iss.sub}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Compliance trend */}
+      {/* Regulatory & thematic implementation — real NBSAP target + indicator progress */}
       <div style={{ ...card, padding: 18, marginBottom: 24 }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            marginBottom: 14,
+            marginBottom: 4,
             fontSize: '0.9rem',
             fontWeight: 700,
           }}
         >
-          <i className="fa-solid fa-chart-line" style={{ color: 'var(--sky-dim)' }} />
-          Compliance Trend Over Time
+          <i className="fa-solid fa-scale-balanced" style={{ color: '#1f6cb4' }} />
+          Regulatory &amp; thematic implementation
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-          {['Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025', getCurrentQuarterLabel()].map((q, qi) => {
-            const vals = [85, 87, 89, 91, eiaScore];
-            const v = vals[qi];
-            const color = v >= 85 ? '#10b981' : v >= 70 ? '#f59e0b' : '#f43f5e';
+        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 14, lineHeight: 1.5 }}>
+          <i className="fa-solid fa-circle-info" style={{ marginRight: 5, color: '#1f6cb4' }} />
+          Shows NBSAP <b style={{ color: '#475569' }}>implementation progress</b> for
+          compliance-related targets — this is target progress, not a compliance rate. Click any
+          target or indicator for details.
+        </div>
+        {targets.length === 0 ? (
+          <div style={{ fontSize: '0.78rem', color: '#94a3b8', padding: 8 }}>Loading targets…</div>
+        ) : (
+          complianceTargets.map(ct => {
+            const t = targets.find(x => x.id === ct.id);
+            if (!t) return null;
+            const pc = progressColor(t.progress);
+            const tInd = indicators.filter(i => i.nbsap_target_id === t.id);
+            const isHighlighted = highlightTargetId === ct.id;
             return (
               <div
-                key={q}
+                key={ct.id}
+                id={`compliance-target-${ct.id}`}
                 style={{
-                  textAlign: 'center',
-                  background: 'var(--surface-2)',
-                  borderRadius: 8,
-                  padding: '10px 8px',
+                  marginBottom: 14,
+                  borderBottom: '1px solid #e2e8f0',
+                  paddingBottom: 12,
+                  ...(isHighlighted
+                    ? {
+                        background: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        borderRadius: 10,
+                        padding: 10,
+                      }
+                    : {}),
                 }}
               >
                 <div
+                  onClick={() => navigate(`/targets?expand=${t.id}`)}
                   style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    fontFamily: "'Playfair Display', serif",
-                    color,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    marginBottom: 6,
                   }}
                 >
-                  {v}%
+                  <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, color: '#0f172a' }}>
+                    {ct.label}
+                    <span
+                      style={{
+                        fontSize: '0.58rem',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: 8,
+                        background: '#e0e7ff',
+                        color: '#3730a3',
+                        marginLeft: 8,
+                      }}
+                    >
+                      PROGRESS
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        color: '#94a3b8',
+                        fontWeight: 400,
+                        marginLeft: 6,
+                      }}
+                    >
+                      Target {t.id}
+                    </span>
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: 8,
+                      background: pc.bg,
+                      color: pc.color,
+                    }}
+                  >
+                    {pc.label}
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: pc.color,
+                      fontSize: '0.82rem',
+                      width: 42,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {t.progress}%
+                  </span>
                 </div>
                 <div
-                  style={{
-                    fontSize: '0.62rem',
-                    color: 'var(--text-3)',
-                    fontFamily: "'DM Mono', monospace",
-                    marginTop: 3,
-                  }}
+                  style={{ height: 7, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}
                 >
-                  {q}
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${t.progress}%`,
+                      background: pc.color,
+                      borderRadius: 4,
+                      transition: 'width 1.2s ease',
+                    }}
+                  />
                 </div>
+                {tInd.length > 0 && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {tInd.map(ind => {
+                      const ipc = progressColor(ind.progress);
+                      return (
+                        <div
+                          key={ind.id}
+                          onClick={() => navigate(`/indicators?target=${t.id}`)}
+                          style={{
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            fontSize: '0.72rem',
+                            color: '#475569',
+                            padding: '3px 0',
+                          }}
+                        >
+                          <i
+                            className="fa-solid fa-angle-right"
+                            style={{ color: '#94a3b8', fontSize: '0.6rem' }}
+                          />
+                          <span
+                            style={{
+                              flex: 1,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {ind.name}
+                          </span>
+                          <span style={{ fontWeight: 700, color: ipc.color }}>{ind.progress}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
-          })}
-        </div>
+          })
+        )}
       </div>
 
       {/* Accountability mechanisms */}
@@ -514,7 +621,7 @@ export function CompliancePage() {
             fontWeight: 700,
           }}
         >
-          <i className="fa-solid fa-shield-check" style={{ color: 'var(--sky-dim)' }} />
+          <i className="fa-solid fa-shield-check" style={{ color: '#1f6cb4' }} />
           Accountability Mechanisms
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
@@ -541,7 +648,7 @@ export function CompliancePage() {
             <div
               key={m.title}
               style={{
-                background: 'var(--surface-2)',
+                background: '#f8fafc',
                 borderRadius: 10,
                 padding: 14,
                 textAlign: 'center',
@@ -552,9 +659,7 @@ export function CompliancePage() {
                 style={{ fontSize: '1.6rem', color: m.color, display: 'block', marginBottom: 8 }}
               />
               <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{m.title}</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 3 }}>
-                {m.sub}
-              </div>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 3 }}>{m.sub}</div>
             </div>
           ))}
         </div>
