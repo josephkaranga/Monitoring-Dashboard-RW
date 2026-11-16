@@ -133,7 +133,7 @@ export function usePendingCount(): number {
     const { count: c } = await supabase
       .from('toolkit_reports')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending');
+      .in('workflow_status', ['submitted', 'in_validation']);
     setCount(c || 0);
   }, []);
 

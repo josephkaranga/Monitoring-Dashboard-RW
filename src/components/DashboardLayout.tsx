@@ -29,7 +29,7 @@ export default function DashboardLayout() {
   const canSeeCompliance = permissions?.canViewCompliance ?? false;
   const canSeeAnalytics = permissions?.canViewAnalytics ?? false;
   const canManageUsers = permissions?.canManageUsers ?? false;
-  const { isInstitutionAdmin } = useMyScopes();
+  const { isInstitutionAdmin, isValidator } = useMyScopes();
   const canViewAuditLog = permissions?.canViewAuditLog ?? false;
 
   // ── Nav sections with role-based filtering ──────────────────────────────────────────
@@ -93,7 +93,7 @@ export default function DashboardLayout() {
   const governanceNav = [
     // Verification Queue - only for lead_government_ministry_reporting and dashboard_management
     // Controlled by canViewVerifQueue permission
-    ...(canSeeVerifQueue
+    ...(canSeeVerifQueue || isValidator
       ? [
           {
             to: '/verification-queue',
@@ -152,7 +152,10 @@ export default function DashboardLayout() {
   // Admin navigation - only for dashboard_management
   // Controlled by canViewAuditLog permission
   const adminNav = canViewAuditLog
-    ? [{ to: '/role-requests/admin', icon: 'fa-user-check', label: 'Approve Requests' }]
+    ? [
+        { to: '/role-requests/admin', icon: 'fa-user-check', label: 'Approve Requests' },
+        { to: '/validation-workflow', icon: 'fa-route', label: 'Validation Workflow' },
+      ]
     : [];
 
   const isActive = (to: string) => location.pathname === to.split('?')[0];

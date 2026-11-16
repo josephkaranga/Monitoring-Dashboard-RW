@@ -124,19 +124,54 @@ export async function setRole(
   ]);
 }
 
-/** Grant a scope as the service role would (migration 039). */
+export type ScopeRole =
+  | 'data_entry'
+  | 'institution_admin'
+  | 'district_validator'
+  | 'ministry_validator'
+  | 'nisr_validator'
+  | 'rlmua_validator'
+  | 'rema_verifier';
+
+/** Grant a scope as the service role would (migrations 039/040). */
 export async function grantScope(
   db: PGlite,
   userId: string,
-  scopeRole: 'data_entry' | 'ministry_validator' | 'institution_admin',
+  scopeRole: ScopeRole,
   institutionCode: string,
   districtName?: string
 ): Promise<void> {
-  await db.query(
+  const r = await db.query(
     `INSERT INTO public.user_scopes (user_id, scope_role, institution_id, district_id)
      SELECT $1, $2, i.id, (SELECT id FROM public.districts WHERE name = $4)
      FROM public.institutions i WHERE i.code = $3`,
     [userId, scopeRole, institutionCode, districtName ?? null]
+  );
+  if (r.affectedRows !== 1) throw new Error(`grantScope: institution ${institutionCode} not found`);
+}
+
+/**
+ * Keep only one validation stage active, applying to every report (040).
+ * Lets tests of other rules (security, metrics, scope) publish a report in
+ * one review step.
+ */
+export async function useSingleStage(db: PGlite, code = 'ministry'): Promise<void> {
+  await db.query(`UPDATE public.validation_stages SET is_active = (code = $1)`, [code]);
+  await db.query(`UPDATE public.validation_stages SET applies_to = 'all_reports' WHERE code = $1`, [
+    code,
+  ]);
+}
+
+/** Run review_report() as a user (040). */
+export async function review(
+  db: PGlite,
+  userId: string,
+  reportId: string,
+  action: 'approve' | 'return' | 'reject',
+  note?: string
+): Promise<void> {
+  await asUser(db, userId, tx =>
+    tx.query(`SELECT public.review_report($1, $2, $3)`, [reportId, action, note ?? null])
   );
 }
 

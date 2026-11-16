@@ -225,6 +225,8 @@ export type GBFGoal = 'A' | 'B' | 'C' | 'D';
 export interface Indicator {
   id: number;
   name: string;
+  /** M02: reports on this indicator need NISR statistical sign-off. */
+  requires_statistical_validation?: boolean;
   definition: string;
   tier: IndicatorTier;
   nbsap_target_id: number;
@@ -295,13 +297,60 @@ export interface Institution {
   is_active: boolean;
 }
 
-export type ScopeRole = 'data_entry' | 'ministry_validator' | 'institution_admin';
+export type ScopeRole =
+  | 'data_entry'
+  | 'institution_admin'
+  | 'district_validator'
+  | 'ministry_validator'
+  | 'nisr_validator'
+  | 'rlmua_validator'
+  | 'rema_verifier';
 
 export const SCOPE_ROLE_LABELS: Record<ScopeRole, string> = {
   data_entry: 'Data entry',
-  ministry_validator: 'Ministry validator',
   institution_admin: 'Institution administrator',
+  district_validator: 'District validator',
+  ministry_validator: 'Ministry / institution validator',
+  nisr_validator: 'NISR validator (statistics)',
+  rlmua_validator: 'RLMUA validator (spatial data)',
+  rema_verifier: 'REMA verifier (publishes)',
 };
+
+// ── M02: MULTI-LEVEL VALIDATION ─────────────────────────────
+
+export type WorkflowStatus =
+  'draft' | 'submitted' | 'in_validation' | 'returned' | 'published' | 'rejected';
+
+export interface ValidationStage {
+  id: number;
+  code: string;
+  name: string;
+  ordinal: number;
+  scope_role: ScopeRole;
+  applies_to:
+    | 'all_reports'
+    | 'district_reports'
+    | 'institution_reports'
+    | 'flagged_indicators'
+    | 'spatial_reports';
+  scope_match: 'report_district' | 'report_institution' | 'national';
+  institution_code: string | null;
+  is_active: boolean;
+}
+
+export interface ReportHistoryEntry {
+  id: number;
+  report_id: string;
+  action: 'submit' | 'approve' | 'publish' | 'return' | 'reject' | 'resubmit' | string;
+  from_status: WorkflowStatus | null;
+  to_status: WorkflowStatus;
+  stage_id: number | null;
+  next_stage_id: number | null;
+  note: string | null;
+  actor: string | null;
+  actor_profile?: { full_name: string | null; email: string } | null;
+  created_at: string;
+}
 
 export interface UserScope {
   id: number;
@@ -333,7 +382,16 @@ export interface ToolkitReport {
   tool_name: string;
   submitted_by: string;
   submitted_by_profile?: UserProfile;
+  /** Derived from workflow_status by the database (published -> approved). */
   status: SubmissionStatus;
+  workflow_status?: WorkflowStatus;
+  current_stage_id?: number | null;
+  route?: number[] | null;
+  returned_at_stage_id?: number | null;
+  last_action?: string | null;
+  published_at?: string | null;
+  institution_id?: number | null;
+  district_id?: number | null;
   reviewed_by: string | null;
   reviewed_by_profile?: UserProfile;
   reviewed_at: string | null;

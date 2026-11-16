@@ -58,5 +58,9 @@ export function useMyScopes() {
 
   const isAdmin = user?.role === 'dashboard_management';
   const isInstitutionAdmin = scopes.some(s => s.scope_role === 'institution_admin');
-  return { scopes, loading, isAdmin, isInstitutionAdmin, reload: load };
+  // Any validation-stage scope (M02).
+  const isValidator = scopes.some(
+    s => s.scope_role.endsWith('_validator') || s.scope_role === 'rema_verifier'
+  );
+  return { scopes, loading, isAdmin, isInstitutionAdmin, isValidator, reload: load };
 }

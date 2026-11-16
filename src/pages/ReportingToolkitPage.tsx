@@ -34,6 +34,8 @@ import { validateYear } from '../utils/validation';
 import { groupStakeholders, STAKEHOLDER_CATEGORIES } from '../utils/stakeholderGroups';
 import { useInstitutions, useMyScopes } from '../hooks/useInstitutions';
 import { allowedDistrictIds } from '../services/institutionService';
+import ResubmitReportModal from '../components/ResubmitReportModal';
+import type { ToolkitReport } from '../types/index';
 import {
   EVIDENCE_ACCEPTED_EXT,
   EVIDENCE_TYPES,
@@ -1993,6 +1995,9 @@ const SuccessScreen = ({
 // ── Main Page ─────────────────────────────────────────────────
 export default function ReportingToolkitPage() {
   const [searchParams] = useSearchParams();
+  const { user: currentUser } = useAuth();
+  // M02: a returned report the user is correcting.
+  const [resubmitTarget, setResubmitTarget] = useState<ToolkitReport | null>(null);
   const { institutions } = useInstitutions();
   const institutionNames = useMemo(
     () => new Map(institutions.map(i => [i.code, i.name])),
@@ -2430,11 +2435,28 @@ export default function ReportingToolkitPage() {
                   <tbody>
                     {reports.map(r => {
                       const tool = TOOLKIT_TOOLS.find(t => t.id === r.tool_id);
+                      // M02 workflow state (older rows fall back to the derived status).
+                      const ws =
+                        r.workflow_status ??
+                        (r.status === 'approved'
+                          ? 'published'
+                          : r.status === 'rejected'
+                            ? 'rejected'
+                            : 'submitted');
                       const statusConf = {
-                        pending: { bg: '#fef9c3', color: '#854d0e', label: '⏳ Pending' },
-                        approved: { bg: '#dcfce7', color: '#166534', label: '✓ Approved' },
+                        draft: { bg: '#f1f5f9', color: '#475569', label: 'Draft' },
+                        submitted: { bg: '#fef9c3', color: '#854d0e', label: '⏳ In validation' },
+                        in_validation: {
+                          bg: '#e0f2fe',
+                          color: '#0369a1',
+                          label: '⏳ In validation',
+                        },
+                        returned: { bg: '#ffedd5', color: '#9a3412', label: '↩ Returned' },
+                        published: { bg: '#dcfce7', color: '#166534', label: '✓ Published' },
                         rejected: { bg: '#fee2e2', color: '#991b1b', label: '✕ Rejected' },
-                      }[r.status] || { bg: '#f1f5f9', color: '#475569', label: r.status };
+                      }[ws];
+                      const canResubmit =
+                        ws === 'returned' && !!currentUser && r.submitted_by === currentUser.id;
                       const keyField = Object.entries(r.form_data || {}).find(([k]) =>
                         [
                           'district',
@@ -2516,6 +2538,22 @@ export default function ReportingToolkitPage() {
                             >
                               {statusConf.label}
                             </span>
+                            {ws === 'returned' && r.review_note && (
+                              <div
+                                title={r.review_note}
+                                style={{
+                                  fontSize: '0.66rem',
+                                  color: '#9a3412',
+                                  marginTop: 3,
+                                  maxWidth: 180,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {r.review_note}
+                              </div>
+                            )}
                           </td>
                           <td style={{ padding: '11px 14px', maxWidth: 200 }}>
                             {(() => {
@@ -2578,7 +2616,25 @@ export default function ReportingToolkitPage() {
                               r.submitted_by_profile?.email ||
                               '—'}
                           </td>
-                          <td style={{ padding: '11px 14px' }}>
+                          <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
+                            {canResubmit && (
+                              <button
+                                onClick={() => setResubmitTarget(r)}
+                                style={{
+                                  background: '#1e3a5f',
+                                  color: '#fff',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  padding: '4px 9px',
+                                  borderRadius: 6,
+                                  marginRight: 6,
+                                }}
+                              >
+                                Correct &amp; resubmit
+                              </button>
+                            )}
                             <button
                               onClick={() => handleDelete(r.id, r.tool_name)}
                               style={{
@@ -2706,6 +2762,16 @@ export default function ReportingToolkitPage() {
           </div>
         )}
       </div>
+      {resubmitTarget && (
+        <ResubmitReportModal
+          report={resubmitTarget}
+          onClose={() => setResubmitTarget(null)}
+          onDone={() => {
+            setResubmitTarget(null);
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 }

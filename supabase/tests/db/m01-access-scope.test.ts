@@ -7,7 +7,16 @@
 
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
-import { asUser, createDatabase, createUser, errorAsUser, grantScope, setRole } from './harness';
+import {
+  asUser,
+  createDatabase,
+  createUser,
+  errorAsUser,
+  grantScope,
+  review,
+  setRole,
+  useSingleStage,
+} from './harness';
 
 let db: PGlite;
 
@@ -86,6 +95,8 @@ beforeAll(async () => {
   await grantScope(db, minagriValidator, 'ministry_validator', 'MINAGRI');
   await grantScope(db, moeEntry, 'data_entry', 'MoE');
   await grantScope(db, minagriAdmin, 'institution_admin', 'MINAGRI');
+  // M02 (040): a single ministry stage isolates the scope rules under test.
+  await useSingleStage(db, 'ministry');
 }, 180_000);
 
 describe('reference data moved from the frontend', () => {
@@ -181,14 +192,10 @@ describe('Done when: a ministry validator acts only on their institution', () =>
     const minagriReport = await submit(minagriEntry, 'MINAGRI');
     const moeReport = await submit(moeEntry, 'MoE');
 
-    await asUser(db, minagriValidator, async tx => {
-      await tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [
-        minagriReport,
-      ]);
-      await tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [
-        moeReport,
-      ]);
-    });
+    await review(db, minagriValidator, minagriReport, 'approve');
+    await expect(review(db, minagriValidator, moeReport, 'approve')).rejects.toThrow(
+      /not a validator/
+    );
 
     expect(await status(minagriReport)).toBe('approved');
     expect(await status(moeReport)).toBe('pending');
@@ -196,18 +203,14 @@ describe('Done when: a ministry validator acts only on their institution', () =>
 
   it('a ministry account without a validator scope cannot approve anything', async () => {
     const id = await submit(minagriEntry, 'MINAGRI');
-    await asUser(db, moeEntry, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
-    );
+    await expect(review(db, moeEntry, id, 'approve')).rejects.toThrow(/not a validator/);
     expect(await status(id)).toBe('pending');
   });
 
-  it('an administrator still reviews any institution, but never their own report', async () => {
+  it('a system administrator without a validator scope cannot approve data (PDF target roles)', async () => {
     const id = await submit(moeEntry, 'MoE');
-    await asUser(db, admin, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
-    );
-    expect(await status(id)).toBe('approved');
+    await expect(review(db, admin, id, 'approve')).rejects.toThrow(/not a validator/);
+    expect(await status(id)).toBe('pending');
   });
 });
 

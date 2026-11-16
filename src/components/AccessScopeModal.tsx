@@ -25,8 +25,16 @@ import type { District, ScopeRole, UserProfile, UserScope } from '../types/index
 const SCOPE_ROLE_HELP: Record<ScopeRole, string> = {
   data_entry: 'Submits reports for this institution (and district). Needs a reporting account.',
   ministry_validator:
-    "Approves or rejects this institution's reports. Needs a Lead Government Ministry account.",
+    "Validates this institution's reports at the ministry stage. Needs a Lead Government Ministry account.",
   institution_admin: "Approves and removes this institution's data-entry and viewer accounts.",
+  district_validator:
+    'Validates reports about one district at the district stage. Grant on District Authorities with the district.',
+  nisr_validator:
+    'Statistical sign-off on reports for indicators flagged for NISR validation. Grant on NISR.',
+  rlmua_validator:
+    'Spatial sign-off on reports with map/GIS evidence. Grant on the National Land Authority (RLMUA).',
+  rema_verifier:
+    'Final verification: publishes reports, which then count toward progress. Grant on REMA.',
 };
 
 const field: React.CSSProperties = {

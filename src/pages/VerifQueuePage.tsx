@@ -1,6 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useReports } from '../hooks/useData';
-import { verifyReport } from '../services/reportService';
+import { fetchValidationStages, reviewReport, type ReviewAction } from '../services/reportService';
+import WorkflowPanel from '../components/WorkflowPanel';
+import { useInstitutions, useMyScopes } from '../hooks/useInstitutions';
+import { WORKFLOW_LABELS, canActOnReport, stageProgress } from '../utils/workflow';
+import type { ValidationStage, WorkflowStatus } from '../types/index';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -24,11 +28,27 @@ const TOOL_EMOJI: Record<string, string> = {
   T07: '\u{1F52C}',
 };
 
-const STATUS_CFG: Record<string, { bg: string; color: string; label: string }> = {
-  pending: { bg: '#fef9c3', color: '#854d0e', label: 'PENDING' },
-  approved: { bg: '#dcfce7', color: '#166534', label: 'APPROVED' },
-  rejected: { bg: '#fee2e2', color: '#991b1b', label: 'REJECTED' },
+// Badge per validation state (M02). The derived status is used only for
+// reports loaded before migration 040.
+const WORKFLOW_CFG: Record<WorkflowStatus, { bg: string; color: string }> = {
+  draft: { bg: '#f1f5f9', color: '#475569' },
+  submitted: { bg: '#fef9c3', color: '#854d0e' },
+  in_validation: { bg: '#e0f2fe', color: '#0369a1' },
+  returned: { bg: '#ffedd5', color: '#9a3412' },
+  published: { bg: '#dcfce7', color: '#166534' },
+  rejected: { bg: '#fee2e2', color: '#991b1b' },
 };
+
+function statusBadge(report: ToolkitReport): { bg: string; color: string; label: string } {
+  const ws: WorkflowStatus =
+    report.workflow_status ??
+    (report.status === 'approved'
+      ? 'published'
+      : report.status === 'rejected'
+        ? 'rejected'
+        : 'submitted');
+  return { ...WORKFLOW_CFG[ws], label: WORKFLOW_LABELS[ws].toUpperCase() };
+}
 
 const card: React.CSSProperties = {
   background: 'var(--surface)',
@@ -492,24 +512,26 @@ function SectionHead({ icon, title }: { icon: string; title: string }) {
 /* ── Report Detail Modal ─────────────────────────────────── */
 function ReportDetailModal({
   report,
-  noteValue,
-  onNoteChange,
-  onVerify,
+  onReview,
+  stages,
+  canAct,
+  canDelete,
   onDelete,
   onClose,
   actioning,
   currentUserId,
 }: {
   report: ToolkitReport;
-  noteValue: string;
-  onNoteChange: (v: string) => void;
-  onVerify: (id: string, status: 'approved' | 'rejected' | 'pending') => void;
+  onReview: (id: string, action: ReviewAction, note: string) => void;
+  stages: ValidationStage[];
+  canAct: boolean;
+  canDelete: boolean;
   onDelete: (id: string, name: string) => void;
   onClose: () => void;
   actioning: string | null;
   currentUserId?: string;
 }) {
-  const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
+  const st = statusBadge(report);
   // Nobody reviews their own submission (also enforced by the database, migration 037).
   const isOwnSubmission = !!currentUserId && report.submitted_by === currentUserId;
   const attachments = report.attachments || [];
@@ -939,148 +961,16 @@ function ReportDetailModal({
           </div>
         </div>
 
-        {/* Footer — actions */}
-        <div
-          style={{
-            padding: '14px 20px',
-            borderTop: '1px solid var(--border)',
-            background: 'var(--surface-2)',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ marginBottom: 10 }}>
-            <input
-              type="text"
-              placeholder="Add a reviewer note..."
-              value={noteValue}
-              onChange={e => onNoteChange(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                fontSize: '0.82rem',
-                fontFamily: "'DM Sans', sans-serif",
-                outline: 'none',
-                color: 'var(--text-1)',
-                background: 'var(--surface)',
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {isOwnSubmission ? (
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-3)', fontStyle: 'italic' }}>
-                <i className="fa-solid fa-user-lock" style={{ marginRight: 6 }} />
-                You submitted this report, so another reviewer must verify it.
-              </div>
-            ) : report.status === 'pending' ? (
-              <>
-                <button
-                  onClick={() => onVerify(report.id, 'approved')}
-                  disabled={actioning === report.id}
-                  style={{
-                    padding: '8px 20px',
-                    borderRadius: 8,
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    fontFamily: "'DM Sans', sans-serif",
-                    background: '#16a34a',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <i className="fa-solid fa-check" />{' '}
-                  {actioning === report.id ? 'Processing...' : 'Approve'}
-                </button>
-                <button
-                  onClick={() => onVerify(report.id, 'rejected')}
-                  disabled={actioning === report.id}
-                  style={{
-                    padding: '8px 20px',
-                    borderRadius: 8,
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    fontFamily: "'DM Sans', sans-serif",
-                    background: '#dc2626',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <i className="fa-solid fa-xmark" /> Reject
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() =>
-                  onVerify(report.id, report.status === 'approved' ? 'rejected' : 'approved')
-                }
-                disabled={actioning === report.id}
-                style={{
-                  padding: '8px 20px',
-                  borderRadius: 8,
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid var(--border)',
-                  fontFamily: "'DM Sans', sans-serif",
-                  background: 'var(--surface)',
-                  color: 'var(--text-2)',
-                }}
-              >
-                {report.status === 'approved' ? 'Revoke Approval' : 'Reinstate'}
-              </button>
-            )}
-            {!isOwnSubmission && (
-              <button
-                onClick={() => onVerify(report.id, report.status)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid var(--border)',
-                  fontFamily: "'DM Sans', sans-serif",
-                  background: 'var(--surface)',
-                  color: 'var(--text-2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                }}
-              >
-                <i className="fa-solid fa-floppy-disk" /> Save Note
-              </button>
-            )}
-            <div style={{ flex: 1 }} />
-            <button
-              onClick={() => onDelete(report.id, report.tool_name)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: '1px solid #fecaca',
-                fontFamily: "'DM Sans', sans-serif",
-                background: '#fff1f2',
-                color: '#dc2626',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-            >
-              <i className="fa-solid fa-trash-can" /> Delete
-            </button>
-          </div>
-        </div>
+        {/* Footer — validation workflow (M02) */}
+        <WorkflowPanel
+          report={report}
+          stages={stages}
+          canAct={canAct}
+          isOwnSubmission={isOwnSubmission}
+          busy={actioning === report.id}
+          onReview={(action, note) => onReview(report.id, action, note)}
+          onDelete={canDelete ? () => onDelete(report.id, report.tool_name) : undefined}
+        />
       </div>
     </div>
   );
@@ -1090,44 +980,67 @@ function ReportDetailModal({
 export default function VerifQueuePage() {
   const { permissions, user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'dashboard_management';
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
-    'pending'
-  );
-  const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
+  // M02 views. "My queue" = reports waiting at a stage this user validates.
+  type View = 'my_queue' | 'in_validation' | 'returned' | 'published' | 'rejected' | 'all';
+  const [view, setView] = useState<View>('my_queue');
+  const [stages, setStages] = useState<ValidationStage[]>([]);
+  const { scopes } = useMyScopes();
+  const { institutions } = useInstitutions();
   const [actioning, setActioning] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<ToolkitReport | null>(null);
-  const { reports, count, loading, refetch } = useReports({
-    status:
-      statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved' | 'rejected'),
-    pageSize: 25,
+  const VIEW_STATES: Record<View, WorkflowStatus[] | undefined> = {
+    my_queue: ['submitted', 'in_validation'],
+    in_validation: ['submitted', 'in_validation'],
+    returned: ['returned'],
+    published: ['published'],
+    rejected: ['rejected'],
+    all: undefined,
+  };
+  const {
+    reports: loadedReports,
+    count,
+    loading,
+    refetch,
+  } = useReports({
+    workflowStatuses: VIEW_STATES[view],
+    pageSize: view === 'my_queue' ? 200 : 25,
   });
 
-  const handleVerify = useCallback(
-    async (reportId: string, newStatus: 'approved' | 'rejected' | 'pending') => {
-      if (!permissions?.canApproveReports) {
-        toast.error('You do not have permission to verify reports');
-        return;
-      }
+  useEffect(() => {
+    fetchValidationStages()
+      .then(setStages)
+      .catch(e => toast.error((e as Error).message));
+  }, []);
+
+  const canAct = useCallback(
+    (r: ToolkitReport) => canActOnReport(r, currentUser?.id, stages, scopes, institutions),
+    [currentUser?.id, stages, scopes, institutions]
+  );
+  const reports = view === 'my_queue' ? loadedReports.filter(canAct) : loadedReports;
+
+  const handleReview = useCallback(
+    async (reportId: string, action: ReviewAction, note: string) => {
       setActioning(reportId);
-      const note = noteInputs[reportId] || '';
-      const result = await verifyReport(reportId, newStatus, note);
+      const result = await reviewReport(reportId, action, note);
       if (result.error) {
         toast.error(result.error);
       } else {
-        const label =
-          newStatus === 'approved' ? 'approved' : newStatus === 'rejected' ? 'rejected' : 'updated';
-        toast.success(`Submission ${label}`);
-        await writeAuditEntry(
-          newStatus === 'approved' ? 'approve' : newStatus === 'rejected' ? 'reject' : 'view',
-          `${newStatus === 'approved' ? 'Approved' : newStatus === 'rejected' ? 'Rejected' : 'Updated'} report: ${result.data?.tool_name}`,
-          note ? `Note: ${note}` : undefined
+        const ws = result.data?.workflow_status;
+        toast.success(
+          action === 'approve'
+            ? ws === 'published'
+              ? 'Published: the report now counts toward progress'
+              : 'Approved and sent to the next stage'
+            : action === 'return'
+              ? 'Returned to the submitter'
+              : 'Rejected'
         );
         setSelectedReport(null);
         refetch();
       }
       setActioning(null);
     },
-    [permissions, noteInputs, refetch]
+    [refetch]
   );
 
   const handleDeleteSubmission = useCallback(
@@ -1153,9 +1066,9 @@ export default function VerifQueuePage() {
     [refetch]
   );
 
-  const pendingCount = reports.filter(r => r.status === 'pending').length;
-  const approvedCount = reports.filter(r => r.status === 'approved').length;
-  const rejectedCount = reports.filter(r => r.status === 'rejected').length;
+  const pendingCount = loadedReports.filter(canAct).length;
+  const approvedCount = reports.filter(r => r.workflow_status === 'published').length;
+  const rejectedCount = reports.filter(r => r.workflow_status === 'rejected').length;
 
   return (
     <div>
@@ -1203,8 +1116,9 @@ export default function VerifQueuePage() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+            value={view}
+            onChange={e => setView(e.target.value as View)}
+            aria-label="Which reports to show"
             style={{
               padding: '7px 12px',
               border: '1px solid var(--border)',
@@ -1215,10 +1129,12 @@ export default function VerifQueuePage() {
               background: 'var(--surface)',
             }}
           >
-            <option value="all">All Statuses</option>
-            <option value="pending">Pending Review</option>
-            <option value="approved">Approved</option>
+            <option value="my_queue">My queue (waiting for me)</option>
+            <option value="in_validation">All in validation</option>
+            <option value="returned">Returned for correction</option>
+            <option value="published">Published</option>
             <option value="rejected">Rejected</option>
+            <option value="all">All</option>
           </select>
           <button
             onClick={() => refetch()}
@@ -1310,21 +1226,20 @@ export default function VerifQueuePage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {reports.map(report => {
-            const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
+            const st = statusBadge(report);
             const hasAttachments = (report.attachments || []).length > 0;
             return (
               <div
                 key={report.id}
-                onClick={() => isAdmin && setSelectedReport(report)}
+                onClick={() => setSelectedReport(report)}
                 style={{
                   ...card,
                   padding: 16,
-                  cursor: isAdmin ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   transition: 'border-color 0.15s',
                 }}
                 onMouseEnter={e => {
-                  if (isAdmin)
-                    (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--sky-dim)';
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--sky-dim)';
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)';
@@ -1380,12 +1295,32 @@ export default function VerifQueuePage() {
                     >
                       {st.label}
                     </span>
-                    {isAdmin && (
-                      <i
-                        className="fa-solid fa-chevron-right"
-                        style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}
-                      />
+                    {(() => {
+                      const sp = stageProgress(report, stages);
+                      return sp ? (
+                        <span style={{ fontSize: '0.66rem', color: 'var(--text-2)' }}>
+                          Stage {sp.position}/{sp.total} · {sp.name}
+                        </span>
+                      ) : null;
+                    })()}
+                    {canAct(report) && (
+                      <span
+                        style={{
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          color: '#0369a1',
+                          background: '#e0f2fe',
+                          padding: '2px 8px',
+                          borderRadius: 10,
+                        }}
+                      >
+                        YOUR ACTION
+                      </span>
                     )}
+                    <i
+                      className="fa-solid fa-chevron-right"
+                      style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}
+                    />
                   </div>
                 </div>
 
@@ -1456,12 +1391,13 @@ export default function VerifQueuePage() {
       )}
 
       {/* Detail modal */}
-      {selectedReport && isAdmin && (
+      {selectedReport && (
         <ReportDetailModal
           report={selectedReport}
-          noteValue={noteInputs[selectedReport.id] || ''}
-          onNoteChange={v => setNoteInputs(prev => ({ ...prev, [selectedReport.id]: v }))}
-          onVerify={handleVerify}
+          onReview={handleReview}
+          stages={stages}
+          canAct={canAct(selectedReport)}
+          canDelete={isAdmin}
           onDelete={handleDeleteSubmission}
           onClose={() => setSelectedReport(null)}
           actioning={actioning}

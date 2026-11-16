@@ -17,6 +17,9 @@ import type {
   ApiResponse,
   PaginatedResponse,
   ReportAttachment,
+  ValidationStage,
+  ReportHistoryEntry,
+  WorkflowStatus,
 } from '../types/index';
 
 export interface ToolWeightInfo {
@@ -57,6 +60,8 @@ export async function fetchToolWeight(toolId: ReportType): Promise<ToolWeightInf
 export interface ReportFilters {
   toolId?: ReportType | 'ALL';
   status?: SubmissionStatus | 'ALL';
+  /** M02 workflow states to include (empty/undefined = all). */
+  workflowStatuses?: WorkflowStatus[];
   period?: string;
   district?: string;
   submittedBy?: string;
@@ -82,6 +87,53 @@ const MIME_BY_EXT: Record<string, string> = {
   webp: 'image/webp',
 };
 
+/**
+ * Upload evidence files to storage. Returns the stored attachments and the
+ * names of any that failed, so callers never save a report with evidence
+ * silently missing (previously failures were only logged).
+ */
+export async function uploadEvidence(
+  userId: string,
+  attachments: ReportAttachment[]
+): Promise<{ uploaded: ReportAttachment[]; failed: string[] }> {
+  const uploaded: ReportAttachment[] = [];
+  const failed: string[] = [];
+  for (const att of attachments) {
+    if (!att.data_url) {
+      // Already stored (e.g. kept from a returned report).
+      if (att.storage_path) uploaded.push(att);
+      continue;
+    }
+    try {
+      const base64 = att.data_url.split(',')[1];
+      const binaryStr = atob(base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      const storagePath = `${userId}/${Date.now()}_${att.name}`;
+      const { error } = await supabase.storage
+        .from('report-attachments')
+        .upload(storagePath, new Blob([bytes]), {
+          contentType: MIME_BY_EXT[att.ext] || 'application/octet-stream',
+        });
+      if (error) {
+        failed.push(att.name);
+        continue;
+      }
+      uploaded.push({
+        name: att.name,
+        ext: att.ext,
+        size: att.size,
+        storage_path: storagePath,
+        evidence_type: att.evidence_type || undefined,
+        description: att.description?.trim() || undefined,
+      });
+    } catch {
+      failed.push(att.name);
+    }
+  }
+  return { uploaded, failed };
+}
+
 // ── SUBMIT REPORT ────────────────────────────────────────────
 export async function submitReport(
   toolId: ReportType,
@@ -97,38 +149,13 @@ export async function submitReport(
 
   const userId = sessionData.session.user.id;
 
-  // Upload attachments to Storage first
-  const uploadedAttachments: ReportAttachment[] = [];
-  for (const att of attachments) {
-    if (!att.data_url) continue;
-    try {
-      const base64 = att.data_url.split(',')[1];
-      const binaryStr = atob(base64);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
-      }
-      const blob = new Blob([bytes]);
-      const storagePath = `${userId}/${Date.now()}_${att.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('report-attachments')
-        .upload(storagePath, blob, {
-          contentType: MIME_BY_EXT[att.ext] || 'application/octet-stream',
-        });
-
-      if (!uploadError) {
-        uploadedAttachments.push({
-          name: att.name,
-          ext: att.ext,
-          size: att.size,
-          storage_path: storagePath,
-          evidence_type: att.evidence_type || undefined,
-          description: att.description?.trim() || undefined,
-        });
-      }
-    } catch {
-      console.warn(`Failed to upload ${att.name}`);
-    }
+  // Upload evidence first; if any file fails, nothing is submitted.
+  const { uploaded: uploadedAttachments, failed } = await uploadEvidence(userId, attachments);
+  if (failed.length > 0) {
+    return {
+      data: null,
+      error: `Could not upload: ${failed.join(', ')}. Nothing was submitted; please try again.`,
+    };
   }
 
   const reportData = {
@@ -201,7 +228,17 @@ export async function processReportAutomatic(
 export async function fetchReports(
   filters: ReportFilters = {}
 ): Promise<PaginatedResponse<ToolkitReport>> {
-  const { toolId, status, period, district, page = 1, pageSize = 20, fromDate, toDate } = filters;
+  const {
+    toolId,
+    status,
+    workflowStatuses,
+    period,
+    district,
+    page = 1,
+    pageSize = 20,
+    fromDate,
+    toDate,
+  } = filters;
 
   let query = supabase
     .from('toolkit_reports')
@@ -227,6 +264,8 @@ export async function fetchReports(
 
   if (toolId && toolId !== 'ALL') query = query.eq('tool_id', toolId);
   if (status && status !== 'ALL') query = query.eq('status', status);
+  if (workflowStatuses && workflowStatuses.length > 0)
+    query = query.in('workflow_status', workflowStatuses);
   if (period) query = query.ilike('period', `%${period}%`);
   if (district) query = query.eq('district', district);
   if (fromDate) query = query.gte('submitted_at', fromDate);
@@ -253,34 +292,80 @@ export async function fetchReports(
   };
 }
 
-// ── VERIFY REPORT (approve / reject) ─────────────────────────
-export async function verifyReport(
+// ── VALIDATION WORKFLOW (M02, migration 040) ─────────────────
+// Reports change only through these database functions; the database
+// checks the stage, the validator's scope and self-review.
+
+export type ReviewAction = 'approve' | 'return' | 'reject';
+
+export async function reviewReport(
   reportId: string,
-  newStatus: SubmissionStatus,
-  reviewNote?: string
+  action: ReviewAction,
+  note?: string
 ): Promise<ApiResponse<ToolkitReport>> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData.session) return { data: null, error: 'Not authenticated' };
-
-  const { data, error } = await supabase
-    .from('toolkit_reports')
-    .update({
-      status: newStatus,
-      reviewed_by: sessionData.session.user.id,
-      reviewed_at: new Date().toISOString(),
-      review_note: reviewNote || null,
-    })
-    .eq('id', reportId)
-    .select('*')
-    .single();
-
+  const { data, error } = await supabase.rpc('review_report', {
+    p_report: reportId,
+    p_action: action,
+    p_note: note?.trim() || null,
+  });
   if (error) return { data: null, error: error.message };
-  // Invalidate stats cache — pending count changes when a report is verified
   _statsCache = { data: null, ts: 0 };
-  // Rejection notification to the submitter is handled by a DB trigger
-  // (notify_on_report_rejection, migration 024) so it fires regardless
-  // of which role performs the rejection and isn't subject to client RLS.
+  // Rejection notices to the submitter come from a database trigger (migration 024).
   return { data: data as ToolkitReport, error: null };
+}
+
+/** The submitter corrects a returned report and sends it back into validation. */
+export async function resubmitReport(
+  reportId: string,
+  formData?: Record<string, unknown>,
+  attachments?: ReportAttachment[],
+  note?: string
+): Promise<ApiResponse<ToolkitReport>> {
+  const { data, error } = await supabase.rpc('resubmit_report', {
+    p_report: reportId,
+    p_form_data: formData ?? null,
+    p_attachments: attachments ?? null,
+    p_note: note?.trim() || null,
+  });
+  if (error) return { data: null, error: error.message };
+  _statsCache = { data: null, ts: 0 };
+  return { data: data as ToolkitReport, error: null };
+}
+
+export async function fetchValidationStages(): Promise<ValidationStage[]> {
+  const { data, error } = await supabase
+    .from('validation_stages')
+    .select('*')
+    .order('ordinal')
+    .order('id');
+  if (error) throw new Error(`Could not load the validation workflow: ${error.message}`);
+  return (data || []) as ValidationStage[];
+}
+
+/** REMA administrators only (RLS). Applies to reports submitted afterwards. */
+export async function updateValidationStage(
+  id: number,
+  changes: Partial<Pick<ValidationStage, 'name' | 'ordinal' | 'is_active' | 'applies_to'>>
+): Promise<ApiResponse<ValidationStage>> {
+  const { data, error } = await supabase
+    .from('validation_stages')
+    .update(changes)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: 'You do not have permission to change the workflow.' };
+  return { data: data as ValidationStage, error: null };
+}
+
+export async function fetchReportHistory(reportId: string): Promise<ReportHistoryEntry[]> {
+  const { data, error } = await supabase
+    .from('report_status_history')
+    .select('*, actor_profile:profiles!report_status_history_actor_fkey(full_name, email)')
+    .eq('report_id', reportId)
+    .order('id');
+  if (error) throw new Error(`Could not load the report history: ${error.message}`);
+  return (data || []) as ReportHistoryEntry[];
 }
 
 // ── DELETE REPORT ────────────────────────────────────────────

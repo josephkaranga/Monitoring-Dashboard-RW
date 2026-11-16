@@ -13,7 +13,9 @@ import {
   createUser,
   errorAsUser,
   grantScope,
+  review,
   setRole,
+  useSingleStage,
   type AppliedMigration,
 } from './harness';
 
@@ -79,6 +81,9 @@ beforeAll(async () => {
   for (const u of [ministry, ministry2]) {
     await grantScope(db, u, 'ministry_validator', 'District Authorities', 'Musanze');
   }
+  // M02 (040): one stage, so a single review publishes and the security
+  // rules are tested on their own. The full route is tested in m02-validation.
+  await useSingleStage(db, 'ministry');
 }, 180_000);
 
 describe('migrations', () => {
@@ -188,28 +193,25 @@ describe('H1 — approvers have limits', () => {
 
   it('a reviewer cannot approve their own submission', async () => {
     const id = await submitAs(ministry);
-    await asUser(db, ministry, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
-    );
+    await expect(review(db, ministry, id, 'approve')).rejects.toThrow(/own submission/);
     expect((await reportRow(id)).status).toBe('pending');
   });
 
   it('an administrator cannot approve their own submission', async () => {
     const id = await submitAs(admin);
-    await asUser(db, admin, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
-    );
+    await expect(review(db, admin, id, 'approve')).rejects.toThrow(/own submission/);
     expect((await reportRow(id)).status).toBe('pending');
   });
 
   it('a reviewer approves someone else’s report and the database records who did it', async () => {
     const id = await submitAs(district);
-    await asUser(db, ministry, tx =>
-      tx.query(
-        `UPDATE public.toolkit_reports SET status = 'approved', reviewed_by = $2, review_note = 'ok' WHERE id = $1`,
-        [id, admin] // tries to record someone else as reviewer
+    // Recording someone else as reviewer is impossible: users cannot UPDATE reports at all.
+    expect(
+      await errorAsUser(db, ministry, tx =>
+        tx.query(`UPDATE public.toolkit_reports SET reviewed_by = $2 WHERE id = $1`, [id, admin])
       )
-    );
+    ).not.toBeNull();
+    await review(db, ministry, id, 'approve', 'ok');
     const row = await reportRow(id);
     expect(row.status).toBe('approved');
     expect(row.reviewed_by).toBe(ministry);
@@ -222,15 +224,18 @@ describe('H1 — approvers have limits', () => {
         id,
       ])
     );
-    expect(err?.code).toBe('42501');
+    expect(err?.message).toMatch(/permission denied/i);
     expect((await reportRow(id)).form_data).toMatchObject({ x: 1 });
   });
 
   it('a data-entry user cannot update any report (013 "link reports" policy removed)', async () => {
     const id = await submitAs(ministry2);
-    await asUser(db, district, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
-    );
+    expect(
+      await errorAsUser(db, district, tx =>
+        tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
+      )
+    ).not.toBeNull();
+    await expect(review(db, district, id, 'approve')).rejects.toThrow(/not a validator/);
     expect((await reportRow(id)).status).toBe('pending');
   });
 });
@@ -240,15 +245,8 @@ describe('H2 — public viewer reads approved reports only', () => {
     const pending = await submitAs(district);
     const rejected = await submitAs(district);
     const approved = await submitAs(district);
-    await asUser(db, ministry, async tx => {
-      await tx.query(
-        `UPDATE public.toolkit_reports SET status = 'rejected', review_note = 'no' WHERE id = $1`,
-        [rejected]
-      );
-      await tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [
-        approved,
-      ]);
-    });
+    await review(db, ministry, rejected, 'reject', 'no');
+    await review(db, ministry, approved, 'approve');
 
     const seen = await asUser(db, viewer, async tx => {
       const r = await tx.query<{ id: string; status: string }>(
@@ -300,9 +298,7 @@ describe('H3 — audit log is written by the database and append-only', () => {
 
   it('a status change is recorded with who did it and the previous value', async () => {
     const id = await submitAs(district);
-    await asUser(db, ministry2, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
-    );
+    await review(db, ministry2, id, 'approve');
     const r = await db.query<{
       user_id: string;
       action_type: string;

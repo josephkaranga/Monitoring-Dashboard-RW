@@ -24,6 +24,7 @@ const DataPipelinePage = lazy(() => import('../pages/DataPipelinePage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 const UserManagementPage = lazy(() => import('../pages/UserManagementPage'));
 const MyInstitutionPage = lazy(() => import('../pages/MyInstitutionPage'));
+const ValidationWorkflowPage = lazy(() => import('../pages/ValidationWorkflowPage'));
 const RoleRequestsPage = lazy(() => import('../pages/RoleRequestsPage'));
 const RoleChangeApprovalPanel = lazy(() => import('./RoleChangeApprovalPanel'));
 
@@ -203,20 +204,9 @@ export default function App() {
                     <Route path="/risk" element={<RiskPage />} />
                   </Route>
 
-                  {/* Verification queue: approvers only */}
-                  <Route
-                    element={
-                      <ProtectedRoute
-                        allowedRoles={[
-                          'lead_government_ministry_reporting',
-                          'dashboard_management',
-                        ]}
-                        requiredPermission="canApproveReports"
-                      />
-                    }
-                  >
-                    <Route path="/verification-queue" element={<VerifQueuePage />} />
-                  </Route>
+                  {/* Verification queue (M02): validators at any stage. What each user
+                      sees and may do is enforced by the database (RLS and review_report). */}
+                  <Route path="/verification-queue" element={<VerifQueuePage />} />
 
                   {/* Settings: all */}
                   <Route path="/settings" element={<SettingsPage />} />
@@ -242,6 +232,8 @@ export default function App() {
                   {/* Role change approval: admin only */}
                   <Route element={<ProtectedRoute allowedRoles={['dashboard_management']} />}>
                     <Route path="/role-requests/admin" element={<RoleChangeApprovalPanel />} />
+                    {/* M02: validation order (Decision 3) */}
+                    <Route path="/validation-workflow" element={<ValidationWorkflowPage />} />
                   </Route>
                 </Route>
               </Route>

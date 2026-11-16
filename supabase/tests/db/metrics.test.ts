@@ -6,7 +6,15 @@
 
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
-import { asUser, createDatabase, createUser, grantScope, setRole } from './harness';
+import {
+  asUser,
+  createDatabase,
+  createUser,
+  grantScope,
+  review,
+  setRole,
+  useSingleStage,
+} from './harness';
 
 let db: PGlite;
 let reviewer: string;
@@ -31,6 +39,7 @@ beforeAll(async () => {
   // Scope rules (migration 039) are not under test here.
   await grantScope(db, officer, 'data_entry', 'District Authorities', 'Musanze');
   await grantScope(db, reviewer, 'ministry_validator', 'District Authorities', 'Musanze');
+  await useSingleStage(db, 'ministry');
 }, 180_000);
 
 describe('system metrics (forest hectares)', () => {
@@ -49,21 +58,25 @@ describe('system metrics (forest hectares)', () => {
     });
     expect(await forestTotal()).toBe(before); // pending: not counted
 
-    const review = (sql: string) => asUser(db, reviewer, tx => tx.query(sql, [id]));
-
-    await review(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`);
+    await review(db, reviewer, id, 'approve'); // single stage: publishes
     expect(await forestTotal()).toBe(before + 120);
 
-    await review(`UPDATE public.toolkit_reports SET review_note = 'checked' WHERE id = $1`);
-    await review(`UPDATE public.toolkit_reports SET review_note = 'checked again' WHERE id = $1`);
-    expect(await forestTotal()).toBe(before + 120); // was +360 before 038
-
-    await review(
-      `UPDATE public.toolkit_reports SET status = 'rejected', review_note = 'revoked' WHERE id = $1`
+    // Any later write to a published report (here by the service role) must
+    // not add the figures again -- this inflated totals before 038.
+    await db.query(`UPDATE public.toolkit_reports SET review_note = 'checked' WHERE id = $1`, [id]);
+    await db.query(
+      `UPDATE public.toolkit_reports SET review_note = 'checked again' WHERE id = $1`,
+      [id]
     );
-    expect(await forestTotal()).toBe(before); // was still +120 before 038
+    expect(await forestTotal()).toBe(before + 120);
 
-    await review(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`);
+    await review(db, reviewer, id, 'return', 'withdrawn: figures to be checked');
+    expect(await forestTotal()).toBe(before); // a withdrawn report no longer counts
+
+    await asUser(db, officer, tx => tx.query(`SELECT public.resubmit_report($1)`, [id]));
+    expect(await forestTotal()).toBe(before); // resubmitted is not published
+
+    await review(db, reviewer, id, 'approve');
     expect(await forestTotal()).toBe(before + 120);
 
     await asUser(db, admin, tx =>
