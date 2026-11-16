@@ -62,6 +62,8 @@ export interface ReportFilters {
   status?: SubmissionStatus | 'ALL';
   /** M02 workflow states to include (empty/undefined = all). */
   workflowStatuses?: WorkflowStatus[];
+  /** Reports currently waiting at this validation stage. */
+  currentStageId?: number;
   period?: string;
   district?: string;
   submittedBy?: string;
@@ -232,6 +234,7 @@ export async function fetchReports(
     toolId,
     status,
     workflowStatuses,
+    currentStageId,
     period,
     district,
     page = 1,
@@ -266,6 +269,7 @@ export async function fetchReports(
   if (status && status !== 'ALL') query = query.eq('status', status);
   if (workflowStatuses && workflowStatuses.length > 0)
     query = query.in('workflow_status', workflowStatuses);
+  if (currentStageId != null) query = query.eq('current_stage_id', currentStageId);
   if (period) query = query.ilike('period', `%${period}%`);
   if (district) query = query.eq('district', district);
   if (fromDate) query = query.gte('submitted_at', fromDate);
@@ -356,6 +360,22 @@ export async function updateValidationStage(
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: 'You do not have permission to change the workflow.' };
   return { data: data as ValidationStage, error: null };
+}
+
+export interface PipelineRow {
+  workflow_status: WorkflowStatus;
+  current_stage_id: number | null;
+  stage_code: string | null;
+  stage_name: string | null;
+  stage_ordinal: number | null;
+  reports: number;
+}
+
+/** Reports per state and stage (v_validation_pipeline, migration 041), under the caller's access. */
+export async function fetchValidationPipeline(): Promise<PipelineRow[]> {
+  const { data, error } = await supabase.from('v_validation_pipeline').select('*');
+  if (error) throw new Error(`Could not load the validation pipeline: ${error.message}`);
+  return (data || []) as PipelineRow[];
 }
 
 export async function fetchReportHistory(reportId: string): Promise<ReportHistoryEntry[]> {

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDashboardStats, useReports, useDistricts } from '../hooks/useData';
 import { fetchIndicators, fetchTargets } from '../services/dataService';
+import { fetchValidationPipeline, type PipelineRow } from '../services/reportService';
+import ValidationPipelineCard, { type ActivityFilter } from '../components/ValidationPipelineCard';
 import type { Indicator, NBSAPTarget } from '../types/index';
 
 import { DashboardSkeleton } from '../components/Skeleton';
@@ -1570,7 +1572,26 @@ function EntityDetailPanel({
 export default function DashboardPageRedesign() {
   const navigate = useNavigate();
   const { stats, loading, refetch: refetchStats } = useDashboardStats(false);
-  const { reports, refetch: refetchReports } = useReports({ status: 'approved', pageSize: 6 });
+  // Stage filters (after M02): the activity list follows the chosen state or stage.
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>({ kind: 'published' });
+  const [pipeline, setPipeline] = useState<PipelineRow[]>([]);
+  const { reports, refetch: refetchReports } = useReports(
+    activityFilter.kind === 'stage'
+      ? {
+          workflowStatuses: ['submitted', 'in_validation'],
+          currentStageId: activityFilter.stageId,
+          pageSize: 6,
+        }
+      : { workflowStatuses: [activityFilter.kind], pageSize: 6 }
+  );
+  const loadPipeline = useCallback(() => {
+    fetchValidationPipeline()
+      .then(setPipeline)
+      .catch(e => console.error(e));
+  }, []);
+  useEffect(() => {
+    loadPipeline();
+  }, [loadPipeline]);
   const [systemMetrics, setSystemMetrics] = useState<DashboardMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [indicators, setIndicators] = useState<Indicator[]>([]);
@@ -1602,10 +1623,11 @@ export default function DashboardPageRedesign() {
   const refreshAll = useCallback(() => {
     refetchStats();
     refetchReports();
+    loadPipeline();
     loadSystemMetrics();
     fetchTargets().then(setTargets);
     fetchIndicators({ pageSize: 200 }).then(setIndicators);
-  }, [refetchStats, refetchReports, loadSystemMetrics]);
+  }, [refetchStats, refetchReports, loadPipeline, loadSystemMetrics]);
 
   useEffect(() => {
     return eventBus.on('dashboard-refresh', refreshAll);
@@ -1786,6 +1808,14 @@ export default function DashboardPageRedesign() {
       {/* ═══ MILESTONE TRACKER ═══ */}
       <MilestoneTrackerUN targets={targets} onOpen={onOpen} />
 
+      {/* ═══ VALIDATION PIPELINE (stage filters) ═══ */}
+      <ValidationPipelineCard
+        rows={pipeline}
+        filter={activityFilter}
+        onFilter={setActivityFilter}
+        style={{ ...card, padding: '16px 20px', marginBottom: 20 }}
+      />
+
       {/* ═══ ATTENTION + RECENT ACTIVITY ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <AttentionPanelUN targets={targets} indicators={indicators} onOpen={onOpen} />
@@ -1793,7 +1823,12 @@ export default function DashboardPageRedesign() {
         <div style={card}>
           <div style={cardHead}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={cardTitle}>Recent activity</div>
+              <div style={cardTitle}>
+                Recent activity ·{' '}
+                {activityFilter.kind === 'stage'
+                  ? `at ${activityFilter.name}`
+                  : activityFilter.kind}
+              </div>
               {(s?.pendingVerifications ?? 0) > 0 && (
                 <span
                   style={{
@@ -1819,7 +1854,7 @@ export default function DashboardPageRedesign() {
                   className="fa-solid fa-inbox"
                   style={{ fontSize: '1.6rem', display: 'block', marginBottom: 10, opacity: 0.4 }}
                 />
-                No approved submissions yet
+                No reports in this view
               </div>
             ) : (
               reports.map(r => (
