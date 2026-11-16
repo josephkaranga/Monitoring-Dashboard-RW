@@ -67,12 +67,27 @@ export interface ReportFilters {
   realtime?: boolean;
 }
 
+// Evidence content types (the bucket stores what we send; 'application/xlsx' is not a real type).
+const MIME_BY_EXT: Record<string, string> = {
+  pdf: 'application/pdf',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xls: 'application/vnd.ms-excel',
+  csv: 'text/csv',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+};
+
 // ── SUBMIT REPORT ────────────────────────────────────────────
 export async function submitReport(
   toolId: ReportType,
   toolName: string,
   formData: Record<string, unknown>,
-  requireVerification: boolean = true,
+  _requireVerification: boolean = true,
   attachments: ReportAttachment[] = [],
   nbsapTargetId?: number | null,
   indicatorId?: number | null
@@ -97,7 +112,9 @@ export async function submitReport(
       const storagePath = `${userId}/${Date.now()}_${att.name}`;
       const { error: uploadError } = await supabase.storage
         .from('report-attachments')
-        .upload(storagePath, blob, { contentType: `application/${att.ext}` });
+        .upload(storagePath, blob, {
+          contentType: MIME_BY_EXT[att.ext] || 'application/octet-stream',
+        });
 
       if (!uploadError) {
         uploadedAttachments.push({
@@ -105,6 +122,8 @@ export async function submitReport(
           ext: att.ext,
           size: att.size,
           storage_path: storagePath,
+          evidence_type: att.evidence_type || undefined,
+          description: att.description?.trim() || undefined,
         });
       }
     } catch {
@@ -116,9 +135,12 @@ export async function submitReport(
     tool_id: toolId,
     tool_name: toolName,
     submitted_by: userId,
-    status: (requireVerification ? 'pending' : 'approved') as SubmissionStatus,
-    reviewed_by: requireVerification ? null : userId,
-    reviewed_at: requireVerification ? null : new Date().toISOString(),
+    // Every report enters as pending: nobody approves their own submission,
+    // and the database refuses anything else (migration 037). The
+    // requireVerification argument is kept for callers but no longer skips review.
+    status: 'pending' as SubmissionStatus,
+    reviewed_by: null,
+    reviewed_at: null,
     period: (formData.period as string) || null,
     form_data: formData,
     attachments: uploadedAttachments,
@@ -498,7 +520,8 @@ export async function importReportsFromJSON(
       tool_id: r.tool_id,
       tool_name: r.tool_name,
       submitted_by: sessionData.session!.user.id,
-      status: r.status || 'pending',
+      // Imported records are re-reviewed: approval does not travel with the file.
+      status: 'pending' as SubmissionStatus,
       period: r.period,
       form_data: r.form_data || {},
       attachments: [],

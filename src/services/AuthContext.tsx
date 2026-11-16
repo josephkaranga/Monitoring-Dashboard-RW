@@ -113,12 +113,10 @@ export async function checkAccountStatus(profile: UserProfile): Promise<AccountS
 
         // Log the auto-reactivation
         try {
-          await supabase.from('audit_log').insert({
-            user_id: profile.id,
-            action_type: 'auto_reactivate_account',
-            action: 'System auto-reactivated expired suspension',
-            detail: `Suspension expired on ${endDate.toISOString()}. Account automatically reactivated.`,
-            role: 'system',
+          await supabase.rpc('log_audit_event', {
+            p_action_type: 'auto_reactivate_account',
+            p_action: 'System auto-reactivated expired suspension',
+            p_detail: `Suspension expired on ${endDate.toISOString()}. Account automatically reactivated.`,
           });
         } catch (auditError) {
           console.error('Failed to log auto-reactivation:', auditError);

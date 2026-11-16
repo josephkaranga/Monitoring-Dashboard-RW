@@ -94,11 +94,11 @@ export class AutomatedProcessingEngine {
     report: ReportSubmission,
     orgConfig: OrganizationConfig
   ): Promise<void> {
-    await supabase.from('audit_log').insert({
-      user_id: report.submittedBy,
-      action_type: 'submit',
-      action: `Report ${report.id} submitted via ${report.toolId}`,
-      detail: JSON.stringify({
+    // Recorded through the RPC: the database sets the user from the session (migration 037).
+    await supabase.rpc('log_audit_event', {
+      p_action_type: 'submit',
+      p_action: `Report ${report.id} submitted via ${report.toolId}`,
+      p_detail: JSON.stringify({
         reportId: report.id,
         toolId: report.toolId,
         toolWeight: getToolWeight(report.toolId),
@@ -119,11 +119,10 @@ export class AutomatedProcessingEngine {
   ): Promise<void> {
     if (orgConfig.auditLevel === 'minimal') return;
 
-    await supabase.from('audit_log').insert({
-      user_id: report.submittedBy,
-      action_type: 'automatic_processing',
-      action: `Report ${report.id} processed automatically`,
-      detail: JSON.stringify({
+    await supabase.rpc('log_audit_event', {
+      p_action_type: 'automatic_processing',
+      p_action: `Report ${report.id} processed automatically`,
+      p_detail: JSON.stringify({
         reportId: report.id,
         toolId: report.toolId,
         nbsapTargetId: report.nbsapTargetId,

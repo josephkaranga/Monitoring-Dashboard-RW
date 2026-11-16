@@ -77,7 +77,6 @@ export async function signUp(userData: SignupData): Promise<ApiResponse<UserProf
     options: {
       data: {
         full_name: userData.full_name,
-        role: userData.role,
         organization: userData.organization || null,
         department: userData.department || null,
       },
@@ -91,6 +90,13 @@ export async function signUp(userData: SignupData): Promise<ApiResponse<UserProf
 
   if (!data.user) {
     return { data: null, error: 'Signup failed. Please try again.' };
+  }
+
+  // With email confirmation on, there is no session until the link is
+  // clicked, so the profile (created by the handle_new_user trigger) is not
+  // readable yet. The account stays inactive until an administrator approves it.
+  if (!data.session) {
+    return { data: null, error: null };
   }
 
   // Profile is created automatically via DB trigger
@@ -285,12 +291,10 @@ export async function updateUserRoleDirectly(
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'admin_role_change',
-    action: 'Administrator directly changed user role',
-    detail: `Changed ${targetProfile.full_name}'s role from ${oldRole} to ${newRole}. Reason: ${reason || 'Not specified'}`,
-    role: 'dashboard_management',
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'admin_role_change',
+    p_action: 'Administrator directly changed user role',
+    p_detail: `Changed ${targetProfile.full_name}'s role from ${oldRole} to ${newRole}. Reason: ${reason || 'Not specified'}`,
   });
 
   // Notify the user
@@ -349,12 +353,10 @@ export async function deactivateUserAccount(
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'deactivate_account',
-    action: 'Administrator deactivated user account',
-    detail: `Deactivated account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason || 'Not specified'}`,
-    role: 'dashboard_management',
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'deactivate_account',
+    p_action: 'Administrator deactivated user account',
+    p_detail: `Deactivated account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason || 'Not specified'}`,
   });
 
   // Notify the user
@@ -419,12 +421,10 @@ export async function suspendUserAccount(
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'suspend_account',
-    action: 'Administrator suspended user account',
-    detail: `Suspended account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason}. End date: ${endDate?.toISOString() || 'Indefinite'}`,
-    role: 'dashboard_management',
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'suspend_account',
+    p_action: 'Administrator suspended user account',
+    p_detail: `Suspended account for ${targetProfile.full_name} (${targetProfile.email}). Reason: ${reason}. End date: ${endDate?.toISOString() || 'Indefinite'}`,
   });
 
   // Notify the user
@@ -486,12 +486,10 @@ export async function reactivateUserAccount(userId: string): Promise<ApiResponse
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'reactivate_account',
-    action: 'Administrator reactivated user account',
-    detail: `Reactivated account for ${targetProfile.full_name} (${targetProfile.email})`,
-    role: 'dashboard_management',
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'reactivate_account',
+    p_action: 'Administrator reactivated user account',
+    p_detail: `Reactivated account for ${targetProfile.full_name} (${targetProfile.email})`,
   });
 
   // Notify the user

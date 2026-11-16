@@ -5,8 +5,8 @@ import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
-import type { UserRole, LoginCredentials, SignupData } from '../types/index';
-import { USER_ROLE_LABELS, USER_ROLE_DESCRIPTIONS } from '../types/index';
+import type { LoginCredentials, SignupData } from '../types/index';
+import { MIN_PASSWORD_LENGTH, passwordProblem } from '../utils/passwordPolicy';
 
 type AuthMode = 'login' | 'signup' | 'reset' | 'set-password';
 
@@ -44,13 +44,11 @@ export default function AuthPage() {
   );
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('policy_monitoring');
   const [loginForm, setLoginForm] = useState<LoginCredentials>({ email: '', password: '' });
-  const [signupForm, setSignupForm] = useState<Omit<SignupData, 'role'> & { role: UserRole }>({
+  const [signupForm, setSignupForm] = useState<SignupData>({
     email: '',
     password: '',
     full_name: '',
-    role: 'policy_monitoring',
     organization: '',
   });
   const [resetEmail, setResetEmail] = useState('');
@@ -85,8 +83,8 @@ export default function AuthPage() {
     } else if (mode === 'signup') {
       if (!signupForm.full_name) errs.full_name = 'Full name is required';
       if (!signupForm.email) errs.email = 'Email is required';
-      if (!signupForm.password || signupForm.password.length < 8)
-        errs.password = 'Password must be at least 8 characters';
+      const pwProblem = passwordProblem(signupForm.password);
+      if (pwProblem) errs.password = pwProblem;
     } else {
       if (!resetEmail) errs.email = 'Email is required';
     }
@@ -115,7 +113,7 @@ export default function AuthPage() {
       e.preventDefault();
       if (!validate()) return;
       setLoading(true);
-      const result = await signUp({ ...signupForm, role: selectedRole });
+      const result = await signUp(signupForm);
       if (result.error) toast.error(result.error);
       else {
         toast.success('Registration submitted. Awaiting administrator approval.');
@@ -123,7 +121,7 @@ export default function AuthPage() {
       }
       setLoading(false);
     },
-    [signupForm, selectedRole, validate]
+    [signupForm, validate]
   );
 
   const handleReset = useCallback(
@@ -145,8 +143,9 @@ export default function AuthPage() {
   const handleSetPassword = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (newPassword.length < 8) {
-        toast.error('Password must be at least 8 characters');
+      const pwProblem = passwordProblem(newPassword);
+      if (pwProblem) {
+        toast.error(pwProblem);
         return;
       }
       if (newPassword !== confirmPassword) {
@@ -456,33 +455,28 @@ export default function AuthPage() {
                     </div>
                   )}
                 </div>
-                <div style={fieldWrap}>
-                  <label style={labelStyle}>Role</label>
-                  <select
-                    value={selectedRole}
-                    onChange={e => setSelectedRole(e.target.value as UserRole)}
-                    style={{ ...inputBase, cursor: 'pointer' }}
-                  >
-                    {(Object.entries(USER_ROLE_LABELS) as [UserRole, string][]).map(
-                      ([role, label]) => (
-                        <option key={role} value={role}>
-                          {label}
-                        </option>
-                      )
-                    )}
-                  </select>
-                  <p
-                    style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: 6, lineHeight: 1.4 }}
-                  >
-                    {USER_ROLE_DESCRIPTIONS[selectedRole]}
-                  </p>
+                {/* Access is assigned by an administrator, never chosen at sign-up (security annex C1) */}
+                <div
+                  style={{
+                    background: '#f0f9ff',
+                    borderRadius: 8,
+                    padding: '10px 12px',
+                    marginBottom: 14,
+                    fontSize: '0.75rem',
+                    color: '#0369a1',
+                    lineHeight: 1.5,
+                    borderLeft: '3px solid #0ea5e9',
+                  }}
+                >
+                  A REMA administrator activates your account and assigns your access role after
+                  confirming it with your institution.
                 </div>
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Password</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Min. 8 characters"
+                      placeholder={`Min. ${MIN_PASSWORD_LENGTH} characters, upper/lower case and a number`}
                       value={signupForm.password}
                       onChange={e => setSignupForm(f => ({ ...f, password: e.target.value }))}
                       className="auth-input"
@@ -596,7 +590,7 @@ export default function AuthPage() {
                   <div style={{ position: 'relative' }}>
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Min. 8 characters"
+                      placeholder={`Min. ${MIN_PASSWORD_LENGTH} characters, upper/lower case and a number`}
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
                       className="auth-input"
@@ -625,9 +619,9 @@ export default function AuthPage() {
                       />
                     </button>
                   </div>
-                  {newPassword.length > 0 && newPassword.length < 8 && (
+                  {newPassword.length > 0 && passwordProblem(newPassword) && (
                     <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: 4 }}>
-                      Must be at least 8 characters
+                      {passwordProblem(newPassword)}
                     </div>
                   )}
                 </div>
@@ -652,11 +646,17 @@ export default function AuthPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
+                  disabled={
+                    loading ||
+                    passwordProblem(newPassword) !== null ||
+                    newPassword !== confirmPassword
+                  }
                   style={{
                     ...btnStyle,
                     opacity:
-                      loading || newPassword.length < 8 || newPassword !== confirmPassword
+                      loading ||
+                      passwordProblem(newPassword) !== null ||
+                      newPassword !== confirmPassword
                         ? 0.4
                         : 1,
                   }}

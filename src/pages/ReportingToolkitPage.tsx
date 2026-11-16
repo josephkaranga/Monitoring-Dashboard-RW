@@ -30,6 +30,15 @@ import type {
 import { supabase } from '../utils/supabase';
 import { formatFieldLabel, formatFieldValue } from '../utils/formData';
 import { validateYear } from '../utils/validation';
+import { groupStakeholders } from '../utils/stakeholderGroups';
+import {
+  EVIDENCE_ACCEPTED_EXT,
+  EVIDENCE_TYPES,
+  evidenceFileProblem,
+  evidenceSubmissionProblem,
+  fileExtension,
+  isEvidenceClassified,
+} from '../utils/evidence';
 
 // ── STAKEHOLDER RESPONSIBILITIES MAPPING ─────────────────────────
 // Full NBSAP 2025-2030 institutional framework — all institutions with module assignments
@@ -1284,6 +1293,11 @@ const ReportForm = ({
       .filter(([, info]) => info.modules.includes(tool.id))
       .map(([key, info]) => ({ id: key, ...info }));
   }, [tool.id]);
+  // Grouped by institution type for the dropdown (ministries, authorities, boards, ...)
+  const stakeholderGroups = useMemo(
+    () => groupStakeholders(availableStakeholders),
+    [availableStakeholders]
+  );
 
   // Get filtered targets based on selected stakeholder
   const filteredTargets = useMemo(() => {
@@ -1458,9 +1472,10 @@ const ReportForm = ({
         return;
       }
 
-      // Require at least one supporting file (document or image)
-      if (attachments.length === 0) {
-        toast.error('Please attach at least one supporting document or image');
+      // Supporting evidence: at least one file, each classified (quality control)
+      const evidenceProblem = evidenceSubmissionProblem(attachments);
+      if (evidenceProblem) {
+        toast.error(evidenceProblem);
         return;
       }
 
@@ -1609,28 +1624,41 @@ const ReportForm = ({
     [formData, tool, settings, attachments, onSuccess, responsibleTargets, allDistricts]
   );
 
-  const handleFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      const allowed = ['pdf', 'xlsx', 'xls', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
-      if (!allowed.includes(ext)) {
-        toast.error(`${file.name}: unsupported file type`);
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name}: file is larger than 10 MB`);
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = e => {
-        setAttachments(prev => [
-          ...prev,
-          { name: file.name, ext, size: file.size, data_url: e.target?.result as string },
-        ]);
-      };
-      reader.readAsDataURL(file);
-    });
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files) return;
+      const accepted: ReportAttachment[] = [...attachments];
+      Array.from(files).forEach(file => {
+        const problem = evidenceFileProblem(file, accepted);
+        if (problem) {
+          toast.error(problem);
+          return;
+        }
+        const ext = fileExtension(file.name);
+        const placeholder: ReportAttachment = { name: file.name, ext, size: file.size };
+        accepted.push(placeholder);
+        const reader = new FileReader();
+        reader.onload = e => {
+          setAttachments(prev => [
+            ...prev,
+            {
+              name: file.name,
+              ext,
+              size: file.size,
+              data_url: e.target?.result as string,
+              evidence_type: '',
+              description: '',
+            },
+          ]);
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+    [attachments]
+  );
+
+  const updateAttachment = useCallback((index: number, patch: Partial<ReportAttachment>) => {
+    setAttachments(prev => prev.map((a, i) => (i === index ? { ...a, ...patch } : a)));
   }, []);
 
   return (
@@ -1765,10 +1793,14 @@ const ReportForm = ({
                     }}
                   >
                     <option value="">— Select Stakeholder —</option>
-                    {availableStakeholders.map(stakeholder => (
-                      <option key={stakeholder.id} value={stakeholder.id}>
-                        {stakeholder.name}
-                      </option>
+                    {stakeholderGroups.map(group => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.items.map(stakeholder => (
+                          <option key={stakeholder.id} value={stakeholder.id}>
+                            {stakeholder.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 ) : f.type === 'target_select' ? (
@@ -2234,7 +2266,7 @@ const ReportForm = ({
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
+              accept={EVIDENCE_ACCEPTED_EXT.map(e => `.${e}`).join(',')}
               style={{ display: 'none' }}
               onChange={e => handleFiles(e.target.files)}
             />
@@ -2244,70 +2276,130 @@ const ReportForm = ({
               <span style={{ color: tool.accent, textDecoration: 'underline' }}>browse</span>
             </div>
             <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 3 }}>
-              PDF · Excel · Word · Images (PNG, JPG, GIF) — at least one required · max 10 MB each
+              PDF · Excel · CSV · Word · Images (PNG, JPG, GIF, WebP) — at least one required · max
+              10 MB each · choose an evidence type for every file
             </div>
           </div>
 
-          {/* Attached files */}
-          {attachments.map((att, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 12px',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                marginBottom: 6,
-              }}
-            >
-              {['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(att.ext) ? (
-                <img
-                  src={att.data_url}
-                  alt={att.name}
-                  style={{
-                    width: 34,
-                    height: 34,
-                    objectFit: 'cover',
-                    borderRadius: 6,
-                    flexShrink: 0,
-                  }}
-                />
-              ) : (
-                <span style={{ fontSize: '0.82rem' }}>📄</span>
-              )}
-              <span
+          {/* Attached files: each must be classified for validators */}
+          {attachments.map((att, i) => {
+            const classified = isEvidenceClassified(att);
+            const typeHint = EVIDENCE_TYPES.find(t => t.value === att.evidence_type)?.hint;
+            return (
+              <div
+                key={i}
                 style={{
-                  flex: 1,
-                  fontSize: '0.78rem',
-                  fontWeight: 500,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  padding: '8px 12px',
+                  background: '#f8fafc',
+                  border: `1px solid ${classified ? '#e2e8f0' : '#fbbf24'}`,
+                  borderRadius: 8,
+                  marginBottom: 6,
                 }}
               >
-                {att.name}
-              </span>
-              <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
-                {(att.size / 1024).toFixed(1)} KB
-              </span>
-              <button
-                type="button"
-                onClick={() => setAttachments(a => a.filter((_, j) => j !== i))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#f43f5e',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(att.ext) ? (
+                    <img
+                      src={att.data_url}
+                      alt={att.name}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        objectFit: 'cover',
+                        borderRadius: 6,
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '0.82rem' }}>📄</span>
+                  )}
+                  <span
+                    style={{
+                      flex: 1,
+                      fontSize: '0.78rem',
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {att.name}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                    {(att.size / 1024).toFixed(1)} KB
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments(a => a.filter((_, j) => j !== i))}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#f43f5e',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}
+                >
+                  <div>
+                    <select
+                      aria-label={`Evidence type for ${att.name}`}
+                      value={att.evidence_type || ''}
+                      onChange={e => updateAttachment(i, { evidence_type: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        border: `1.5px solid ${att.evidence_type ? '#e2e8f0' : '#fbbf24'}`,
+                        borderRadius: 7,
+                        fontSize: '0.78rem',
+                        fontFamily: "'DM Sans', sans-serif",
+                        outline: 'none',
+                        background: '#fff',
+                        color: '#0f172a',
+                      }}
+                    >
+                      <option value="">— Evidence type (required) —</option>
+                      {EVIDENCE_TYPES.map(t => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    {typeHint && (
+                      <div style={{ fontSize: '0.66rem', color: '#94a3b8', marginTop: 3 }}>
+                        {typeHint}
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    aria-label={`Description of ${att.name}`}
+                    value={att.description || ''}
+                    onChange={e => updateAttachment(i, { description: e.target.value })}
+                    placeholder={
+                      att.evidence_type === 'other'
+                        ? 'Describe this evidence (required)'
+                        : 'What does this file show? (optional)'
+                    }
+                    maxLength={200}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      border: '1.5px solid #e2e8f0',
+                      borderRadius: 7,
+                      fontSize: '0.78rem',
+                      fontFamily: "'DM Sans', sans-serif",
+                      outline: 'none',
+                      color: '#0f172a',
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
             <button

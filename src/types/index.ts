@@ -309,6 +309,8 @@ export interface ReportAttachment {
   size: number;
   storage_path?: string;
   data_url?: string; // temporary for upload
+  evidence_type?: string; // see EVIDENCE_TYPES in utils/evidence.ts
+  description?: string; // what the file shows; required when evidence_type is 'other'
 }
 
 // ── DISTRICTS ────────────────────────────────────────────────
@@ -479,7 +481,6 @@ export interface LoginCredentials {
 
 export interface SignupData extends LoginCredentials {
   full_name: string;
-  role: UserRole;
   organization?: string;
   department?: string;
 }

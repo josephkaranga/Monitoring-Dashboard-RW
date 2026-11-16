@@ -238,19 +238,15 @@ export async function writeAuditEntry(
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return;
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name')
-    .eq('id', sessionData.session.user.id)
-    .single();
-
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: actionType,
-    action,
-    detail: detail || null,
-    role: profile?.role || null,
+  // The database sets user_id, role and source (migration 037); the browser
+  // cannot write audit_log directly. Report status changes, role changes and
+  // account changes are recorded by database triggers, not here.
+  const { error } = await supabase.rpc('log_audit_event', {
+    p_action_type: actionType,
+    p_action: action,
+    p_detail: detail || null,
   });
+  if (error) console.error('Failed to write audit entry:', error.message);
 }
 
 /**
@@ -264,27 +260,15 @@ export async function logAuditEvent(
 ): Promise<void> {
   try {
     const { data: sessionData } = await supabase.auth.getSession();
+    // Anonymous events are not recorded: audit rows always carry a real user.
+    if (!sessionData.session) return;
 
-    // If no session, log anonymously (for public access scenarios)
-    const userId = sessionData.session?.user.id || 'anonymous';
-
-    let role = null;
-    if (sessionData.session) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', sessionData.session.user.id)
-        .single();
-      role = profile?.role || null;
-    }
-
-    await supabase.from('audit_log').insert({
-      user_id: userId,
-      action_type: 'map_action',
-      action: eventType,
-      detail: JSON.stringify(metadata),
-      role,
+    const { error } = await supabase.rpc('log_audit_event', {
+      p_action_type: 'map_action',
+      p_action: eventType,
+      p_detail: JSON.stringify(metadata),
     });
+    if (error) console.error('Failed to log audit event:', error.message);
   } catch (error) {
     // Don't throw errors for audit logging failures
     console.error('Failed to log audit event:', error);

@@ -11,6 +11,7 @@ import { useAuditLog } from '../hooks/useData';
 import type { UserSettings, NotificationPreferences } from '../types/index';
 import { USER_ROLE_LABELS } from '../types/index';
 import toast from 'react-hot-toast';
+import { passwordProblem } from '../utils/passwordPolicy';
 // ── Toggle ────────────────────────────────────────────────────
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
   <label
@@ -183,8 +184,9 @@ export default function SettingsPage() {
       toast.error('Passwords do not match');
       return;
     }
-    if (pwForm.next.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    const pwProblem = passwordProblem(pwForm.next);
+    if (pwProblem) {
+      toast.error(pwProblem);
       return;
     }
     setSaving(true);

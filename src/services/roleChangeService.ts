@@ -73,12 +73,10 @@ export async function submitRoleChangeRequest(
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'role_change_request',
-    action: 'Submitted role change request',
-    detail: `Requested change from ${profile.role} to ${requestedRole}`,
-    role: profile.role,
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'role_change_request',
+    p_action: 'Submitted role change request',
+    p_detail: `Requested change from ${profile.role} to ${requestedRole}`,
   });
 
   return { data: data as RoleChangeRequest, error: null };
@@ -166,12 +164,10 @@ export async function approveRoleChangeRequest(
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'role_change_approved',
-    action: 'Approved role change request',
-    detail: `Approved request ${requestId}`,
-    role: 'dashboard_management',
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'role_change_approved',
+    p_action: 'Approved role change request',
+    p_detail: `Approved request ${requestId}`,
   });
 
   return { data: data as RoleChangeRequest, error: null };
@@ -208,12 +204,10 @@ export async function rejectRoleChangeRequest(
   }
 
   // Log in audit trail
-  await supabase.from('audit_log').insert({
-    user_id: sessionData.session.user.id,
-    action_type: 'role_change_rejected',
-    action: 'Rejected role change request',
-    detail: `Rejected request ${requestId}: ${rejectionReason}`,
-    role: 'dashboard_management',
+  await supabase.rpc('log_audit_event', {
+    p_action_type: 'role_change_rejected',
+    p_action: 'Rejected role change request',
+    p_detail: `Rejected request ${requestId}: ${rejectionReason}`,
   });
 
   return { data: data as RoleChangeRequest, error: null };
@@ -237,11 +231,10 @@ export async function cancelRoleChangeRequest(
   // Log in audit trail
   const { data: sessionData } = await supabase.auth.getSession();
   if (sessionData.session?.user) {
-    await supabase.from('audit_log').insert({
-      user_id: sessionData.session.user.id,
-      action_type: 'role_change_request',
-      action: 'Cancelled role change request',
-      detail: `Cancelled request ${requestId}`,
+    await supabase.rpc('log_audit_event', {
+      p_action_type: 'role_change_request',
+      p_action: 'Cancelled role change request',
+      p_detail: `Cancelled request ${requestId}`,
     });
   }
 

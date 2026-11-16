@@ -6,11 +6,13 @@ import { useAuth } from '../services/AuthContext';
 import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
 // Lazy-loaded to avoid bundling ~800KB on initial page load
-const loadXLSX = () => import('xlsx');
+// Spreadsheet preview without the `xlsx` package (security annex: vulnerable library).
+const loadSpreadsheetPreview = () => import('../utils/spreadsheetPreview');
 const loadMammoth = () => import('mammoth');
 import DOMPurify from 'dompurify';
 import type { ToolkitReport, ReportAttachment } from '../types/index';
 import { flattenFormData, groupedFormData } from '../utils/formData';
+import { evidenceTypeLabel } from '../utils/evidence';
 
 const TOOL_EMOJI: Record<string, string> = {
   T01: '\u{1F3DB}️',
@@ -90,19 +92,20 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
   const [excelHtml, setExcelHtml] = useState<string | null>(null);
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
-  const workbookRef = useRef<any>(null);
-  const xlsxRef = useRef<typeof import('xlsx') | null>(null);
+  const sheetsRef = useRef<import('../utils/spreadsheetPreview').PreviewSheet[]>([]);
+  const toHtmlRef = useRef<
+    ((sheet: import('../utils/spreadsheetPreview').PreviewSheet) => string) | null
+  >(null);
   // Word
   const [wordHtml, setWordHtml] = useState<string | null>(null);
 
   const ext = (att.ext || '').toLowerCase().replace('.', '');
   const { icon, color } = getFileIcon(ext);
 
-  const renderExcelSheet = useCallback((wb: any, idx: number) => {
-    const name = wb.SheetNames[idx];
-    const ws = wb.Sheets[name];
-    if (!ws || !xlsxRef.current) return;
-    setExcelHtml(xlsxRef.current.utils.sheet_to_html(ws, { editable: false }));
+  const renderExcelSheet = useCallback((idx: number) => {
+    const sheet = sheetsRef.current[idx];
+    if (!sheet || !toHtmlRef.current) return;
+    setExcelHtml(toHtmlRef.current(sheet));
     setActiveSheet(idx);
   }, []);
 
@@ -128,8 +131,17 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
             setImgUrl(url);
             setLoading(false);
           }
-        } else if (['xlsx', 'xls', 'csv'].includes(ext)) {
-          const [buf, xlsx] = await Promise.all([downloadFileBytes(att.storage_path!), loadXLSX()]);
+        } else if (ext === 'xls') {
+          // Legacy binary Excel cannot be previewed in the browser; download instead.
+          if (!cancelled) {
+            setError('Preview is not available for .xls files. Download the file to open it.');
+            setLoading(false);
+          }
+        } else if (['xlsx', 'csv'].includes(ext)) {
+          const [buf, sp] = await Promise.all([
+            downloadFileBytes(att.storage_path!),
+            loadSpreadsheetPreview(),
+          ]);
           if (cancelled || !buf) {
             if (!cancelled) {
               setError('Failed to load file');
@@ -137,11 +149,11 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
             }
             return;
           }
-          xlsxRef.current = xlsx;
-          const wb = xlsx.read(buf, { type: 'array' });
-          workbookRef.current = wb;
-          setSheetNames(wb.SheetNames);
-          renderExcelSheet(wb, 0);
+          sheetsRef.current =
+            ext === 'csv' ? [sp.parseCsv(new TextDecoder('utf-8').decode(buf))] : sp.parseXlsx(buf);
+          toHtmlRef.current = sp.sheetToHtml;
+          setSheetNames(sheetsRef.current.map(sh => sh.name));
+          renderExcelSheet(0);
           if (!cancelled) setLoading(false);
         } else if (['doc', 'docx'].includes(ext)) {
           const [buf, mam] = await Promise.all([
@@ -219,6 +231,16 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
             >
               {ext.toUpperCase()} {att.size ? `· ${formatFileSize(att.size)}` : ''}
             </div>
+            {att.evidence_type ? (
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-2)', marginTop: 2 }}>
+                <strong>{evidenceTypeLabel(att.evidence_type) ?? att.evidence_type}</strong>
+                {att.description ? ` — ${att.description}` : ''}
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.7rem', color: '#b45309', marginTop: 2 }}>
+                Evidence type not recorded (submitted before classification was required)
+              </div>
+            )}
           </div>
         </div>
         <button onClick={handleDownload} style={headerBtn}>
@@ -294,7 +316,7 @@ function AttachmentPreview({ att }: { att: ReportAttachment }) {
               {sheetNames.map((name, i) => (
                 <button
                   key={name}
-                  onClick={() => workbookRef.current && renderExcelSheet(workbookRef.current, i)}
+                  onClick={() => renderExcelSheet(i)}
                   style={{
                     padding: '6px 14px',
                     fontSize: '0.72rem',
@@ -476,6 +498,7 @@ function ReportDetailModal({
   onDelete,
   onClose,
   actioning,
+  currentUserId,
 }: {
   report: ToolkitReport;
   noteValue: string;
@@ -484,8 +507,11 @@ function ReportDetailModal({
   onDelete: (id: string, name: string) => void;
   onClose: () => void;
   actioning: string | null;
+  currentUserId?: string;
 }) {
   const st = STATUS_CFG[report.status] || STATUS_CFG.pending;
+  // Nobody reviews their own submission (also enforced by the database, migration 037).
+  const isOwnSubmission = !!currentUserId && report.submitted_by === currentUserId;
   const attachments = report.attachments || [];
   const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
 
@@ -942,7 +968,12 @@ function ReportDetailModal({
             />
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {report.status === 'pending' ? (
+            {isOwnSubmission ? (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-3)', fontStyle: 'italic' }}>
+                <i className="fa-solid fa-user-lock" style={{ marginRight: 6 }} />
+                You submitted this report, so another reviewer must verify it.
+              </div>
+            ) : report.status === 'pending' ? (
               <>
                 <button
                   onClick={() => onVerify(report.id, 'approved')}
@@ -1007,25 +1038,27 @@ function ReportDetailModal({
                 {report.status === 'approved' ? 'Revoke Approval' : 'Reinstate'}
               </button>
             )}
-            <button
-              onClick={() => onVerify(report.id, 'pending')}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: '1px solid var(--border)',
-                fontFamily: "'DM Sans', sans-serif",
-                background: 'var(--surface)',
-                color: 'var(--text-2)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-            >
-              <i className="fa-solid fa-floppy-disk" /> Save Note
-            </button>
+            {!isOwnSubmission && (
+              <button
+                onClick={() => onVerify(report.id, report.status)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: '1px solid var(--border)',
+                  fontFamily: "'DM Sans', sans-serif",
+                  background: 'var(--surface)',
+                  color: 'var(--text-2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
+                <i className="fa-solid fa-floppy-disk" /> Save Note
+              </button>
+            )}
             <div style={{ flex: 1 }} />
             <button
               onClick={() => onDelete(report.id, report.tool_name)}
@@ -1432,6 +1465,7 @@ export default function VerifQueuePage() {
           onDelete={handleDeleteSubmission}
           onClose={() => setSelectedReport(null)}
           actioning={actioning}
+          currentUserId={currentUser?.id}
         />
       )}
     </div>

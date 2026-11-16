@@ -12,7 +12,7 @@ import {
   type ReportSubmission,
 } from '../types/automaticReporting';
 
-const { mockFrom, insertedRows, updateCalls, mockState } = vi.hoisted(() => {
+const { mockFrom, mockRpc, insertedRows, updateCalls, mockState } = vi.hoisted(() => {
   const insertedRows: Record<string, unknown>[] = [];
   const updateCalls: Array<{ table: string; values: Record<string, unknown>; id: number }> = [];
   const mockState = {
@@ -46,22 +46,25 @@ const { mockFrom, insertedRows, updateCalls, mockState } = vi.hoisted(() => {
         }),
       };
     }
-    if (table === 'audit_log') {
-      return {
-        insert: (row: Record<string, unknown>) => {
-          insertedRows.push(row);
-          return Promise.resolve({ data: null, error: null });
-        },
-      };
-    }
     throw new Error(`Unexpected table in test: ${table}`);
   });
 
-  return { mockFrom, insertedRows, updateCalls, mockState };
+  // Audit events go through supabase.rpc('log_audit_event'); record them as rows.
+  const mockRpc = vi.fn((fn: string, params: Record<string, unknown>) => {
+    if (fn !== 'log_audit_event') throw new Error(`Unexpected RPC in test: ${fn}`);
+    insertedRows.push({
+      action_type: params.p_action_type,
+      action: params.p_action,
+      detail: params.p_detail,
+    });
+    return Promise.resolve({ data: null, error: null });
+  });
+
+  return { mockFrom, mockRpc, insertedRows, updateCalls, mockState };
 });
 
 vi.mock('../utils/supabase', () => ({
-  supabase: { from: mockFrom },
+  supabase: { from: mockFrom, rpc: mockRpc },
 }));
 
 function makeOrgConfig(overrides: Partial<OrganizationConfig> = {}): OrganizationConfig {
