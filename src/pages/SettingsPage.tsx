@@ -493,13 +493,28 @@ export default function SettingsPage() {
                 />
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Organization</label>
-                <input
-                  type="text"
-                  value={profileForm.organization}
-                  onChange={e => setProfileForm(f => ({ ...f, organization: e.target.value }))}
-                  style={inputStyle}
-                />
+                <label style={labelStyle}>Institution</label>
+                {user?.institution_id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={user.organization || ''}
+                      readOnly
+                      style={{ ...inputStyle, background: 'var(--surface-2)', cursor: 'default' }}
+                    />
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 4 }}>
+                      Set by an administrator. Ask your institution administrator or REMA to change
+                      it.
+                    </div>
+                  </>
+                ) : (
+                  <input
+                    type="text"
+                    value={profileForm.organization}
+                    onChange={e => setProfileForm(f => ({ ...f, organization: e.target.value }))}
+                    style={inputStyle}
+                  />
+                )}
               </div>
               <div
                 style={{

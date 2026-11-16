@@ -7,7 +7,15 @@
 
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
-import { asUser, createDatabase, createUser, errorAsUser, setRole, type AppliedMigration } from './harness';
+import {
+  asUser,
+  createDatabase,
+  createUser,
+  errorAsUser,
+  grantScope,
+  setRole,
+  type AppliedMigration,
+} from './harness';
 
 let db: PGlite;
 let applied: AppliedMigration[];
@@ -28,8 +36,9 @@ async function submitAs(userId: string, status = 'pending'): Promise<string> {
   periodSeq += 1;
   return asUser(db, userId, async tx => {
     const r = await tx.query<{ id: string }>(
-      `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, form_data)
-       VALUES ('T02', 'District Biodiversity Monitoring', $1, $2::submission_status, $3, '{"x":1}'::jsonb)
+      `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data)
+       VALUES ('T02', 'District Biodiversity Monitoring', $1, $2::submission_status, $3, 'Musanze',
+               '{"x":1, "stakeholder": "District Authorities", "district": "Musanze"}'::jsonb)
        RETURNING id`,
       [userId, status, period]
     );
@@ -61,6 +70,15 @@ beforeAll(async () => {
   await setRole(db, ministry2, 'lead_government_ministry_reporting');
   await setRole(db, district, 'local_reporting');
   await setRole(db, viewer, 'public_viewer');
+
+  // M01 (039): submitting and reviewing need a scope. Everyone here works on
+  // Musanze district reports, so the security rules are tested in isolation.
+  for (const u of [ministry, ministry2, district]) {
+    await grantScope(db, u, 'data_entry', 'District Authorities', 'Musanze');
+  }
+  for (const u of [ministry, ministry2]) {
+    await grantScope(db, u, 'ministry_validator', 'District Authorities', 'Musanze');
+  }
 }, 180_000);
 
 describe('migrations', () => {
@@ -103,7 +121,9 @@ describe('C2 — users cannot change their own role or account status', () => {
 
   it('still lets a user edit their own name', async () => {
     const err = await errorAsUser(db, district, tx =>
-      tx.query(`UPDATE public.profiles SET full_name = 'District Officer' WHERE id = $1`, [district])
+      tx.query(`UPDATE public.profiles SET full_name = 'District Officer' WHERE id = $1`, [
+        district,
+      ])
     );
     expect(err).toBeNull();
   });
@@ -111,7 +131,10 @@ describe('C2 — users cannot change their own role or account status', () => {
   it('lets an administrator change another user’s role', async () => {
     const target = await createUser(db, 'promote@example.org');
     await asUser(db, admin, tx =>
-      tx.query(`UPDATE public.profiles SET role = 'local_reporting', is_active = true WHERE id = $1`, [target])
+      tx.query(
+        `UPDATE public.profiles SET role = 'local_reporting', is_active = true WHERE id = $1`,
+        [target]
+      )
     );
     const r = await db.query<{ role: string; is_active: boolean }>(
       `SELECT role::text, is_active FROM public.profiles WHERE id = $1`,
@@ -143,7 +166,10 @@ describe('C2 — users cannot change their own role or account status', () => {
       );
     expect((await errorAsUser(db, u, clear))?.code).toBe('42501');
 
-    await db.query(`UPDATE public.profiles SET suspension_end_date = now() - interval '1 day' WHERE id = $1`, [u]);
+    await db.query(
+      `UPDATE public.profiles SET suspension_end_date = now() - interval '1 day' WHERE id = $1`,
+      [u]
+    );
     expect(await errorAsUser(db, u, clear)).toBeNull();
   });
 });
@@ -192,10 +218,12 @@ describe('H1 — approvers have limits', () => {
   it('a reviewer cannot change the submitted data', async () => {
     const id = await submitAs(district);
     const err = await errorAsUser(db, ministry, tx =>
-      tx.query(`UPDATE public.toolkit_reports SET form_data = '{"x":999}'::jsonb WHERE id = $1`, [id])
+      tx.query(`UPDATE public.toolkit_reports SET form_data = '{"x":999}'::jsonb WHERE id = $1`, [
+        id,
+      ])
     );
     expect(err?.code).toBe('42501');
-    expect((await reportRow(id)).form_data).toEqual({ x: 1 });
+    expect((await reportRow(id)).form_data).toMatchObject({ x: 1 });
   });
 
   it('a data-entry user cannot update any report (013 "link reports" policy removed)', async () => {
@@ -213,12 +241,19 @@ describe('H2 — public viewer reads approved reports only', () => {
     const rejected = await submitAs(district);
     const approved = await submitAs(district);
     await asUser(db, ministry, async tx => {
-      await tx.query(`UPDATE public.toolkit_reports SET status = 'rejected', review_note = 'no' WHERE id = $1`, [rejected]);
-      await tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [approved]);
+      await tx.query(
+        `UPDATE public.toolkit_reports SET status = 'rejected', review_note = 'no' WHERE id = $1`,
+        [rejected]
+      );
+      await tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [
+        approved,
+      ]);
     });
 
     const seen = await asUser(db, viewer, async tx => {
-      const r = await tx.query<{ id: string; status: string }>(`SELECT id, status::text FROM public.toolkit_reports`);
+      const r = await tx.query<{ id: string; status: string }>(
+        `SELECT id, status::text FROM public.toolkit_reports`
+      );
       return r.rows;
     });
     const ids = seen.map(r => r.id);
@@ -255,7 +290,11 @@ describe('H3 — audit log is written by the database and append-only', () => {
       await errorAsUser(db, null, tx => tx.query(`SELECT public.log_audit_event('x', 'y')`))
     ).not.toBeNull();
     expect(
-      (await errorAsUser(db, district, tx => tx.query(`SELECT public.log_audit_event('DROP TABLE;', 'y')`)))?.code
+      (
+        await errorAsUser(db, district, tx =>
+          tx.query(`SELECT public.log_audit_event('DROP TABLE;', 'y')`)
+        )
+      )?.code
     ).toBe('22023');
   });
 
@@ -264,7 +303,12 @@ describe('H3 — audit log is written by the database and append-only', () => {
     await asUser(db, ministry2, tx =>
       tx.query(`UPDATE public.toolkit_reports SET status = 'approved' WHERE id = $1`, [id])
     );
-    const r = await db.query<{ user_id: string; action_type: string; old_values: { status: string }; new_values: { status: string } }>(
+    const r = await db.query<{
+      user_id: string;
+      action_type: string;
+      old_values: { status: string };
+      new_values: { status: string };
+    }>(
       `SELECT user_id, action_type, old_values, new_values FROM public.audit_log
        WHERE table_name = 'toolkit_reports' AND record_id = $1 AND action_type = 'approve'`,
       [id]
@@ -280,7 +324,11 @@ describe('H3 — audit log is written by the database and append-only', () => {
     await asUser(db, admin2, tx =>
       tx.query(`UPDATE public.profiles SET role = 'policy_monitoring' WHERE id = $1`, [target])
     );
-    const r = await db.query<{ user_id: string; old_values: { role: string }; new_values: { role: string } }>(
+    const r = await db.query<{
+      user_id: string;
+      old_values: { role: string };
+      new_values: { role: string };
+    }>(
       `SELECT user_id, old_values, new_values FROM public.audit_log
        WHERE table_name = 'profiles' AND record_id = $1 AND action_type = 'role_updated'`,
       [target]
@@ -293,7 +341,9 @@ describe('H3 — audit log is written by the database and append-only', () => {
   });
 
   it('nobody can edit or delete audit rows, not even the database owner', async () => {
-    await expect(db.query(`UPDATE public.audit_log SET action = 'edited'`)).rejects.toThrow(/append-only/);
+    await expect(db.query(`UPDATE public.audit_log SET action = 'edited'`)).rejects.toThrow(
+      /append-only/
+    );
     await expect(db.query(`DELETE FROM public.audit_log`)).rejects.toThrow(/append-only/);
     await expect(db.query(`TRUNCATE public.audit_log`)).rejects.toThrow(/append-only/);
   });

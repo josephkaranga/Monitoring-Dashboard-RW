@@ -6,6 +6,7 @@ import { useNotifications, usePendingCount } from '../hooks/useData';
 import { USER_ROLE_LABELS } from '../types/index';
 import toast from 'react-hot-toast';
 import PendingRequestsBadge from './PendingRequestsBadge';
+import { useMyScopes } from '../hooks/useInstitutions';
 // DashboardLayout component: Provides the main layout for the dashboard, including sidebar navigation, topbar, and page content area.
 export default function DashboardLayout() {
   const { user, permissions, signOut } = useAuth();
@@ -28,6 +29,7 @@ export default function DashboardLayout() {
   const canSeeCompliance = permissions?.canViewCompliance ?? false;
   const canSeeAnalytics = permissions?.canViewAnalytics ?? false;
   const canManageUsers = permissions?.canManageUsers ?? false;
+  const { isInstitutionAdmin } = useMyScopes();
   const canViewAuditLog = permissions?.canViewAuditLog ?? false;
 
   // ── Nav sections with role-based filtering ──────────────────────────────────────────
@@ -138,6 +140,13 @@ export default function DashboardLayout() {
     // User Management - only for dashboard_management
     // Controlled by canManageUsers permission
     { to: '/users', icon: 'fa-users-gear', label: 'User Management', visible: canManageUsers },
+    // My Institution - institution administrators (M01)
+    {
+      to: '/my-institution',
+      icon: 'fa-building-user',
+      label: 'My Institution',
+      visible: isInstitutionAdmin,
+    },
   ].filter(item => item.visible);
 
   // Admin navigation - only for dashboard_management

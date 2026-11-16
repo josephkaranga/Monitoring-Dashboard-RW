@@ -176,7 +176,9 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
  */
 export async function recalculateSystemMetrics(): Promise<string> {
   try {
-    const { data, error } = await supabase.rpc('recalculate_system_metrics');
+    // Administrators only (migration 038). Metrics also refresh automatically
+    // whenever an approved report changes.
+    const { data, error } = await supabase.rpc('admin_recalculate_system_metrics');
     if (error) {
       console.error('Error recalculating metrics:', error);
       throw new Error(`Failed to recalculate metrics: ${error.message}`);

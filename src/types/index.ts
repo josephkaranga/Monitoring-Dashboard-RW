@@ -130,6 +130,9 @@ export interface UserProfile {
   full_name: string | null;
   role: UserRole;
   organization: string | null;
+  /** Affiliation (M01). Grants nothing by itself; see UserScope. */
+  institution_id?: number | null;
+  district_id?: number | null;
   department: string | null;
   phone: string | null;
   is_active: boolean;
@@ -265,6 +268,61 @@ export interface NBSAPTarget {
 }
 
 // ── TOOLKIT REPORTS ──────────────────────────────────────────
+
+// ── M01: INSTITUTIONS AND ACCESS SCOPE ──────────────────────
+
+export type InstitutionCategory =
+  | 'Ministries'
+  | 'Authorities'
+  | 'Boards'
+  | 'Agencies and other public institutions'
+  | 'Local government'
+  | 'Development partners and international organisations'
+  | 'NGOs and civil society'
+  | 'Academia and research'
+  | 'Private sector';
+
+export interface Institution {
+  id: number;
+  code: string;
+  name: string;
+  category: InstitutionCategory;
+  responsibilities: string[];
+  target_ids: number[];
+  tool_ids: string[];
+  /** True for District Authorities: scopes and reports must name a district. */
+  covers_all_districts: boolean;
+  is_active: boolean;
+}
+
+export type ScopeRole = 'data_entry' | 'ministry_validator' | 'institution_admin';
+
+export const SCOPE_ROLE_LABELS: Record<ScopeRole, string> = {
+  data_entry: 'Data entry',
+  ministry_validator: 'Ministry validator',
+  institution_admin: 'Institution administrator',
+};
+
+export interface UserScope {
+  id: number;
+  user_id: string;
+  scope_role: ScopeRole;
+  institution_id: number;
+  district_id: number | null;
+  sector_id: number | null;
+  granted_by: string | null;
+  granted_at: string;
+}
+
+export interface StrategicAction {
+  id: number;
+  target_id: number;
+  ordinal: number;
+  action: string;
+  data_sources: string[];
+  /** Responsible parties as written in the NBSAP; institution_id when it is one institution. */
+  institutions: { label: string; institution_id: number | null }[];
+}
 
 export type ReportType = 'T01' | 'T02' | 'T03' | 'T04' | 'T05' | 'T06' | 'T07';
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
@@ -481,6 +539,9 @@ export interface LoginCredentials {
 
 export interface SignupData extends LoginCredentials {
   full_name: string;
+  /** Requested institution (M01). Approval and scope come from an administrator. */
+  institution_code?: string;
+  district_id?: number;
   organization?: string;
   department?: string;
 }

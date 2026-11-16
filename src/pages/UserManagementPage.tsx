@@ -12,6 +12,7 @@ import {
   signUp,
   resetPassword,
 } from '../services/authService';
+import AccessScopeModal from '../components/AccessScopeModal';
 
 /* =========================================================
    TYPES
@@ -30,6 +31,8 @@ export interface UserProfile {
   full_name?: string;
   email: string;
   organization?: string;
+  institution_id?: number | null;
+  district_id?: number | null;
   role: UserRole;
   is_active: boolean;
   suspended_at?: string | null;
@@ -118,6 +121,7 @@ interface FloatingMenuProps {
   onReactivate: () => void;
   onResetPassword: () => void;
   onAssignRole: () => void;
+  onManageAccess: () => void;
   onDelete: () => void;
 }
 
@@ -131,6 +135,7 @@ function FloatingMenu({
   onReactivate,
   onResetPassword,
   onAssignRole,
+  onManageAccess,
   onDelete,
 }: FloatingMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -278,6 +283,24 @@ function FloatingMenu({
         Assign Role
       </button>
 
+      <button
+        onClick={onManageAccess}
+        style={{
+          width: '100%',
+          padding: '12px 16px',
+          border: 'none',
+          background: 'none',
+          textAlign: 'left',
+          fontSize: 13,
+          cursor: 'pointer',
+          color: '#374151',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+      >
+        Access &amp; institution
+      </button>
+
       <div style={{ height: '0.5px', background: '#e5e7eb', margin: '4px 0' }} />
 
       <button
@@ -329,6 +352,7 @@ export default function UserManagementPage() {
   const [suspendReason, setSuspendReason] = useState('');
   const [suspendEndDate, setSuspendEndDate] = useState<string>('');
   const [roleAssignTarget, setRoleAssignTarget] = useState<UserProfile | null>(null);
+  const [accessTarget, setAccessTarget] = useState<UserProfile | null>(null);
   const [createUserModal, setCreateUserModal] = useState(false);
 
   /* ---------------- DERIVED DATA ---------------- */
@@ -1045,6 +1069,11 @@ export default function UserManagementPage() {
             setRoleAssignTarget(user);
             setOpenMenuId(null);
           }}
+          onManageAccess={() => {
+            const user = users.find(u => u.id === openMenuId)!;
+            setAccessTarget(user);
+            setOpenMenuId(null);
+          }}
           onDelete={() => {
             const user = users.find(u => u.id === openMenuId)!;
             handleDelete(user.id, user.full_name || user.email);
@@ -1053,6 +1082,15 @@ export default function UserManagementPage() {
       )}
 
       {/* ================= MODALS ================= */}
+
+      {/* M01: institution and access scope */}
+      {accessTarget && (
+        <AccessScopeModal
+          user={accessTarget}
+          onClose={() => setAccessTarget(null)}
+          onChanged={refetch}
+        />
+      )}
 
       {/* Role Assignment Modal */}
       {roleAssignTarget && (

@@ -7,6 +7,11 @@ import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
 import type { LoginCredentials, SignupData } from '../types/index';
 import { MIN_PASSWORD_LENGTH, passwordProblem } from '../utils/passwordPolicy';
+import { fetchSignupOptions, type SignupOptions } from '../services/institutionService';
+import { groupStakeholders } from '../utils/stakeholderGroups';
+
+// Sentinel for "my institution is not in the list" (the administrator assigns it).
+const NOT_LISTED = '__not_listed__';
 
 type AuthMode = 'login' | 'signup' | 'reset' | 'set-password';
 
@@ -51,10 +56,23 @@ export default function AuthPage() {
     full_name: '',
     organization: '',
   });
+  const [signupOptions, setSignupOptions] = useState<SignupOptions | null>(null);
+  const [signupOptionsError, setSignupOptionsError] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Institutions and districts for the sign-up form (M01), loaded once when needed.
+  useEffect(() => {
+    if (mode !== 'signup' || signupOptions) return;
+    fetchSignupOptions()
+      .then(o => {
+        setSignupOptions(o);
+        setSignupOptionsError(null);
+      })
+      .catch(e => setSignupOptionsError((e as Error).message));
+  }, [mode, signupOptions]);
 
   useEffect(() => {
     const m = searchParams.get('mode');
@@ -85,12 +103,18 @@ export default function AuthPage() {
       if (!signupForm.email) errs.email = 'Email is required';
       const pwProblem = passwordProblem(signupForm.password);
       if (pwProblem) errs.password = pwProblem;
+      if (!signupForm.institution_code) errs.institution = 'Choose your institution';
+      else if (signupForm.institution_code === NOT_LISTED && !signupForm.organization?.trim())
+        errs.institution = 'Type the name of your institution';
+      const chosen = signupOptions?.institutions.find(i => i.code === signupForm.institution_code);
+      if (chosen?.covers_all_districts && !signupForm.district_id)
+        errs.district = 'Choose your district';
     } else {
       if (!resetEmail) errs.email = 'Email is required';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
-  }, [mode, loginForm, signupForm, resetEmail]);
+  }, [mode, loginForm, signupForm, resetEmail, signupOptions]);
 
   const handleLogin = useCallback(
     async (e: React.FormEvent) => {
@@ -113,7 +137,11 @@ export default function AuthPage() {
       e.preventDefault();
       if (!validate()) return;
       setLoading(true);
-      const result = await signUp(signupForm);
+      const result = await signUp({
+        ...signupForm,
+        institution_code:
+          signupForm.institution_code === NOT_LISTED ? undefined : signupForm.institution_code,
+      });
       if (result.error) toast.error(result.error);
       else {
         toast.success('Registration submitted. Awaiting administrator approval.');
@@ -427,17 +455,86 @@ export default function AuthPage() {
                   )}
                 </div>
                 <div style={fieldWrap}>
-                  <label style={labelStyle}>Organisation</label>
-                  <input
-                    type="text"
-                    placeholder="REMA, Ministry, District..."
-                    value={signupForm.organization}
-                    onChange={e => setSignupForm(f => ({ ...f, organization: e.target.value }))}
-                    className="auth-input"
-                    style={inputBase}
-                    autoComplete="organization"
-                  />
+                  <label style={labelStyle}>Institution</label>
+                  <select
+                    value={signupForm.institution_code || ''}
+                    onChange={e =>
+                      setSignupForm(f => ({
+                        ...f,
+                        institution_code: e.target.value,
+                        district_id: undefined,
+                        organization: '',
+                      }))
+                    }
+                    style={{ ...(errors.institution ? inputError : inputBase), cursor: 'pointer' }}
+                    disabled={!signupOptions}
+                  >
+                    <option value="">
+                      {signupOptionsError
+                        ? 'Could not load institutions'
+                        : signupOptions
+                          ? '— Select your institution —'
+                          : 'Loading institutions…'}
+                    </option>
+                    {signupOptions &&
+                      groupStakeholders(signupOptions.institutions).map(g => (
+                        <optgroup key={g.label} label={g.label}>
+                          {g.items.map(i => (
+                            <option key={i.code} value={i.code}>
+                              {i.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    {signupOptions && (
+                      <option value={NOT_LISTED}>My institution is not listed</option>
+                    )}
+                  </select>
+                  {signupForm.institution_code === NOT_LISTED && (
+                    <input
+                      type="text"
+                      placeholder="Name of your institution"
+                      value={signupForm.organization}
+                      onChange={e => setSignupForm(f => ({ ...f, organization: e.target.value }))}
+                      className="auth-input"
+                      style={{ ...inputBase, marginTop: 8 }}
+                      autoComplete="organization"
+                    />
+                  )}
+                  {errors.institution && (
+                    <div style={{ fontSize: '0.72rem', color: '#f43f5e', marginTop: 4 }}>
+                      {errors.institution}
+                    </div>
+                  )}
                 </div>
+                {signupOptions?.institutions.find(i => i.code === signupForm.institution_code)
+                  ?.covers_all_districts && (
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>District</label>
+                    <select
+                      value={signupForm.district_id ?? ''}
+                      onChange={e =>
+                        setSignupForm(f => ({
+                          ...f,
+                          district_id: e.target.value ? Number(e.target.value) : undefined,
+                        }))
+                      }
+                      style={{ ...(errors.district ? inputError : inputBase), cursor: 'pointer' }}
+                    >
+                      <option value="">— Select your district —</option>
+                      {signupOptions.districts.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.district && (
+                      <div style={{ fontSize: '0.72rem', color: '#f43f5e', marginTop: 4 }}>
+                        {errors.district}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Email</label>
                   <input

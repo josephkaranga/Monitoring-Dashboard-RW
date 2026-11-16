@@ -23,6 +23,7 @@ const RBISPage = lazy(() => import('../pages/BiodiversityDataPage'));
 const DataPipelinePage = lazy(() => import('../pages/DataPipelinePage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 const UserManagementPage = lazy(() => import('../pages/UserManagementPage'));
+const MyInstitutionPage = lazy(() => import('../pages/MyInstitutionPage'));
 const RoleRequestsPage = lazy(() => import('../pages/RoleRequestsPage'));
 const RoleChangeApprovalPanel = lazy(() => import('./RoleChangeApprovalPanel'));
 
@@ -219,6 +220,9 @@ export default function App() {
 
                   {/* Settings: all */}
                   <Route path="/settings" element={<SettingsPage />} />
+
+                  {/* M01: institution administrators (the page checks the scope; the database enforces it) */}
+                  <Route path="/my-institution" element={<MyInstitutionPage />} />
 
                   {/* Role change requests: all authenticated users */}
                   <Route path="/role-requests" element={<RoleRequestsPage />} />

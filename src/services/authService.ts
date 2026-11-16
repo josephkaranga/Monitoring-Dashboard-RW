@@ -77,6 +77,9 @@ export async function signUp(userData: SignupData): Promise<ApiResponse<UserProf
     options: {
       data: {
         full_name: userData.full_name,
+        // Requested affiliation only (M01); the database grants no access from it.
+        institution_code: userData.institution_code || null,
+        district_id: userData.district_id ?? null,
         organization: userData.organization || null,
         department: userData.department || null,
       },

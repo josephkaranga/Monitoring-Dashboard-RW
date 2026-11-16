@@ -23,7 +23,10 @@ const MIGRATIONS_DIR = join(ROOT, 'migrations');
  * intended end state instead. Each entry says why.
  * A clean baseline for staging/training environments is part of M10.
  */
-const REPLAY_ADJUSTMENTS: Record<string, { before?: string; replaceWith?: string; strip?: RegExp }> = {
+const REPLAY_ADJUSTMENTS: Record<
+  string,
+  { before?: string; replaceWith?: string; strip?: RegExp }
+> = {
   // Adds an enum value and uses it in the same transaction, which
   // PostgreSQL forbids. Commit the new value first, then run the rest.
   '010_add_public_viewer_role.sql': {
@@ -108,12 +111,33 @@ export async function createUser(
 }
 
 /** Set a user's role and activation as the service role would (no auth.uid()). */
-export async function setRole(db: PGlite, userId: string, role: string, active = true): Promise<void> {
+export async function setRole(
+  db: PGlite,
+  userId: string,
+  role: string,
+  active = true
+): Promise<void> {
   await db.query(`UPDATE public.profiles SET role = $2::user_role, is_active = $3 WHERE id = $1`, [
     userId,
     role,
     active,
   ]);
+}
+
+/** Grant a scope as the service role would (migration 039). */
+export async function grantScope(
+  db: PGlite,
+  userId: string,
+  scopeRole: 'data_entry' | 'ministry_validator' | 'institution_admin',
+  institutionCode: string,
+  districtName?: string
+): Promise<void> {
+  await db.query(
+    `INSERT INTO public.user_scopes (user_id, scope_role, institution_id, district_id)
+     SELECT $1, $2, i.id, (SELECT id FROM public.districts WHERE name = $4)
+     FROM public.institutions i WHERE i.code = $3`,
+    [userId, scopeRole, institutionCode, districtName ?? null]
+  );
 }
 
 /**
