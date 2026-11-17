@@ -24,7 +24,11 @@ async function submit(user: string, district: string, period: string) {
 
 async function pipeline(user: string) {
   return asUser(db, user, async tx => {
-    const r = await tx.query<{ workflow_status: string; stage_code: string | null; reports: number }>(
+    const r = await tx.query<{
+      workflow_status: string;
+      stage_code: string | null;
+      reports: number;
+    }>(
       `SELECT workflow_status, stage_code, reports FROM public.v_validation_pipeline ORDER BY 1, 2`
     );
     return r.rows;
