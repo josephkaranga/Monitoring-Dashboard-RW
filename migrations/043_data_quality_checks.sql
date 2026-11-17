@@ -51,7 +51,10 @@ ON CONFLICT (key) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS public.dqa_field_rules (
   id           SERIAL PRIMARY KEY,
-  tool_id      report_type NOT NULL,
+  -- TEXT, not the report_type enum: databases created from the dashboard
+  -- do not all have the same enum values (rules for a tool the enum lacks
+  -- are simply never used).
+  tool_id      TEXT NOT NULL,
   field_key    TEXT NOT NULL,
   label        TEXT NOT NULL,
   unit         TEXT,
@@ -253,7 +256,7 @@ BEGIN
   END IF;
 
   -- ── Field rules: numbers, ranges, units, jumps ──
-  FOR v_rule IN SELECT * FROM public.dqa_field_rules WHERE tool_id = p_tool AND is_active ORDER BY id LOOP
+  FOR v_rule IN SELECT * FROM public.dqa_field_rules WHERE tool_id = p_tool::TEXT AND is_active ORDER BY id LOOP
     v_raw := NULLIF(TRIM(p_form->>v_rule.field_key), '');
     CONTINUE WHEN v_raw IS NULL;
 
@@ -299,7 +302,7 @@ BEGIN
   END LOOP;
 
   -- ── Consistency ──
-  IF p_tool = 'T05'
+  IF p_tool::TEXT = 'T05'
      AND (p_form->>'budget_allocated') ~ '^[0-9]+(\.[0-9]+)?$'
      AND (p_form->>'budget_disbursed') ~ '^[0-9]+(\.[0-9]+)?$'
      AND (p_form->>'budget_disbursed')::NUMERIC > (p_form->>'budget_allocated')::NUMERIC THEN
