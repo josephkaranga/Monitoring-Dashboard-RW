@@ -38,6 +38,11 @@ import ResubmitReportModal from '../components/ResubmitReportModal';
 import DraftStatusBar from '../components/DraftStatusBar';
 import TwoStepStakeholderSelect from '../components/TwoStepStakeholderSelect';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
+import DataQualityChecklist from '../components/DataQualityChecklist';
+import QualityFlagsList from '../components/QualityFlagsList';
+import { useChecklistItems, useQualityPreview } from '../hooks/useDataQuality';
+import { emptyDeclaration, isChecklistComplete } from '../utils/dataQuality';
+import type { DqaDeclaration } from '../types/index';
 import {
   deleteDraft,
   listMyDrafts,
@@ -757,6 +762,26 @@ const ReportForm = ({
     () => initialDraft?.attachments ?? []
   );
   const [submitting, setSubmitting] = useState(false);
+  // M04: data-quality checklist and a live preview of the database checks.
+  const checklist = useChecklistItems();
+  const [declaration, setDeclaration] = useState<DqaDeclaration>(emptyDeclaration);
+  const checklistComplete = isChecklistComplete(checklist.items, declaration);
+  const previewTarget = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
+  const previewIndicator = formData.indicator ? parseInt(formData.indicator, 10) : null;
+  const preview = useQualityPreview(
+    tool.id as ReportType,
+    formData,
+    previewTarget,
+    previewIndicator,
+    !!formData.stakeholder
+  );
+  // Missing period, target and indicator are already shown as required fields.
+  const previewFlags = useMemo(
+    () =>
+      preview.flags.filter(f => !['period_missing', 'no_target', 'no_indicator'].includes(f.code)),
+    [preview.flags]
+  );
+  const previewHasErrors = previewFlags.some(f => f.severity === 'error');
   // M03: auto-save to a server draft.
   const draft = useDraftAutosave({
     toolId: tool.id as ReportType,
@@ -992,6 +1017,16 @@ const ReportForm = ({
         return;
       }
 
+      // M04: data-quality checklist (the database refuses the report otherwise)
+      if (checklist.error) {
+        toast.error(checklist.error);
+        return;
+      }
+      if (!isChecklistComplete(checklist.items, declaration)) {
+        toast.error('Confirm every data-quality point and the declaration before submitting');
+        return;
+      }
+
       // Validate year fields
       const yearField = tool.fields.find(f => f.key === 'year');
       if (yearField && formData.year) {
@@ -1077,7 +1112,8 @@ const ReportForm = ({
         requireVerification,
         attachments,
         nbsapTargetId,
-        indicatorId
+        indicatorId,
+        declaration
       );
 
       if (result.error) {
@@ -1137,7 +1173,19 @@ const ReportForm = ({
       }
       setSubmitting(false);
     },
-    [formData, tool, settings, attachments, onSuccess, responsibleTargets, allDistricts, draft]
+    [
+      formData,
+      tool,
+      settings,
+      attachments,
+      onSuccess,
+      responsibleTargets,
+      allDistricts,
+      draft,
+      checklist.items,
+      checklist.error,
+      declaration,
+    ]
   );
 
   const handleFiles = useCallback(
@@ -1939,10 +1987,29 @@ const ReportForm = ({
             );
           })}
 
+          <QualityFlagsList
+            flags={previewFlags}
+            title={previewHasErrors ? 'Fix before submitting' : 'Validators will see'}
+          />
+          <DataQualityChecklist
+            items={checklist.items}
+            declaration={declaration}
+            onChange={setDeclaration}
+            loading={checklist.loading}
+            error={checklist.error}
+          />
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !checklistComplete || previewHasErrors}
+              title={
+                !checklistComplete
+                  ? 'Complete the data-quality check first'
+                  : previewHasErrors
+                    ? 'Fix the data-quality errors first'
+                    : undefined
+              }
               style={{
                 padding: '10px 28px',
                 background: `linear-gradient(135deg, ${tool.color}, ${tool.accent})`,
@@ -1951,9 +2018,10 @@ const ReportForm = ({
                 borderRadius: 9,
                 fontSize: '0.88rem',
                 fontWeight: 700,
-                cursor: submitting ? 'not-allowed' : 'pointer',
+                cursor:
+                  submitting || !checklistComplete || previewHasErrors ? 'not-allowed' : 'pointer',
                 fontFamily: "'DM Sans', sans-serif",
-                opacity: submitting ? 0.7 : 1,
+                opacity: submitting || !checklistComplete || previewHasErrors ? 0.6 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,

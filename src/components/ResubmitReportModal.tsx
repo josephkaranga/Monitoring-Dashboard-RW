@@ -3,7 +3,8 @@
 // Shows why the report came back, lets the submitter correct the values
 // and add evidence, and sends it back through resubmit_report(). The
 // institution and district stay as they were (the database refuses a
-// change); the route starts again from the first stage.
+// change); the route starts again from the first stage. The data-quality
+// checklist is confirmed again (M04) and the values are checked again.
 // ============================================================
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -18,7 +19,16 @@ import {
   evidenceSubmissionProblem,
   fileExtension,
 } from '../utils/evidence';
-import type { ReportAttachment, ReportHistoryEntry, ToolkitReport } from '../types/index';
+import type {
+  DqaDeclaration,
+  ReportAttachment,
+  ReportHistoryEntry,
+  ToolkitReport,
+} from '../types/index';
+import DataQualityChecklist from './DataQualityChecklist';
+import QualityFlagsList from './QualityFlagsList';
+import { useChecklistItems } from '../hooks/useDataQuality';
+import { emptyDeclaration, isChecklistComplete } from '../utils/dataQuality';
 
 // Changing these would move the report to another institution, district,
 // target or period: that is a new report, not a correction.
@@ -68,6 +78,9 @@ export default function ResubmitReportModal({
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [returnEntry, setReturnEntry] = useState<ReportHistoryEntry | null>(null);
+  const checklist = useChecklistItems();
+  const [declaration, setDeclaration] = useState<DqaDeclaration>(emptyDeclaration);
+  const checklistComplete = isChecklistComplete(checklist.items, declaration);
 
   useEffect(() => {
     fetchReportHistory(report.id)
@@ -117,6 +130,10 @@ export default function ResubmitReportModal({
       toast.error(evidenceProblem);
       return;
     }
+    if (!checklistComplete) {
+      toast.error('Confirm every data-quality point and the declaration before resubmitting');
+      return;
+    }
     if (!user) return;
     setBusy(true);
     const { uploaded, failed } = await uploadEvidence(user.id, attachments);
@@ -134,7 +151,7 @@ export default function ResubmitReportModal({
             ? values[k] === 'true'
             : values[k];
     }
-    const r = await resubmitReport(report.id, formData, uploaded, note);
+    const r = await resubmitReport(report.id, formData, uploaded, note, declaration);
     setBusy(false);
     if (r.error) toast.error(r.error);
     else {
@@ -222,6 +239,12 @@ export default function ResubmitReportModal({
               {report.review_note || returnEntry?.note || 'No reason recorded.'}
             </div>
           </div>
+
+          <QualityFlagsList
+            flags={report.quality_flags}
+            title="Data-quality warnings on the returned report"
+            compact
+          />
 
           <div style={{ fontWeight: 700, fontSize: '0.84rem', marginBottom: 8 }}>Values</div>
           {editableKeys.length === 0 ? (
@@ -324,6 +347,14 @@ export default function ResubmitReportModal({
             style={{ ...field, resize: 'vertical', marginBottom: 14 }}
           />
 
+          <DataQualityChecklist
+            items={checklist.items}
+            declaration={declaration}
+            onChange={setDeclaration}
+            loading={checklist.loading}
+            error={checklist.error}
+          />
+
           <div
             style={{
               display: 'flex',
@@ -337,7 +368,8 @@ export default function ResubmitReportModal({
             </span>
             <button
               onClick={submit}
-              disabled={busy}
+              disabled={busy || !checklistComplete}
+              title={checklistComplete ? undefined : 'Complete the data-quality check first'}
               style={{
                 padding: '9px 18px',
                 borderRadius: 8,
@@ -345,7 +377,8 @@ export default function ResubmitReportModal({
                 background: '#1e3a5f',
                 color: '#fff',
                 fontWeight: 700,
-                cursor: 'pointer',
+                cursor: busy || !checklistComplete ? 'not-allowed' : 'pointer',
+                opacity: busy || !checklistComplete ? 0.6 : 1,
               }}
             >
               {busy ? 'Sending…' : 'Resubmit'}

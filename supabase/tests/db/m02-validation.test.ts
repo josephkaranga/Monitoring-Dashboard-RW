@@ -13,7 +13,9 @@ import {
   createDatabase,
   createUser,
   errorAsUser,
+  FULL_DECLARATION,
   grantScope,
+  pastPeriod,
   review,
   setRole,
 } from './harness';
@@ -50,13 +52,13 @@ async function submitFullRoute(forestHa = 50): Promise<string> {
     const r = await tx.query<{ id: string }>(
       `INSERT INTO public.toolkit_reports
          (tool_id, tool_name, submitted_by, status, period, district, nbsap_target_id, indicator_id,
-          form_data, attachments, workflow_status)
+          form_data, attachments, workflow_status, dqa_declaration)
        VALUES ('T02', 'District Biodiversity Monitoring', $1, 'pending', $2, 'Musanze', $3, $4, $5::jsonb, $6::jsonb,
-               'published') -- a forged status: must be ignored
+               'published', ${FULL_DECLARATION}) -- a forged status: must be ignored
        RETURNING id`,
       [
         submitter,
-        `Q${(periodSeq % 4) + 1} ${2030 + Math.floor(periodSeq / 4)}`,
+        pastPeriod(periodSeq),
         TARGET,
         indicatorId,
         JSON.stringify({ stakeholder: 'REMA', district: 'Musanze', forest_ha: String(forestHa) }),
@@ -224,7 +226,9 @@ describe('Done when: progress changes only on publication — the stored figure 
     await review(db, remaVerifier, id, 'return', 'Recheck');
     expect(await stored()).toBe(s0);
 
-    await asUser(db, submitter, tx => tx.query(`SELECT public.resubmit_report($1)`, [id]));
+    await asUser(db, submitter, tx =>
+      tx.query(`SELECT public.resubmit_report($1, p_declaration => ${FULL_DECLARATION})`, [id])
+    );
     await approveThrough(id, [...STAGES]);
     expect(await stored()).toBe(s1); // not s1 + another step
   });
@@ -252,10 +256,10 @@ describe('Done when: a report can be returned at any stage', () => {
       // Nobody can approve a returned report; the submitter corrects and resubmits.
       await expect(review(db, validatorFor(code), id, 'approve')).rejects.toThrow(/returned/);
       await asUser(db, submitter, tx =>
-        tx.query(`SELECT public.resubmit_report($1, $2::jsonb, NULL, 'Corrected')`, [
-          id,
-          JSON.stringify({ stakeholder: 'REMA', district: 'Musanze', forest_ha: '55' }),
-        ])
+        tx.query(
+          `SELECT public.resubmit_report($1, $2::jsonb, NULL, 'Corrected', ${FULL_DECLARATION})`,
+          [id, JSON.stringify({ stakeholder: 'REMA', district: 'Musanze', forest_ha: '55' })]
+        )
       );
       expect(await state(id)).toMatchObject({ workflow_status: 'submitted', stage: 'district' });
     });
@@ -271,14 +275,16 @@ describe('Done when: a report can be returned at any stage', () => {
     const id = await submitFullRoute();
     await review(db, districtVal, id, 'return', 'Missing data');
     await expect(
-      asUser(db, districtVal, tx => tx.query(`SELECT public.resubmit_report($1)`, [id]))
+      asUser(db, districtVal, tx =>
+        tx.query(`SELECT public.resubmit_report($1, p_declaration => ${FULL_DECLARATION})`, [id])
+      )
     ).rejects.toThrow(/Only the person who submitted/);
     await expect(
       asUser(db, submitter, tx =>
-        tx.query(`SELECT public.resubmit_report($1, $2::jsonb)`, [
-          id,
-          JSON.stringify({ stakeholder: 'REMA', district: 'Huye' }),
-        ])
+        tx.query(
+          `SELECT public.resubmit_report($1, $2::jsonb, p_declaration => ${FULL_DECLARATION})`,
+          [id, JSON.stringify({ stakeholder: 'REMA', district: 'Huye' })]
+        )
       )
     ).rejects.toThrow(/cannot change/);
   });
@@ -344,8 +350,8 @@ describe('history and integrity', () => {
     // A REMA report without map evidence never reaches RLMUA.
     const notRouted = await asUser(db, submitter, async tx => {
       const r = await tx.query<{ id: string }>(
-        `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, form_data)
-         VALUES ('T01', 'National Institutional Reporting', $1, 'pending', 'Q4 2040', '{"stakeholder":"REMA"}')
+        `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, form_data, dqa_declaration)
+         VALUES ('T01', 'National Institutional Reporting', $1, 'pending', 'Q4 2025', '{"stakeholder":"REMA"}', ${FULL_DECLARATION})
          RETURNING id`,
         [submitter]
       );

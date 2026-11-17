@@ -12,7 +12,9 @@ import {
   createDatabase,
   createUser,
   errorAsUser,
+  FULL_DECLARATION,
   grantScope,
+  pastPeriod,
   review,
   setRole,
   useSingleStage,
@@ -34,13 +36,13 @@ let periodSeq = 0;
 
 /** Insert a report as `userId` through RLS, like the browser does. Returns its id. */
 async function submitAs(userId: string, status = 'pending'): Promise<string> {
-  const period = `Q${(periodSeq % 4) + 1} ${2027 + Math.floor(periodSeq / 4)}`;
+  const period = pastPeriod(periodSeq);
   periodSeq += 1;
   return asUser(db, userId, async tx => {
     const r = await tx.query<{ id: string }>(
-      `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data)
+      `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data, dqa_declaration)
        VALUES ('T02', 'District Biodiversity Monitoring', $1, $2::submission_status, $3, 'Musanze',
-               '{"x":1, "stakeholder": "District Authorities", "district": "Musanze"}'::jsonb)
+               '{"x":1, "stakeholder": "District Authorities", "district": "Musanze"}'::jsonb, ${FULL_DECLARATION})
        RETURNING id`,
       [userId, status, period]
     );
@@ -183,8 +185,8 @@ describe('H1 — approvers have limits', () => {
   it('a submitter cannot insert a report that is already approved', async () => {
     const err = await errorAsUser(db, ministry, tx =>
       tx.query(
-        `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period)
-         VALUES ('T01', 'National Institutional Reporting', $1, 'approved', 'Q1 2030')`,
+        `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, dqa_declaration)
+         VALUES ('T01', 'National Institutional Reporting', $1, 'approved', 'Q1 2026', ${FULL_DECLARATION})`,
         [ministry]
       )
     );

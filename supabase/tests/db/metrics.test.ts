@@ -10,6 +10,7 @@ import {
   asUser,
   createDatabase,
   createUser,
+  FULL_DECLARATION,
   grantScope,
   review,
   setRole,
@@ -48,9 +49,9 @@ describe('system metrics (forest hectares)', () => {
 
     const id = await asUser(db, officer, async tx => {
       const r = await tx.query<{ id: string }>(
-        `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data)
-         VALUES ('T02', 'District Biodiversity Monitoring', $1, 'pending', 'Q1 2027', 'Musanze',
-                 '{"forest_ha": "120", "stakeholder": "District Authorities", "district": "Musanze"}'::jsonb)
+        `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data, dqa_declaration)
+         VALUES ('T02', 'District Biodiversity Monitoring', $1, 'pending', 'Q1 2026', 'Musanze',
+                 '{"forest_ha": "120", "stakeholder": "District Authorities", "district": "Musanze"}'::jsonb, ${FULL_DECLARATION})
          RETURNING id`,
         [officer]
       );
@@ -73,7 +74,9 @@ describe('system metrics (forest hectares)', () => {
     await review(db, reviewer, id, 'return', 'withdrawn: figures to be checked');
     expect(await forestTotal()).toBe(before); // a withdrawn report no longer counts
 
-    await asUser(db, officer, tx => tx.query(`SELECT public.resubmit_report($1)`, [id]));
+    await asUser(db, officer, tx =>
+      tx.query(`SELECT public.resubmit_report($1, p_declaration => ${FULL_DECLARATION})`, [id])
+    );
     expect(await forestTotal()).toBe(before); // resubmitted is not published
 
     await review(db, reviewer, id, 'approve');

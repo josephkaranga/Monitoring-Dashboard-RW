@@ -1,5 +1,6 @@
 import { supabase } from '../utils/supabase';
 import { formatFieldValue } from '../utils/formData';
+import { declarationPayload } from '../utils/dataQuality';
 
 import { automatedProcessingEngine } from './automatedProcessingEngine';
 import { writeAuditEntry } from './dataService';
@@ -20,6 +21,7 @@ import type {
   ValidationStage,
   ReportHistoryEntry,
   WorkflowStatus,
+  DqaDeclaration,
 } from '../types/index';
 
 export interface ToolWeightInfo {
@@ -144,7 +146,9 @@ export async function submitReport(
   _requireVerification: boolean = true,
   attachments: ReportAttachment[] = [],
   nbsapTargetId?: number | null,
-  indicatorId?: number | null
+  indicatorId?: number | null,
+  /** M04: the completed checklist; the database refuses a report without it. */
+  declaration?: DqaDeclaration | null
 ): Promise<ApiResponse<ToolkitReport>> {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return { data: null, error: 'Not authenticated' };
@@ -177,6 +181,7 @@ export async function submitReport(
     institution: (formData.institution as string) || null,
     nbsap_target_id: nbsapTargetId || null,
     indicator_id: indicatorId || null,
+    dqa_declaration: declaration ? declarationPayload(declaration) : null,
     submitted_at: new Date().toISOString(),
   };
 
@@ -323,13 +328,15 @@ export async function resubmitReport(
   reportId: string,
   formData?: Record<string, unknown>,
   attachments?: ReportAttachment[],
-  note?: string
+  note?: string,
+  declaration?: DqaDeclaration | null
 ): Promise<ApiResponse<ToolkitReport>> {
   const { data, error } = await supabase.rpc('resubmit_report', {
     p_report: reportId,
     p_form_data: formData ?? null,
     p_attachments: attachments ?? null,
     p_note: note?.trim() || null,
+    p_declaration: declaration ? declarationPayload(declaration) : null,
   });
   if (error) return { data: null, error: error.message };
   _statsCache = { data: null, ts: 0 };

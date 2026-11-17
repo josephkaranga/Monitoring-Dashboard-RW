@@ -4,6 +4,7 @@ import { fetchValidationStages, reviewReport, type ReviewAction } from '../servi
 import WorkflowPanel from '../components/WorkflowPanel';
 import { useInstitutions, useMyScopes } from '../hooks/useInstitutions';
 import { WORKFLOW_LABELS, canActOnReport, stageProgress } from '../utils/workflow';
+import { validatorAttention } from '../utils/dataQuality';
 import type { ValidationStage, WorkflowStatus } from '../types/index';
 import { writeAuditEntry } from '../services/dataService';
 import { useAuth } from '../services/AuthContext';
@@ -1282,6 +1283,29 @@ export default function VerifQueuePage() {
                         <i className="fa-solid fa-paperclip" /> {report.attachments.length}
                       </span>
                     )}
+                    {(() => {
+                      // M04: data-quality warnings recorded on submission
+                      const warnings = validatorAttention(report.quality_flags);
+                      const jumps = warnings.filter(f => f.code === 'jump').length;
+                      if (warnings.length === 0) return null;
+                      return (
+                        <span
+                          title={warnings.map(f => f.message).join(' · ')}
+                          style={{
+                            fontSize: '0.62rem',
+                            fontWeight: 700,
+                            color: '#92400e',
+                            background: '#fef3c7',
+                            padding: '2px 8px',
+                            borderRadius: 10,
+                          }}
+                        >
+                          {jumps > 0
+                            ? `📈 ${jumps} jump${jumps > 1 ? 's' : ''}`
+                            : `⚠ ${warnings.length} check${warnings.length > 1 ? 's' : ''}`}
+                        </span>
+                      );
+                    })()}
                     <span
                       style={{
                         background: st.bg,

@@ -162,6 +162,25 @@ export async function useSingleStage(db: PGlite, code = 'ministry'): Promise<voi
   ]);
 }
 
+/**
+ * SQL expression for a complete data-quality declaration (043): every
+ * active checklist item confirmed and the declaration accepted. Use it as a
+ * value in an INSERT or as resubmit_report's p_declaration.
+ */
+export const FULL_DECLARATION = `(SELECT jsonb_build_object('declared', true, 'items', COALESCE(jsonb_agg(id), '[]'::jsonb))
+   FROM public.dqa_checklist_items WHERE is_active)`;
+
+/**
+ * The n-th past reporting period (043 refuses future periods): Q1 2020 ...
+ * Q4 2026, then the years 2020 ... 2026. Reports from one submitter, tool
+ * and target need different periods (unique index from 027).
+ */
+export function pastPeriod(n: number): string {
+  if (n < 28) return `Q${(n % 4) + 1} ${2020 + Math.floor(n / 4)}`;
+  if (n < 35) return String(2020 + n - 28);
+  throw new Error(`pastPeriod: only 35 past periods (asked for #${n})`);
+}
+
 /** Run review_report() as a user (040). */
 export async function review(
   db: PGlite,

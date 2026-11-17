@@ -3,7 +3,15 @@
 // database, under each user's own access rules.
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
-import { asUser, createDatabase, createUser, grantScope, review, setRole } from './harness';
+import {
+  asUser,
+  createDatabase,
+  createUser,
+  FULL_DECLARATION,
+  grantScope,
+  review,
+  setRole,
+} from './harness';
 
 let db: PGlite;
 let musanze: string;
@@ -14,8 +22,8 @@ let viewer: string;
 async function submit(user: string, district: string, period: string) {
   return asUser(db, user, async tx => {
     const r = await tx.query<{ id: string }>(
-      `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data)
-       VALUES ('T02', 'District', $1, 'pending', $2, $3, $4::jsonb) RETURNING id`,
+      `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data, dqa_declaration)
+       VALUES ('T02', 'District', $1, 'pending', $2, $3, $4::jsonb, ${FULL_DECLARATION}) RETURNING id`,
       [user, period, district, JSON.stringify({ stakeholder: 'District Authorities', district })]
     );
     return r.rows[0].id;
@@ -49,9 +57,9 @@ beforeAll(async () => {
   await grantScope(db, huye, 'data_entry', 'District Authorities', 'Huye');
   await grantScope(db, validator, 'district_validator', 'District Authorities', 'Musanze');
 
-  const m1 = await submit(musanze, 'Musanze', 'Q1 2031');
-  await submit(musanze, 'Musanze', 'Q2 2031');
-  await submit(huye, 'Huye', 'Q1 2031');
+  const m1 = await submit(musanze, 'Musanze', 'Q1 2026');
+  await submit(musanze, 'Musanze', 'Q2 2026');
+  await submit(huye, 'Huye', 'Q1 2026');
   await review(db, validator, m1, 'approve'); // Musanze report moves on to REMA
 }, 180_000);
 

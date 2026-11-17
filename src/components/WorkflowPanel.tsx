@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchReportHistory, type ReviewAction } from '../services/reportService';
 import { WORKFLOW_LABELS, isFinalStage, stageProgress } from '../utils/workflow';
 import type { ReportHistoryEntry, ToolkitReport, ValidationStage } from '../types/index';
+import QualityFlagsList from './QualityFlagsList';
 
 const ACTION_LABEL: Record<string, string> = {
   submit: 'Submitted',
@@ -124,6 +125,22 @@ export default function WorkflowPanel({
             : ''}
         </span>
       </div>
+
+      {/* M04: data-quality findings recorded on submission */}
+      <QualityFlagsList
+        flags={report.quality_flags}
+        title="Data quality — check before approving"
+      />
+      {report.dqa_declaration?.declared && (
+        <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: 10 }}>
+          <i className="fa-solid fa-clipboard-check" style={{ marginRight: 6, color: '#16a34a' }} />
+          Data-quality checklist confirmed by the submitter
+          {report.dqa_declaration.declared_at
+            ? ` on ${new Date(report.dqa_declaration.declared_at).toLocaleString()}`
+            : ''}
+          .
+        </div>
+      )}
 
       {/* Actions */}
       {isOwnSubmission ? (

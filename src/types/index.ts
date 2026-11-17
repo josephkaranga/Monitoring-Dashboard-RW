@@ -413,9 +413,56 @@ export interface ToolkitReport {
     definition: string;
     periodicity: string;
   } | null;
+  /** M04: warnings recorded by the database on submission (e.g. a 50% jump). */
+  quality_flags?: QualityFlag[];
+  /** M04: the submitter's checklist confirmation (author and time set by the database). */
+  dqa_declaration?: DqaDeclaration | null;
   submitted_at: string;
   created_at: string;
   updated_at: string;
+}
+
+// ── M04: data quality ──────────────────────────────────────────
+export type QualityFlagCode =
+  | 'period_missing'
+  | 'period_format'
+  | 'period_range'
+  | 'period_future'
+  | 'not_a_number'
+  | 'below_min'
+  | 'above_max'
+  | 'disbursed_exceeds_allocated'
+  | 'no_target'
+  | 'no_indicator'
+  | 'jump';
+
+export interface QualityFlag {
+  code: QualityFlagCode | string;
+  /** error = submission refused; warning = recorded and shown to validators. */
+  severity: 'error' | 'warning';
+  field?: string;
+  message: string;
+  previous?: number;
+  current?: number;
+  change_pct?: number;
+  previous_period?: string;
+  previous_report_id?: string;
+}
+
+export interface DqaChecklistItem {
+  id: number;
+  ordinal: number;
+  text: string;
+  source: string | null;
+  is_active: boolean;
+}
+
+export interface DqaDeclaration {
+  declared: boolean;
+  /** Ids of the confirmed checklist items. */
+  items: number[];
+  declared_by?: string;
+  declared_at?: string;
 }
 
 export interface ReportAttachment {

@@ -12,7 +12,9 @@ import {
   createDatabase,
   createUser,
   errorAsUser,
+  FULL_DECLARATION,
   grantScope,
+  pastPeriod,
   review,
   setRole,
   useSingleStage,
@@ -31,7 +33,7 @@ let minagriAdmin: string; // institution admin, MINAGRI
 let periodSeq = 0;
 const nextPeriod = () => {
   periodSeq += 1;
-  return `Q${(periodSeq % 4) + 1} ${2027 + Math.floor(periodSeq / 4)}`;
+  return pastPeriod(periodSeq);
 };
 
 async function submit(userId: string, stakeholder: string, district?: string): Promise<string> {
@@ -39,9 +41,9 @@ async function submit(userId: string, stakeholder: string, district?: string): P
     const r = await tx.query<{ id: string }>(
       `INSERT INTO public.toolkit_reports
          (tool_id, tool_name, submitted_by, status, period, district, institution, form_data,
-          institution_id, district_id)
+          institution_id, district_id, dqa_declaration)
        VALUES ('T01', 'National Institutional Reporting', $1, 'pending', $2, $3, $4, $5::jsonb,
-               999999, 999999) -- forged columns: must be ignored
+               999999, 999999, ${FULL_DECLARATION}) -- forged columns: must be ignored
        RETURNING id`,
       [
         userId,
@@ -155,8 +157,8 @@ describe('Done when: a district officer sees only their district', () => {
       (
         await errorAsUser(db, musanzeOfficer, tx =>
           tx.query(
-            `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data)
-           VALUES ('T02', 'District', $1, 'pending', 'Q1 2031', 'Huye', '{"stakeholder":"District Authorities","district":"Huye"}')`,
+            `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, district, form_data, dqa_declaration)
+           VALUES ('T02', 'District', $1, 'pending', 'Q1 2026', 'Huye', '{"stakeholder":"District Authorities","district":"Huye"}', ${FULL_DECLARATION})`,
             [musanzeOfficer]
           )
         )
@@ -166,8 +168,8 @@ describe('Done when: a district officer sees only their district', () => {
       (
         await errorAsUser(db, musanzeOfficer, tx =>
           tx.query(
-            `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, form_data)
-           VALUES ('T01', 'National', $1, 'pending', 'Q2 2031', '{"stakeholder":"MINAGRI"}')`,
+            `INSERT INTO public.toolkit_reports (tool_id, tool_name, submitted_by, status, period, form_data, dqa_declaration)
+           VALUES ('T01', 'National', $1, 'pending', 'Q2 2026', '{"stakeholder":"MINAGRI"}', ${FULL_DECLARATION})`,
             [musanzeOfficer]
           )
         )
