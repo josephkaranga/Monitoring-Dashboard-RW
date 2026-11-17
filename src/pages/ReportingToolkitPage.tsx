@@ -35,6 +35,14 @@ import { groupStakeholders, STAKEHOLDER_CATEGORIES } from '../utils/stakeholderG
 import { useInstitutions, useMyScopes } from '../hooks/useInstitutions';
 import { allowedDistrictIds } from '../services/institutionService';
 import ResubmitReportModal from '../components/ResubmitReportModal';
+import DraftStatusBar from '../components/DraftStatusBar';
+import { useDraftAutosave } from '../hooks/useDraftAutosave';
+import {
+  deleteDraft,
+  listMyDrafts,
+  uploadDraftEvidence,
+  type ReportDraft,
+} from '../services/draftService';
 import type { ToolkitReport } from '../types/index';
 import {
   EVIDENCE_ACCEPTED_EXT,
@@ -722,10 +730,13 @@ const ReportForm = ({
   tool,
   onBack,
   onSuccess,
+  initialDraft,
 }: {
   tool: (typeof TOOLKIT_TOOLS)[0];
   onBack: () => void;
   onSuccess: () => void;
+  /** M03: resume this draft (from any device). */
+  initialDraft?: ReportDraft | null;
 }) => {
   const { settings, user } = useAuth();
   const { institutions, loading: loadingInstitutions } = useInstitutions();
@@ -738,9 +749,24 @@ const ReportForm = ({
     (key: string) => toStakeholderConfig(institutionsByCode.get(key)),
     [institutionsByCode]
   );
-  const [formData, setFormData] = useState<Record<string, string>>({});
-  const [attachments, setAttachments] = useState<ReportAttachment[]>([]);
+  const [formData, setFormData] = useState<Record<string, string>>(
+    () => initialDraft?.form_data ?? {}
+  );
+  const [attachments, setAttachments] = useState<ReportAttachment[]>(
+    () => initialDraft?.attachments ?? []
+  );
   const [submitting, setSubmitting] = useState(false);
+  // M03: auto-save to a server draft.
+  const draft = useDraftAutosave({
+    toolId: tool.id as ReportType,
+    formData,
+    attachments,
+    initialDraft,
+  });
+  // When a draft is loaded, its stakeholder/target are already chosen: the
+  // "reset dependent fields" effects below must not clear them on first run.
+  const skipStakeholderResetRef = useRef(!!initialDraft?.form_data?.stakeholder);
+  const skipTargetResetRef = useRef(!!initialDraft?.form_data?.nbsap_target);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [responsibleTargets, setResponsibleTargets] = useState<NBSAPTarget[]>([]);
   const [availableIndicators, setAvailableIndicators] = useState<Indicator[]>([]);
@@ -915,6 +941,10 @@ const ReportForm = ({
   // For single-institution stakeholders the institution field is auto-filled;
   // for District Authorities it is cleared so the user picks from the dropdown.
   useEffect(() => {
+    if (skipStakeholderResetRef.current) {
+      skipStakeholderResetRef.current = false;
+      return;
+    }
     if (formData.stakeholder) {
       const config = getStakeholderConfig(formData.stakeholder);
       setFormData(prev => ({
@@ -928,6 +958,10 @@ const ReportForm = ({
 
   // Reset indicator when target changes
   useEffect(() => {
+    if (skipTargetResetRef.current) {
+      skipTargetResetRef.current = false;
+      return;
+    }
     if (formData.nbsap_target) {
       setFormData(prev => ({
         ...prev,
@@ -1088,18 +1122,21 @@ const ReportForm = ({
 
         // Enhanced success message
         const successMsg = requireVerification
-          ? 'Submission queued for verification ⏳' +
-            (selectedTarget ? ` Data will update Target ${selectedTarget.id} upon approval.` : '')
+          ? 'Submitted for validation ⏳' +
+            (selectedTarget
+              ? ` Data will count toward Target ${selectedTarget.id} once published.`
+              : '')
           : 'Report submitted successfully ✓' +
             (selectedTarget ? ` Target ${selectedTarget.id} updated automatically.` : '') +
             (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
 
         toast.success(successMsg);
+        await draft.finish({ discarded: false });
         onSuccess();
       }
       setSubmitting(false);
     },
-    [formData, tool, settings, attachments, onSuccess, responsibleTargets, allDistricts]
+    [formData, tool, settings, attachments, onSuccess, responsibleTargets, allDistricts, draft]
   );
 
   const handleFiles = useCallback(
@@ -1116,23 +1153,36 @@ const ReportForm = ({
         const placeholder: ReportAttachment = { name: file.name, ext, size: file.size };
         accepted.push(placeholder);
         const reader = new FileReader();
-        reader.onload = e => {
-          setAttachments(prev => [
-            ...prev,
-            {
-              name: file.name,
-              ext,
-              size: file.size,
-              data_url: e.target?.result as string,
-              evidence_type: '',
-              description: '',
-            },
-          ]);
+        reader.onload = async e => {
+          const local: ReportAttachment = {
+            name: file.name,
+            ext,
+            size: file.size,
+            data_url: e.target?.result as string,
+            evidence_type: '',
+            description: '',
+          };
+          setAttachments(prev => [...prev, local]);
+          // M03: store the file with the draft now, so it survives a closed browser.
+          if (!user) return;
+          const draftId = await draft.ensureDraft();
+          if (!draftId) return; // kept in memory; uploaded on submit
+          const up = await uploadDraftEvidence(user.id, draftId, local);
+          if (up.data) {
+            const storagePath = up.data.storage_path;
+            setAttachments(prev =>
+              prev.map(a =>
+                a.name === local.name && a.size === local.size && !a.storage_path
+                  ? { ...a, storage_path: storagePath }
+                  : a
+              )
+            );
+          }
         };
         reader.readAsDataURL(file);
       });
     },
-    [attachments]
+    [attachments, draft, user]
   );
 
   const updateAttachment = useCallback((index: number, patch: Partial<ReportAttachment>) => {
@@ -1197,6 +1247,31 @@ const ReportForm = ({
           </div>
         </div>
 
+        <DraftStatusBar
+          status={draft.status}
+          savedAt={draft.savedAt}
+          error={draft.error}
+          hasDraft={!!draft.draftId}
+          onKeepMine={() => void draft.keepMine()}
+          onTakeTheirs={async () => {
+            const theirs = await draft.takeTheirs();
+            if (theirs) {
+              skipStakeholderResetRef.current = true;
+              skipTargetResetRef.current = true;
+              setFormData(theirs.form_data);
+              setAttachments(theirs.attachments);
+            }
+          }}
+          onDiscard={async () => {
+            if (
+              !window.confirm('Discard this draft? Its values and attached files will be deleted.')
+            )
+              return;
+            await draft.finish({ discarded: true });
+            toast.success('Draft discarded');
+            onBack();
+          }}
+        />
         <form onSubmit={handleSubmit}>
           <div
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}
@@ -1783,7 +1858,7 @@ const ReportForm = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(att.ext) ? (
+                  {['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(att.ext) && att.data_url ? (
                     <img
                       src={att.data_url}
                       alt={att.name}
@@ -1998,6 +2073,17 @@ export default function ReportingToolkitPage() {
   const { user: currentUser } = useAuth();
   // M02: a returned report the user is correcting.
   const [resubmitTarget, setResubmitTarget] = useState<ToolkitReport | null>(null);
+  // M03: the user's drafts, and the one being resumed.
+  const [drafts, setDrafts] = useState<ReportDraft[]>([]);
+  const [resumeDraft, setResumeDraft] = useState<ReportDraft | null>(null);
+  const loadDrafts = useCallback(() => {
+    listMyDrafts()
+      .then(setDrafts)
+      .catch(() => setDrafts([]));
+  }, []);
+  useEffect(() => {
+    loadDrafts();
+  }, [loadDrafts]);
   const { institutions } = useInstitutions();
   const institutionNames = useMemo(
     () => new Map(institutions.map(i => [i.code, i.name])),
@@ -2075,13 +2161,19 @@ export default function ReportingToolkitPage() {
   if (activeTool && !showSuccess) {
     return (
       <ReportForm
+        key={resumeDraft?.id ?? activeTool.id}
         tool={activeTool}
+        initialDraft={resumeDraft}
         onBack={() => {
           setActiveTool(null);
           setShowSuccess(false);
+          setResumeDraft(null);
+          loadDrafts();
         }}
         onSuccess={() => {
           setShowSuccess(true);
+          setResumeDraft(null);
+          loadDrafts();
           refetch();
         }}
       />
@@ -2161,6 +2253,91 @@ export default function ReportingToolkitPage() {
         </div>
       </div>
 
+      {/* M03: drafts — resume on any device */}
+      {drafts.length > 0 && (
+        <div
+          style={{
+            background: '#fff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 12,
+            padding: '14px 18px',
+            marginBottom: 18,
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 8 }}>
+            Your drafts ({drafts.length})
+          </div>
+          {drafts.map(d => {
+            const t = TOOLKIT_TOOLS.find(x => x.id === d.tool_id);
+            const who = d.form_data?.stakeholder
+              ? (institutionNames.get(d.form_data.stakeholder) ?? d.form_data.stakeholder)
+              : 'No stakeholder chosen yet';
+            return (
+              <div
+                key={d.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '7px 0',
+                  borderTop: '1px solid #f1f5f9',
+                  fontSize: '0.8rem',
+                }}
+              >
+                <span>{t?.icon}</span>
+                <span style={{ flex: 1 }}>
+                  <strong>{t?.name ?? d.tool_id}</strong> · {who}
+                  {d.form_data?.period ? ` · ${d.form_data.period}` : ''}
+                  <span style={{ color: '#94a3b8' }}>
+                    {' '}
+                    · saved {new Date(d.updated_at).toLocaleString()}
+                  </span>
+                </span>
+                <button
+                  onClick={() => {
+                    if (!t) return;
+                    setResumeDraft(d);
+                    setShowSuccess(false);
+                    setActiveTool(t);
+                  }}
+                  style={{
+                    background: '#1e3a5f',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Resume
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!window.confirm('Delete this draft and its attached files?')) return;
+                    const r = await deleteDraft(d);
+                    if (r.error) toast.error(r.error);
+                    else toast.success('Draft deleted');
+                    loadDrafts();
+                  }}
+                  aria-label="Delete draft"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f43f5e',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  🗑
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Tool cards grid — responsive */}
       <div
         style={{
@@ -2176,6 +2353,7 @@ export default function ReportingToolkitPage() {
             <div
               key={t.id}
               onClick={() => {
+                setResumeDraft(null); // a tool card always starts a new report
                 setActiveTool(t);
                 setShowSuccess(false);
               }}
