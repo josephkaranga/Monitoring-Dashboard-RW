@@ -36,6 +36,7 @@ import { useInstitutions, useMyScopes } from '../hooks/useInstitutions';
 import { allowedDistrictIds } from '../services/institutionService';
 import ResubmitReportModal from '../components/ResubmitReportModal';
 import DraftStatusBar from '../components/DraftStatusBar';
+import TwoStepStakeholderSelect from '../components/TwoStepStakeholderSelect';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
 import {
   deleteDraft,
@@ -1327,41 +1328,17 @@ const ReportForm = ({
                     }}
                   />
                 ) : f.type === 'stakeholder_select' ? (
-                  <select
+                  <TwoStepStakeholderSelect
+                    groups={stakeholderGroups}
                     value={formData[f.key] || ''}
-                    onChange={e => {
-                      setFormData(d => ({ ...d, [f.key]: e.target.value }));
+                    onChange={code => {
+                      setFormData(d => ({ ...d, [f.key]: code }));
                       setErrors(err => ({ ...err, [f.key]: false }));
                     }}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
-                      borderRadius: 8,
-                      fontSize: '0.83rem',
-                      fontFamily: "'DM Sans', sans-serif",
-                      outline: 'none',
-                      background: '#fff',
-                      color: '#0f172a',
-                    }}
-                  >
-                    <option value="">
-                      {loadingInstitutions || loadingScopes
-                        ? 'Loading…'
-                        : availableStakeholders.length === 0
-                          ? 'No data-entry access for this module — ask your institution administrator'
-                          : '— Select Stakeholder —'}
-                    </option>
-                    {stakeholderGroups.map(group => (
-                      <optgroup key={group.label} label={group.label}>
-                        {group.items.map(stakeholder => (
-                          <option key={stakeholder.id} value={stakeholder.id}>
-                            {stakeholder.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                    invalid={!!errors[f.key]}
+                    loading={loadingInstitutions || loadingScopes}
+                    emptyMessage="No data-entry access for this module — ask your institution administrator"
+                  />
                 ) : f.type === 'target_select' ? (
                   <select
                     value={formData[f.key] || ''}
