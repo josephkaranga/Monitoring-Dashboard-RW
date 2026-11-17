@@ -63,6 +63,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    // Each database test file runs a full Postgres (PGlite) in memory;
+    // more than a few at once exhausts memory and crashes workers.
+    maxWorkers: 3,
   },
   build: {
     outDir: 'dist',

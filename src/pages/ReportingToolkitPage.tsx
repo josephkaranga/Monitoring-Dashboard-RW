@@ -40,6 +40,7 @@ import TwoStepStakeholderSelect from '../components/TwoStepStakeholderSelect';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
 import DataQualityChecklist from '../components/DataQualityChecklist';
 import QualityFlagsList from '../components/QualityFlagsList';
+import DisaggregationFields from '../components/DisaggregationFields';
 import { useChecklistItems, useQualityPreview } from '../hooks/useDataQuality';
 import { emptyDeclaration, isChecklistComplete } from '../utils/dataQuality';
 import type { DqaDeclaration } from '../types/index';
@@ -1704,6 +1705,12 @@ const ReportForm = ({
             );
           })}
 
+          {/* M05: sex, age and youth fields where the indicator requires them */}
+          <DisaggregationFields
+            indicatorId={previewIndicator}
+            values={formData}
+            onChange={(key, value) => setFormData(prev => ({ ...prev, [key]: value }))}
+          />
           <QualityFlagsList
             flags={previewFlags}
             title={previewHasErrors ? 'Fix before submitting' : 'Validators will see'}

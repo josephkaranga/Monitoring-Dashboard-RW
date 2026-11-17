@@ -5,6 +5,9 @@ import { writeAuditEntry } from '../services/dataService';
 import { TableRowSkeleton } from '../components/Skeleton';
 import { progressColor } from '../utils/progressColors';
 import type { Indicator, IndicatorTier, IndicatorStatus } from '../types/index';
+import IndicatorReferencePanel from '../components/IndicatorReferencePanel';
+import ReferenceCompletenessBanner from '../components/ReferenceCompletenessBanner';
+import { useMyScopes } from '../hooks/useInstitutions';
 
 // ── Goal config ───────────────────────────────────────────────
 const GOAL_CFG = {
@@ -127,10 +130,12 @@ function IndicatorModal({
   indicator: i,
   onClose,
   onViewTarget,
+  isAdmin,
 }: {
   indicator: Indicator;
   onClose: () => void;
   onViewTarget: (targetId: number) => void;
+  isAdmin: boolean;
 }) {
   const tier = TIER_CFG[i.tier];
   const status = STATUS_CFG[i.status];
@@ -378,6 +383,8 @@ function IndicatorModal({
               ))}
             </div>
           )}
+          {/* M05: reference data and the one-page PDF sheet */}
+          <IndicatorReferencePanel indicatorId={i.id} isAdmin={isAdmin} />
           <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
             <button
               onClick={() => {
@@ -417,6 +424,7 @@ export default function IndicatorsPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Indicator | null>(null);
   const [groupByTarget, setGroupByTarget] = useState(false);
+  const { isAdmin } = useMyScopes();
 
   // Read URL params for cross-page navigation
   useEffect(() => {
@@ -514,6 +522,7 @@ export default function IndicatorsPage() {
       {selected && (
         <IndicatorModal
           indicator={selected}
+          isAdmin={isAdmin}
           onClose={() => setSelected(null)}
           onViewTarget={id => {
             setSelected(null);
@@ -521,6 +530,9 @@ export default function IndicatorsPage() {
           }}
         />
       )}
+
+      {/* M05: how many indicators in use have complete reference data */}
+      <ReferenceCompletenessBanner />
 
       {/* Tier stat strip */}
       <div

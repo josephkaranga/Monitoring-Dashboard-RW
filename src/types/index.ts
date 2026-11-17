@@ -242,9 +242,95 @@ export interface Indicator {
   periodicity: string;
   data_source: string;
   responsible: string[];
+  /** M05: breakdowns a report must give (NULL = not decided). */
+  disaggregations?: string[] | null;
+  /** M05: false for duplicates kept for history. */
+  in_use?: boolean;
   created_at: string;
   updated_at: string;
 }
+
+// ── M05: indicator reference data ─────────────────────────────
+export interface DisaggregationDimension {
+  code: string;
+  label: string;
+  description: string | null;
+  fields: { key: string; label: string }[];
+  ordinal: number;
+}
+
+export interface NationalTier {
+  tier: number;
+  name: string;
+  description: string;
+}
+
+export interface ValidationRouteStep {
+  code: string;
+  name: string;
+  condition: string;
+}
+
+/** One row of v_indicator_reference: everything a reference sheet shows. */
+export interface IndicatorReference {
+  id: number;
+  name: string;
+  definition: string | null;
+  km_gbf_type: IndicatorTier;
+  km_gbf: string | null;
+  national_tier: number | null;
+  national_tier_name: string | null;
+  nbsap_target_id: number | null;
+  target_title: string | null;
+  unit: string | null;
+  formula: string | null;
+  methodology: string | null;
+  data_source: string | null;
+  periodicity: string | null;
+  lead_institution_id: number | null;
+  lead_institution_code: string | null;
+  lead_institution_name: string | null;
+  responsible: string[] | null;
+  rbis_code: string | null;
+  disaggregations: string[] | null;
+  baseline: string | null;
+  midterm: string | null;
+  target_2030: string | null;
+  requires_statistical_validation: boolean;
+  validation_route: ValidationRouteStep[];
+  in_use: boolean;
+  duplicate_of: number | null;
+  reference_status: 'draft' | 'approved';
+  reference_note: string | null;
+  reference_approved_at: string | null;
+  gaps: string[];
+  complete: boolean;
+  sheet_methodology: string | null;
+  sheet_disaggregation: string | null;
+  sheet_data_sources: string | null;
+  sheet_baseline_and_targets: string | null;
+  sheet_frequency: string | null;
+  sheet_lead: string | null;
+  sheet_collaborators: string | null;
+  sheet_source: string | null;
+}
+
+/** Fields an administrator edits (the rest is computed). */
+export type IndicatorReferenceEdit = Partial<{
+  definition: string;
+  unit: string;
+  formula: string;
+  methodology: string;
+  data_source: string;
+  periodicity: string;
+  national_tier: number;
+  lead_institution_id: number;
+  rbis_code: string;
+  disaggregations: string[];
+  requires_statistical_validation: boolean;
+  in_use: boolean;
+  reference_status: 'draft' | 'approved';
+}>;
 
 export interface NBSAPTarget {
   id: number;
