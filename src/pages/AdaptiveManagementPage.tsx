@@ -34,7 +34,7 @@ export default function AdaptiveManagementPage() {
           }}
         >
           {[
-            { num: '1', label: 'Monitor', sub: 'T01–T07 submitted quarterly', bg: '#1e3a5f' },
+            { num: '1', label: 'Monitor', sub: 'T01–T04 submitted', bg: '#1e3a5f' },
             { num: '2', label: 'Analyse', sub: 'Gap detection vs milestones', bg: '#0284c7' },
             { num: '3', label: 'Alert', sub: 'Trigger if indicator <60%', bg: '#d97706' },
             { num: '4', label: 'Decide', sub: 'Policy review or budget shift', bg: '#7c3aed' },
@@ -177,7 +177,7 @@ export default function AdaptiveManagementPage() {
               color: '#10b981',
               label: 'Quarterly 2026',
               title: 'Institutional Submissions',
-              desc: 'All 7 reporting modules — T01 through T07',
+              desc: 'All 4 reporting modules — T01 through T04',
             },
             {
               color: '#0ea5e9',

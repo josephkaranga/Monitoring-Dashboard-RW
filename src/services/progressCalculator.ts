@@ -65,14 +65,14 @@ export class ProgressCalculator {
 
   /**
    * Build the update result for a calculated progress contribution, including
-   * whether the EIA compliance metrics should also be refreshed (T06 reports).
+   * whether the EIA compliance metrics should also be refreshed (T03 Private Sector reports).
    */
   buildUpdateResult(calculation: ProgressCalculation, toolId: ToolId): UpdateResult {
     return {
       success: true,
       targetId: calculation.targetId,
       progressUpdated: calculation.newProgress !== calculation.previousProgress,
-      eiaComplianceUpdated: toolId === ToolId.T06,
+      eiaComplianceUpdated: toolId === ToolId.T03,
       processingTime: 0,
       newProgress: calculation.newProgress,
       calculationDetails: calculation,

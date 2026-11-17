@@ -58,9 +58,11 @@ export function CompliancePage() {
     loadSystemMetrics();
   }, []);
 
-  const t06 = reports.filter(r => r.tool_id === 'T06');
+  // EIA compliance comes from T03 (Private Sector Compliance).
+  const t06 = reports.filter(r => r.tool_id === 'T03');
   const t02 = reports.filter(r => r.tool_id === 'T02');
-  const t05 = reports.filter(r => r.tool_id === 'T05');
+  // Finance tracking is a retired module: only its legacy reports remain.
+  const t05 = reports.filter(r => (r.tool_id as string) === 'T05_LEGACY');
   const t01 = reports.filter(r => r.tool_id === 'T01');
 
   // Prefer the real-time EIA Compliance Tracker, then automated system metrics, then legacy calculation
@@ -107,9 +109,9 @@ export function CompliancePage() {
   const bars = [
     {
       label: eiaLive
-        ? 'EIA Compliance (real-time from T06)'
+        ? 'EIA Compliance (real-time from T03)'
         : systemMetrics
-          ? 'EIA Compliance (automated from T06)'
+          ? 'EIA Compliance (automated from T03)'
           : 'EIA Compliance',
       score: eiaScore,
       color: eiaScore >= 80 ? '#10b981' : '#f59e0b',
@@ -168,10 +170,10 @@ export function CompliancePage() {
       : t06.filter(r => r.form_data?.eia_compliance === 'Full compliance').length;
 
   const trackingLabel = eiaLive
-    ? 'Real-time T06 tracking'
+    ? 'Real-time T03 tracking'
     : systemMetrics
-      ? 'Automated T06 tracking'
-      : 'Live T06 data';
+      ? 'Automated T03 tracking'
+      : 'Live T03 data';
 
   const issues = [
     ...(nonCompliant > 0
@@ -358,7 +360,7 @@ export function CompliancePage() {
               }}
             >
               ✓ {fullCompliant} full · ⚠ {partial} partial · ✗ {nonCompliant} non-compliant (
-              {eiaLive ? 'real-time' : 'automated'} from T06 reports)
+              {eiaLive ? 'real-time' : 'automated'} from T03 reports)
             </div>
           ) : t06.length > 0 ? (
             <div

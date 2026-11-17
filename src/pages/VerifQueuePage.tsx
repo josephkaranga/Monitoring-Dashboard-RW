@@ -18,16 +18,9 @@ import DOMPurify from 'dompurify';
 import type { ToolkitReport, ReportAttachment } from '../types/index';
 import { flattenFormData, groupedFormData } from '../utils/formData';
 import { evidenceTypeLabel } from '../utils/evidence';
+import { moduleMap } from '../utils/reportingTools';
 
-const TOOL_EMOJI: Record<string, string> = {
-  T01: '\u{1F3DB}️',
-  T02: '\u{1F33F}',
-  T03: '\u{1F6E1}️',
-  T04: '\u{1F465}',
-  T05: '\u{1F4B0}',
-  T06: '\u{1F3D7}️',
-  T07: '\u{1F52C}',
-};
+const TOOL_EMOJI: Record<string, string> = moduleMap(m => m.emoji);
 
 // Badge per validation state (M02). The derived status is used only for
 // reports loaded before migration 040.

@@ -353,7 +353,7 @@ export default function SettingsPage() {
               <SectionHead>Display</SectionHead>
               <SettingRow
                 label="Show Live Toolkit Stats"
-                sub="Display real-time T01–T07 submission counts on dashboard"
+                sub="Display real-time T01–T04 submission counts on dashboard"
               >
                 <Toggle
                   checked={!!settings.show_live_stats}

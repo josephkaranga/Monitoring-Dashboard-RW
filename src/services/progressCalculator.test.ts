@@ -33,16 +33,16 @@ describe('ProgressCalculator', () => {
   describe('calculateWeightedProgress', () => {
     it('should apply the T01 weight to a single report contribution', () => {
       const reports = [makeReport({ toolId: ToolId.T01, contributionValue: 20 })];
-      // 30 + (20 * 0.25) = 35
-      expect(calculator.calculateWeightedProgress(reports, 30)).toBe(35);
+      // 30 + (20 * 0.40) = 38
+      expect(calculator.calculateWeightedProgress(reports, 30)).toBe(38);
     });
 
     it('should sum weighted contributions from multiple tools', () => {
       const reports = [
-        makeReport({ toolId: ToolId.T01, contributionValue: 20 }), // +5
-        makeReport({ toolId: ToolId.T02, contributionValue: 20 }), // +4
+        makeReport({ toolId: ToolId.T01, contributionValue: 20 }), // +8
+        makeReport({ toolId: ToolId.T02, contributionValue: 20 }), // +7
       ];
-      expect(calculator.calculateWeightedProgress(reports, 30)).toBe(39);
+      expect(calculator.calculateWeightedProgress(reports, 30)).toBe(45);
     });
 
     it('should clamp progress at 100', () => {
@@ -67,11 +67,11 @@ describe('ProgressCalculator', () => {
 
       expect(calculation.targetId).toBe(1);
       expect(calculation.toolId).toBe(ToolId.T01);
-      expect(calculation.toolWeight).toBe(0.25);
+      expect(calculation.toolWeight).toBe(0.4);
       expect(calculation.baseContribution).toBe(20);
-      expect(calculation.weightedContribution).toBe(5);
+      expect(calculation.weightedContribution).toBe(8);
       expect(calculation.previousProgress).toBe(30);
-      expect(calculation.newProgress).toBe(35);
+      expect(calculation.newProgress).toBe(38);
       expect(calculation.reportId).toBe('report-123');
       expect(calculation.calculatedAt).toBeInstanceOf(Date);
     });
@@ -94,7 +94,7 @@ describe('ProgressCalculator', () => {
       expect(result.targetId).toBe(1);
       expect(result.progressUpdated).toBe(true);
       expect(result.eiaComplianceUpdated).toBe(false);
-      expect(result.newProgress).toBe(35);
+      expect(result.newProgress).toBe(38);
       expect(result.calculationDetails).toBe(calculation);
       expect(result.updatedAt).toBeInstanceOf(Date);
     });
@@ -108,8 +108,8 @@ describe('ProgressCalculator', () => {
       expect(result.newProgress).toBe(100);
     });
 
-    it('should set eiaComplianceUpdated true for T06 reports', () => {
-      const report = makeReport({ toolId: ToolId.T06, contributionValue: 15 });
+    it('should set eiaComplianceUpdated true for T03 (Private Sector) reports', () => {
+      const report = makeReport({ toolId: ToolId.T03, contributionValue: 15 });
       const calculation = calculator.calculateContribution(report, 5, 40);
       const result = calculator.buildUpdateResult(calculation, report.toolId);
 

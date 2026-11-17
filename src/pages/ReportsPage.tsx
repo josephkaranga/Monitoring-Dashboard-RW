@@ -54,16 +54,8 @@ const C = {
   orange: '#f97316',
 };
 
-const TOOL_LABELS: Record<string, string> = {
-  T01: 'National Institutional',
-  T02: 'District Biodiversity',
-  T03: 'Protected Area',
-  T04: 'Community Monitoring',
-  T05: 'Finance Tracking',
-  T06: 'Private Sector',
-  T07: 'Research & Academic',
-};
-const TOOL_COLORS = ['#1B6CA8', '#1E7D4B', '#5B3FA6', '#B56A00', '#0E6655', '#922B21', '#1A5276'];
+const TOOL_LABELS: Record<string, string> = moduleMap(m => m.short);
+const TOOL_COLORS = REPORTING_MODULES.map(m => m.color);
 const TABS = [
   'Overview',
   'Targets & Indicators',
@@ -405,14 +397,15 @@ export function ReportsPage() {
     };
   }, [indicators]);
 
-  // 7. Budget performance from T01/T05 reports
+  // 7. Budget performance from T01 reports, plus legacy finance-tracking
+  // reports (that module is retired; its old reports are T05_LEGACY).
   const budgetData = useMemo(() => {
     const buckets: Record<string, { allocated: number; disbursed: number }> = {
       T01: { allocated: 0, disbursed: 0 },
-      T05: { allocated: 0, disbursed: 0 },
+      T05_LEGACY: { allocated: 0, disbursed: 0 },
     };
     approved.forEach(r => {
-      const id = r.tool_id as 'T01' | 'T05';
+      const id = r.tool_id as string;
       if (!buckets[id]) return;
       const alloc =
         parseFloat(String(r.form_data?.budget_allocated ?? r.form_data?.budget_utilized ?? 0)) || 0;
@@ -420,12 +413,12 @@ export function ReportsPage() {
       buckets[id].allocated += alloc;
       buckets[id].disbursed += disb;
     });
-    const labels = ['National Institutional (T01)', 'Finance Tracking (T05)'];
-    const allocated = [buckets.T01.allocated, buckets.T05.allocated];
-    const disbursed = [buckets.T01.disbursed, buckets.T05.disbursed];
+    const labels = ['National Institutional (T01)', 'Finance Tracking (retired)'];
+    const allocated = [buckets.T01.allocated, buckets.T05_LEGACY.allocated];
+    const disbursed = [buckets.T01.disbursed, buckets.T05_LEGACY.disbursed];
     const remaining = [
       Math.max(0, buckets.T01.allocated - buckets.T01.disbursed),
-      Math.max(0, buckets.T05.allocated - buckets.T05.disbursed),
+      Math.max(0, buckets.T05_LEGACY.allocated - buckets.T05_LEGACY.disbursed),
     ];
     return {
       labels,
@@ -1351,7 +1344,7 @@ export function ReportsPage() {
           <SectionHead
             icon="fa-coins"
             title="Budget Performance"
-            sub="From approved T01 (Institutional) and T05 (Finance) reports"
+            sub="From approved T01 (Institutional) reports"
           />
           <ChartBox title="Budget Allocated vs Utilized vs Remaining (RWF)" height={300}>
             {approved.some(r => r.form_data?.budget_allocated || r.form_data?.budget_utilized) ? (
@@ -1372,11 +1365,9 @@ export function ReportsPage() {
                 }}
               >
                 <i className="fa-solid fa-database" style={{ fontSize: '2rem', opacity: 0.3 }} />
-                <p style={{ fontSize: '0.82rem' }}>
-                  No budget data in approved T01/T05 reports yet
-                </p>
+                <p style={{ fontSize: '0.82rem' }}>No budget data in approved T01 reports yet</p>
                 <p style={{ fontSize: '0.72rem', opacity: 0.7 }}>
-                  Submit T01 or T05 reports with budget fields to populate this chart
+                  Submit T01 reports with the budget utilized to populate this chart
                 </p>
               </div>
             )}
@@ -1774,15 +1765,15 @@ export function ReportsPage() {
             </div>
           )}
 
-          {/* EIA Compliance (T06) */}
+          {/* EIA Compliance (T03) */}
           <SectionHead
             icon="fa-industry"
-            title="EIA Compliance (T06 Reports)"
-            sub="Private sector compliance status from approved T06 submissions"
+            title="EIA Compliance (T03 Reports)"
+            sub="Private sector compliance status from approved T03 submissions"
           />
           <ChartBox title="EIA Compliance Status Distribution" height={260}>
             {(() => {
-              const t06 = approved.filter(r => r.tool_id === 'T06');
+              const t06 = approved.filter(r => r.tool_id === 'T03');
               const full = t06.filter(
                 r => r.form_data?.eia_compliance === 'Full compliance'
               ).length;
@@ -1995,6 +1986,7 @@ export function ReportsPage() {
 
 // ── SubmissionsTab ────────────────────────────────────────────
 import type { ToolkitReport } from '../types/index';
+import { moduleMap, REPORTING_MODULES } from '../utils/reportingTools';
 
 interface SubmissionsTabProps {
   reports: ToolkitReport[];
@@ -2858,15 +2850,7 @@ function SubmissionsTab({ reports, allReports, targets }: SubmissionsTabProps) {
   );
 }
 
-const TOOL_ICONS: Record<string, string> = {
-  T01: 'landmark',
-  T02: 'tree',
-  T03: 'shield',
-  T04: 'users',
-  T05: 'coins',
-  T06: 'industry',
-  T07: 'flask',
-};
+const TOOL_ICONS: Record<string, string> = moduleMap(m => m.faIcon);
 
 function NoData() {
   return (

@@ -92,7 +92,7 @@ export function useEIAComplianceTracking() {
     const { data, error } = await supabase
       .from('toolkit_reports')
       .select('form_data')
-      .eq('tool_id', 'T06')
+      .eq('tool_id', 'T03') // Private Sector Compliance
       .eq('status', 'approved');
 
     if (error || !mountedRef.current) return;

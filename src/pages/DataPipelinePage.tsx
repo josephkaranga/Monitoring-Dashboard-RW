@@ -189,7 +189,7 @@ export default function DataPipelinePage() {
                 bg: '#059669',
                 label: 'Q1',
                 title: 'Quarterly Submissions',
-                desc: 'All 7 reporting modules — districts, institutions, community',
+                desc: 'All 4 reporting modules — institutions, districts, private sector, research',
                 sub: 'Deadline: Mar / Jun / Sep / Dec',
               },
               {

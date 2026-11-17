@@ -12,11 +12,8 @@ import type { ReportType, SubmissionStatus } from './index';
 export enum ToolId {
   T01 = 'T01', // National Institutional Reporting
   T02 = 'T02', // District Biodiversity Monitoring
-  T03 = 'T03', // Protected Area Monitoring
-  T04 = 'T04', // Community Biodiversity Monitoring
-  T05 = 'T05', // Biodiversity Finance Tracking
-  T06 = 'T06', // Private Sector Compliance
-  T07 = 'T07', // Research & Academic Contribution
+  T03 = 'T03', // Private Sector Compliance
+  T04 = 'T04', // Research & Academic Contribution
 }
 
 /**
@@ -47,7 +44,7 @@ export enum UpdateStatus {
  * Interface for tool weight configuration
  */
 export interface ToolWeight {
-  /** Tool identifier (T01-T07) */
+  /** Tool identifier (T01-T04) */
   toolId: ToolId;
   /** Numerical weight factor (0-1, all weights must sum to 1.0) */
   weight: number;
@@ -93,7 +90,7 @@ export interface UpdateResult {
   targetId: number;
   /** Whether progress was actually updated */
   progressUpdated: boolean;
-  /** Whether EIA compliance was updated (for T06 reports) */
+  /** Whether EIA compliance was updated (for T03 Private Sector reports) */
   eiaComplianceUpdated: boolean;
   /** Time taken to process the update (in milliseconds) */
   processingTime: number;
@@ -113,7 +110,7 @@ export interface UpdateResult {
  * Interface for EIA compliance metrics
  */
 export interface EIAMetrics {
-  /** Total number of T06 reports processed */
+  /** Total number of T03 (Private Sector) reports processed */
   totalReports: number;
   /** Number of compliant reports */
   compliantReports: number;
@@ -263,13 +260,11 @@ export interface BatchUpdate {
  * Predefined tool weights as specified in requirements
  */
 export const TOOL_WEIGHTS: Record<ToolId, number> = {
-  [ToolId.T01]: 0.25, // National Institutional Reporting
-  [ToolId.T02]: 0.2, // District Biodiversity Monitoring
-  [ToolId.T03]: 0.15, // Protected Area Monitoring
-  [ToolId.T04]: 0.15, // Community Biodiversity Monitoring
-  [ToolId.T05]: 0.1, // Biodiversity Finance Tracking
-  [ToolId.T06]: 0.1, // Private Sector Compliance
-  [ToolId.T07]: 0.05, // Research & Academic Contribution
+  // Same as public.tool_weights in the database.
+  [ToolId.T01]: 0.4, // National Institutional Reporting
+  [ToolId.T02]: 0.35, // District Biodiversity Monitoring
+  [ToolId.T03]: 0.15, // Private Sector Compliance
+  [ToolId.T04]: 0.1, // Research & Academic Contribution
 } as const;
 
 /**
@@ -278,11 +273,8 @@ export const TOOL_WEIGHTS: Record<ToolId, number> = {
 export const TOOL_DESCRIPTIONS: Record<ToolId, string> = {
   [ToolId.T01]: 'National Institutional Reporting',
   [ToolId.T02]: 'District Biodiversity Monitoring',
-  [ToolId.T03]: 'Protected Area Monitoring',
-  [ToolId.T04]: 'Community Biodiversity Monitoring',
-  [ToolId.T05]: 'Biodiversity Finance Tracking',
-  [ToolId.T06]: 'Private Sector Compliance',
-  [ToolId.T07]: 'Research & Academic Contribution',
+  [ToolId.T03]: 'Private Sector Compliance',
+  [ToolId.T04]: 'Research & Academic Contribution',
 } as const;
 
 /**

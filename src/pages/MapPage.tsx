@@ -25,6 +25,7 @@ import { logAuditEvent } from '../services/dataService';
 import { eventBus } from '../services/eventBus';
 import type { GBIFOccurrence } from '../types/biodiversity';
 import type { ProtectedArea, RiverFeature, LakeFeature } from '../types/overlays';
+import { reportingModule } from '../utils/reportingTools';
 
 // Rwanda Geographic Bounding Box (WGS84 coordinates)
 // Source: Natural Earth Data and OpenStreetMap
@@ -1959,16 +1960,7 @@ export function MapPage() {
                   width: 36,
                   height: 36,
                   borderRadius: 8,
-                  background:
-                    {
-                      T01: '#1B6CA8',
-                      T02: '#1E7D4B',
-                      T03: '#5B3FA6',
-                      T04: '#B56A00',
-                      T05: '#0E6655',
-                      T06: '#922B21',
-                      T07: '#1A5276',
-                    }[selectedMapReport.tool_id] || '#6b7280',
+                  background: reportingModule(selectedMapReport.tool_id)?.color || '#6b7280',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

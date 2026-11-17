@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Polygon } from 'geojson';
 import type { ToolkitReport, District } from '../../types/index';
+import { moduleMap } from '../../utils/reportingTools';
 
 interface GeoFeatureCollection {
   features: Array<{
@@ -17,25 +18,9 @@ interface ReportMarkersOverlayProps {
   onReportHover: (report: ToolkitReport | null) => void;
 }
 
-const TOOL_COLORS: Record<string, string> = {
-  T01: '#1B6CA8',
-  T02: '#1E7D4B',
-  T03: '#5B3FA6',
-  T04: '#B56A00',
-  T05: '#0E6655',
-  T06: '#922B21',
-  T07: '#1A5276',
-};
+const TOOL_COLORS: Record<string, string> = moduleMap(m => m.color);
 
-const TOOL_ICONS: Record<string, string> = {
-  T01: '\u{1F3DB}',
-  T02: '\u{1F33F}',
-  T03: '\u{1F6E1}',
-  T04: '\u{1F465}',
-  T05: '\u{1F4B0}',
-  T06: '\u{1F3D7}',
-  T07: '\u{1F52C}',
-};
+const TOOL_ICONS: Record<string, string> = moduleMap(m => m.emoji);
 
 function getDistrictCentroid(
   districtName: string,

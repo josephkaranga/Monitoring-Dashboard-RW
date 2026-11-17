@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useInstitutions } from '../hooks/useInstitutions';
 import { fetchStrategicActions } from '../services/institutionService';
 import { fetchTargets } from '../services/dataService';
+import { moduleMap } from '../utils/reportingTools';
 
 const card: React.CSSProperties = {
   background: 'var(--surface)',
@@ -23,15 +24,10 @@ interface TargetMapping {
   actions: StrategicAction[];
 }
 
-const MODULE_NAMES: Record<string, { name: string; color: string }> = {
-  T01: { name: 'Institutional Reporting', color: '#1B6CA8' },
-  T02: { name: 'District Monitoring', color: '#1E7D4B' },
-  T03: { name: 'Protected Areas', color: '#5B3FA6' },
-  T04: { name: 'Community Monitoring', color: '#B56A00' },
-  T05: { name: 'Finance Tracking', color: '#0E6655' },
-  T06: { name: 'Private Sector Compliance', color: '#922B21' },
-  T07: { name: 'Research & Academic', color: '#1A5276' },
-};
+const MODULE_NAMES: Record<string, { name: string; color: string }> = moduleMap(m => ({
+  name: m.name,
+  color: m.color,
+}));
 
 const goalColors: Record<string, { bg: string; color: string; accent: string }> = {
   A: { bg: '#f0fdf4', color: '#166534', accent: '#16a34a' },

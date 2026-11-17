@@ -202,26 +202,13 @@ describe('impossible values are refused', () => {
     ],
     ['text in a number field', 'T02', 'Q4 2025', { wetland_ha: 'about 40' }, /must be a number/],
     [
-      'a habitat score outside 1-10',
+      'an ESG score outside 1-100 (T03 Private Sector)',
       'T03',
-      'Q4 2025',
-      { habitat_quality: '11' },
-      /cannot be above 10/,
-    ],
-    [
-      'implementation above 100%',
-      'T05',
       null,
-      { year: '2025', implementation_pct: '120' },
-      /cannot be above 100 %/,
+      { year: '2025', esg_score: '120' },
+      /ESG Biodiversity Score is 120; it cannot be above 100/,
     ],
-    [
-      'disbursed above allocated',
-      'T05',
-      null,
-      { year: '2025', budget_allocated: '100', budget_disbursed: '150' },
-      /disbursed cannot be more/,
-    ],
+    ['a future year', 'T03', null, { year: '2099', esg_score: '50' }, /outside the NBSAP/],
     [
       'a future quarter',
       'T02',
@@ -242,12 +229,12 @@ describe('impossible values are refused', () => {
     expect(await submitError(tool, period, { ...form })).toMatch(message);
   });
 
-  it('accepts a valid fiscal-year report (T05)', async () => {
-    const id = await submit('T05', null, {
-      year: '2024',
-      budget_allocated: '100',
-      budget_disbursed: '80',
-      implementation_pct: '60',
+  it('accepts a valid yearly report (T03 Private Sector)', async () => {
+    const id = await submit('T03', null, {
+      year: '2023',
+      company: 'Test Ltd',
+      restoration_ha: '12',
+      esg_score: '60',
     });
     const flags = await flagsSeenBy(officer, id);
     expect(flags.filter(f => f.severity === 'error')).toEqual([]);
@@ -258,10 +245,10 @@ describe('Done when: a 50% jump is flagged to the validator', () => {
   let jumpId: string;
 
   beforeAll(async () => {
-    // Previous published report: 100 ha of forest restored in Q1 2024.
-    const prev = await submit('T03', 'Q1 2024', { restoration_ha: '100', habitat_quality: '6' });
+    // Previous published report: 100 ha of restoration committed in Q1 2024.
+    const prev = await submit('T03', 'Q1 2024', { restoration_ha: '100', esg_score: '60' });
     await review(db, validator, prev, 'approve'); // single stage: published
-    jumpId = await submit('T03', 'Q2 2024', { restoration_ha: '160', habitat_quality: '7' });
+    jumpId = await submit('T03', 'Q2 2024', { restoration_ha: '160', esg_score: '70' });
   });
 
   it('the validator sees the jump, with the previous and current values', async () => {
@@ -275,8 +262,8 @@ describe('Done when: a 50% jump is flagged to the validator', () => {
       change_pct: 60,
       previous_period: 'Q1 2024',
     });
-    expect(jump?.message).toMatch(/Restoration Activities changed by 60% since Q1 2024/);
-    // A 17% change in the habitat score is not flagged.
+    expect(jump?.message).toMatch(/Restoration Commitments changed by 60% since Q1 2024/);
+    // A 17% change in the ESG score is not flagged.
     expect(flags.filter(f => f.code === 'jump')).toHaveLength(1);
   });
 
@@ -320,7 +307,7 @@ describe('the form preview gives the same answer as submission', () => {
             ...MUSANZE,
             period: 'Q3 2026',
             restoration_ha: '400',
-            habitat_quality: '0',
+            esg_score: '0',
           }),
         ]
       );
@@ -330,7 +317,7 @@ describe('the form preview gives the same answer as submission', () => {
       previous: 100,
       current: 400,
     });
-    expect(flags.find(f => f.code === 'below_min')?.field).toBe('habitat_quality');
+    expect(flags.find(f => f.code === 'below_min')?.field).toBe('esg_score');
   });
 
   it('is not available to anonymous visitors', async () => {

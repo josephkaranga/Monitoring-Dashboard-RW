@@ -101,9 +101,6 @@ describe('validateToolWeightsSum', () => {
       [ToolId.T02]: 0.5,
       [ToolId.T03]: 0.5,
       [ToolId.T04]: 0,
-      [ToolId.T05]: 0,
-      [ToolId.T06]: 0,
-      [ToolId.T07]: 0,
     });
 
     expect(check.valid).toBe(false);
@@ -116,9 +113,6 @@ describe('validateToolWeightsSum', () => {
       [ToolId.T02]: -0.5,
       [ToolId.T03]: 0,
       [ToolId.T04]: 0,
-      [ToolId.T05]: 0,
-      [ToolId.T06]: 0,
-      [ToolId.T07]: 0,
     });
 
     expect(check.valid).toBe(false);

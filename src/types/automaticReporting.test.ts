@@ -35,14 +35,11 @@ describe('Automatic Reporting Types', () => {
       expect(ToolId.T02).toBe('T02');
       expect(ToolId.T03).toBe('T03');
       expect(ToolId.T04).toBe('T04');
-      expect(ToolId.T05).toBe('T05');
-      expect(ToolId.T06).toBe('T06');
-      expect(ToolId.T07).toBe('T07');
     });
 
-    it('should have exactly 7 tool IDs', () => {
+    it('should have exactly the 4 modules REMA uses', () => {
       const toolIds = Object.values(ToolId);
-      expect(toolIds).toHaveLength(7);
+      expect(toolIds).toHaveLength(4);
     });
   });
 
@@ -70,13 +67,11 @@ describe('Automatic Reporting Types', () => {
 
   describe('TOOL_WEIGHTS constant', () => {
     it('should have correct weight values as specified in requirements', () => {
-      expect(TOOL_WEIGHTS[ToolId.T01]).toBe(0.25); // National Institutional Reporting
-      expect(TOOL_WEIGHTS[ToolId.T02]).toBe(0.2); // District Biodiversity Monitoring
-      expect(TOOL_WEIGHTS[ToolId.T03]).toBe(0.15); // Protected Area Monitoring
-      expect(TOOL_WEIGHTS[ToolId.T04]).toBe(0.15); // Community Biodiversity Monitoring
-      expect(TOOL_WEIGHTS[ToolId.T05]).toBe(0.1); // Biodiversity Finance Tracking
-      expect(TOOL_WEIGHTS[ToolId.T06]).toBe(0.1); // Private Sector Compliance
-      expect(TOOL_WEIGHTS[ToolId.T07]).toBe(0.05); // Research & Academic Contribution
+      // Same as public.tool_weights in the database.
+      expect(TOOL_WEIGHTS[ToolId.T01]).toBe(0.4); // National Institutional Reporting
+      expect(TOOL_WEIGHTS[ToolId.T02]).toBe(0.35); // District Biodiversity Monitoring
+      expect(TOOL_WEIGHTS[ToolId.T03]).toBe(0.15); // Private Sector Compliance
+      expect(TOOL_WEIGHTS[ToolId.T04]).toBe(0.1); // Research & Academic Contribution
     });
 
     it('should have weights that sum to 1.0', () => {
@@ -97,11 +92,8 @@ describe('Automatic Reporting Types', () => {
     it('should have descriptions for all tool IDs', () => {
       expect(TOOL_DESCRIPTIONS[ToolId.T01]).toBe('National Institutional Reporting');
       expect(TOOL_DESCRIPTIONS[ToolId.T02]).toBe('District Biodiversity Monitoring');
-      expect(TOOL_DESCRIPTIONS[ToolId.T03]).toBe('Protected Area Monitoring');
-      expect(TOOL_DESCRIPTIONS[ToolId.T04]).toBe('Community Biodiversity Monitoring');
-      expect(TOOL_DESCRIPTIONS[ToolId.T05]).toBe('Biodiversity Finance Tracking');
-      expect(TOOL_DESCRIPTIONS[ToolId.T06]).toBe('Private Sector Compliance');
-      expect(TOOL_DESCRIPTIONS[ToolId.T07]).toBe('Research & Academic Contribution');
+      expect(TOOL_DESCRIPTIONS[ToolId.T03]).toBe('Private Sector Compliance');
+      expect(TOOL_DESCRIPTIONS[ToolId.T04]).toBe('Research & Academic Contribution');
     });
 
     it('should contain descriptions for all tool IDs', () => {
@@ -280,9 +272,6 @@ describe('Automatic Reporting Types', () => {
         [ToolId.T02]: 0.2,
         [ToolId.T03]: 0.1,
         [ToolId.T04]: 0.1,
-        [ToolId.T05]: 0.1,
-        [ToolId.T06]: 0.1,
-        [ToolId.T07]: 0.05,
       } as Record<ToolId, number>;
 
       const result = validateToolWeights(invalidWeights);
@@ -292,12 +281,9 @@ describe('Automatic Reporting Types', () => {
     it('should handle floating point precision correctly', () => {
       const weightsWithPrecisionIssue = {
         [ToolId.T01]: 0.1,
-        [ToolId.T02]: 0.1,
-        [ToolId.T03]: 0.1,
-        [ToolId.T04]: 0.1,
-        [ToolId.T05]: 0.1,
-        [ToolId.T06]: 0.1,
-        [ToolId.T07]: 0.4,
+        [ToolId.T02]: 0.2,
+        [ToolId.T03]: 0.3,
+        [ToolId.T04]: 0.4,
       } as Record<ToolId, number>;
 
       // This should sum to 1.0 but might have floating point issues
@@ -314,13 +300,10 @@ describe('Automatic Reporting Types', () => {
 
   describe('getToolWeight function', () => {
     it('should return correct weight for each tool ID', () => {
-      expect(getToolWeight(ToolId.T01)).toBe(0.25);
-      expect(getToolWeight(ToolId.T02)).toBe(0.2);
+      expect(getToolWeight(ToolId.T01)).toBe(0.4);
+      expect(getToolWeight(ToolId.T02)).toBe(0.35);
       expect(getToolWeight(ToolId.T03)).toBe(0.15);
-      expect(getToolWeight(ToolId.T04)).toBe(0.15);
-      expect(getToolWeight(ToolId.T05)).toBe(0.1);
-      expect(getToolWeight(ToolId.T06)).toBe(0.1);
-      expect(getToolWeight(ToolId.T07)).toBe(0.05);
+      expect(getToolWeight(ToolId.T04)).toBe(0.1);
     });
   });
 
@@ -328,11 +311,8 @@ describe('Automatic Reporting Types', () => {
     it('should return correct description for each tool ID', () => {
       expect(getToolDescription(ToolId.T01)).toBe('National Institutional Reporting');
       expect(getToolDescription(ToolId.T02)).toBe('District Biodiversity Monitoring');
-      expect(getToolDescription(ToolId.T03)).toBe('Protected Area Monitoring');
-      expect(getToolDescription(ToolId.T04)).toBe('Community Biodiversity Monitoring');
-      expect(getToolDescription(ToolId.T05)).toBe('Biodiversity Finance Tracking');
-      expect(getToolDescription(ToolId.T06)).toBe('Private Sector Compliance');
-      expect(getToolDescription(ToolId.T07)).toBe('Research & Academic Contribution');
+      expect(getToolDescription(ToolId.T03)).toBe('Private Sector Compliance');
+      expect(getToolDescription(ToolId.T04)).toBe('Research & Academic Contribution');
     });
   });
 
@@ -342,9 +322,6 @@ describe('Automatic Reporting Types', () => {
       expect(reportTypeToToolId('T02' as ReportType)).toBe(ToolId.T02);
       expect(reportTypeToToolId('T03' as ReportType)).toBe(ToolId.T03);
       expect(reportTypeToToolId('T04' as ReportType)).toBe(ToolId.T04);
-      expect(reportTypeToToolId('T05' as ReportType)).toBe(ToolId.T05);
-      expect(reportTypeToToolId('T06' as ReportType)).toBe(ToolId.T06);
-      expect(reportTypeToToolId('T07' as ReportType)).toBe(ToolId.T07);
     });
   });
 
@@ -354,9 +331,6 @@ describe('Automatic Reporting Types', () => {
       expect(toolIdToReportType(ToolId.T02)).toBe('T02');
       expect(toolIdToReportType(ToolId.T03)).toBe('T03');
       expect(toolIdToReportType(ToolId.T04)).toBe('T04');
-      expect(toolIdToReportType(ToolId.T05)).toBe('T05');
-      expect(toolIdToReportType(ToolId.T06)).toBe('T06');
-      expect(toolIdToReportType(ToolId.T07)).toBe('T07');
     });
   });
 
@@ -462,11 +436,11 @@ describe('Automatic Reporting Types', () => {
         }
       });
 
-      // Test that T07 has the lowest weight (as per requirements)
-      const t07Weight = TOOL_WEIGHTS[ToolId.T07];
+      // Test that T04 (research) has the lowest weight
+      const t04Weight = TOOL_WEIGHTS[ToolId.T04];
       Object.entries(TOOL_WEIGHTS).forEach(([toolId, weight]) => {
-        if (toolId !== ToolId.T07) {
-          expect(weight).toBeGreaterThanOrEqual(t07Weight);
+        if (toolId !== ToolId.T04) {
+          expect(weight).toBeGreaterThanOrEqual(t04Weight);
         }
       });
     });

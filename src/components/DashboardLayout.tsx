@@ -7,6 +7,7 @@ import { USER_ROLE_LABELS } from '../types/index';
 import toast from 'react-hot-toast';
 import PendingRequestsBadge from './PendingRequestsBadge';
 import { useMyScopes } from '../hooks/useInstitutions';
+import { REPORTING_MODULES } from '../utils/reportingTools';
 // DashboardLayout component: Provides the main layout for the dashboard, including sidebar navigation, topbar, and page content area.
 export default function DashboardLayout() {
   const { user, permissions, signOut } = useAuth();
@@ -39,7 +40,7 @@ export default function DashboardLayout() {
   //   - Dashboard, Indicators, Targets, Reports, Stakeholders, Map
   //
   // public_viewer CANNOT see:
-  //   - Reporting Modules (T01-T07)
+  //   - Reporting Modules (T01-T04)
   //   - Verification Queue
   //   - Compliance
   //   - Analytics (Adaptive Management)
@@ -50,7 +51,7 @@ export default function DashboardLayout() {
   //   - Audit Log
   //
   // lead_government_ministry_reporting has:
-  //   - Full reporting access (T01-T07)
+  //   - Full reporting access (T01-T04)
   //   - Verification Queue access
   //   - Compliance, Analytics, Risk Register access
   //   - RBIS and Data Pipeline access
@@ -80,13 +81,11 @@ export default function DashboardLayout() {
   // Reporting modules - only visible to users with canSubmitReports permission
   // Roles with access: lead_government_ministry_reporting, local_reporting, dashboard_management
   // public_viewer does NOT have access
-  const reportingNav = [
-    { to: '/reporting-toolkit?tool=T01', icon: 'fa-landmark', label: 'T01 · Institutional' },
-    { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree', label: 'T02 · District' },
-    { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield', label: 'T03 · Protected Areas' },
-    { to: '/reporting-toolkit?tool=T04', icon: 'fa-people-group', label: 'T04 · Community' },
-    // T05–T07 are not used by REMA (see utils/reportingTools.ts).
-  ];
+  const reportingNav = REPORTING_MODULES.map(m => ({
+    to: `/reporting-toolkit?tool=${m.id}`,
+    icon: `fa-${m.faIcon}`,
+    label: `${m.id} · ${m.short}`,
+  }));
 
   const governanceNav = [
     // Verification Queue - only for lead_government_ministry_reporting and dashboard_management

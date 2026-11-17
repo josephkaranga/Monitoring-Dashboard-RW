@@ -184,7 +184,7 @@ describe('AutomatedProcessingEngine', () => {
     );
 
     const detail = JSON.parse(insertedRows[0].detail as string);
-    expect(detail.toolWeight).toBe(0.2);
+    expect(detail.toolWeight).toBe(0.35);
     expect(detail.status).toBe('approved');
   });
 });

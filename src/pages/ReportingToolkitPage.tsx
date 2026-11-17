@@ -38,7 +38,6 @@ import ResubmitReportModal from '../components/ResubmitReportModal';
 import DraftStatusBar from '../components/DraftStatusBar';
 import TwoStepStakeholderSelect from '../components/TwoStepStakeholderSelect';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
-import { isToolEnabled } from '../utils/reportingTools';
 import DataQualityChecklist from '../components/DataQualityChecklist';
 import QualityFlagsList from '../components/QualityFlagsList';
 import { useChecklistItems, useQualityPreview } from '../hooks/useDataQuality';
@@ -91,7 +90,8 @@ function toStakeholderConfig(inst: Institution | undefined): StakeholderConfig |
 }
 
 // ── Tool Definitions ─────────────────────────────────────────
-const ALL_TOOLKIT_TOOLS = [
+// The four modules REMA uses (utils/reportingTools.ts).
+const TOOLKIT_TOOLS = [
   {
     id: 'T01',
     name: 'National Institutional Reporting',
@@ -288,290 +288,6 @@ const ALL_TOOLKIT_TOOLS = [
   },
   {
     id: 'T03',
-    name: 'Protected Area Monitoring',
-    icon: '🛡️',
-    color: '#5B3FA6',
-    accent: '#9C78E0',
-    frequency: 'Biannual',
-    output: 'Ecosystem Integrity Report',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      {
-        key: 'area_name',
-        label: 'Protected Area Name',
-        type: 'text',
-        placeholder: 'e.g. Nyungwe National Park',
-        required: true,
-      },
-      {
-        key: 'agency',
-        label: 'Managing Agency',
-        type: 'text',
-        placeholder: 'Agency name',
-        required: true,
-      },
-      {
-        key: 'period',
-        label: 'Reporting Period',
-        type: 'select',
-        options: [
-          'H1 2024',
-          'H2 2024',
-          'H1 2025',
-          'H2 2025',
-          'H1 2026',
-          'H2 2026',
-          'H1 2027',
-          'H2 2027',
-          'H1 2028',
-          'H2 2028',
-          'H1 2029',
-          'H2 2029',
-          'H1 2030',
-          'H2 2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'coverage_change_ha',
-        label: 'Coverage Change (ha)',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'species_trend',
-        label: 'Species Population Trend',
-        type: 'select',
-        options: ['Increasing', 'Stable', 'Declining', 'Unknown'],
-        required: true,
-      },
-      {
-        key: 'habitat_quality',
-        label: 'Habitat Quality (1–10)',
-        type: 'number',
-        placeholder: '1',
-        required: true,
-      },
-      {
-        key: 'illegal_cases',
-        label: 'Illegal Activities Detected',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'restoration_ha',
-        label: 'Restoration Activities (ha)',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'observations',
-        label: 'Field Observations',
-        type: 'textarea',
-        placeholder: 'Key findings...',
-        required: false,
-      },
-    ],
-  },
-  {
-    id: 'T04',
-    name: 'Community Biodiversity Monitoring',
-    icon: '👥',
-    color: '#B56A00',
-    accent: '#F0A030',
-    frequency: 'Quarterly',
-    output: 'Community Observation Dataset',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      {
-        key: 'community',
-        label: 'Community / Village',
-        type: 'text',
-        placeholder: 'Community name',
-        required: true,
-      },
-      {
-        key: 'reporter',
-        label: 'Reporter / Group Name',
-        type: 'text',
-        placeholder: 'Name or group',
-        required: true,
-      },
-      {
-        key: 'reporter_type',
-        label: 'Reporter Type',
-        type: 'select',
-        options: [
-          'Community Conservation Committee',
-          'Youth Environmental Club',
-          "Women's Cooperative",
-          'Local Knowledge Holder',
-          'Other',
-        ],
-        required: true,
-      },
-      {
-        key: 'period',
-        label: 'Reporting Period',
-        type: 'select',
-        options: [
-          'Q1 2025',
-          'Q2 2025',
-          'Q3 2025',
-          'Q4 2025',
-          'Q1 2026',
-          'Q2 2026',
-          'Q3 2026',
-          'Q4 2026',
-          'Q1 2027',
-          'Q2 2027',
-          'Q3 2027',
-          'Q4 2027',
-          'Q1 2028',
-          'Q2 2028',
-          'Q3 2028',
-          'Q4 2028',
-          'Q1 2029',
-          'Q2 2029',
-          'Q3 2029',
-          'Q4 2029',
-          'Q1 2030',
-          'Q2 2030',
-          'Q3 2030',
-          'Q4 2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'hwc_incidents',
-        label: 'Human-Wildlife Conflict Incidents',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'tree_planting_hh',
-        label: 'Tree Planting Households',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'water_source_status',
-        label: 'Water Source Condition',
-        type: 'select',
-        options: ['Good', 'Fair', 'Degraded', 'Dry / Absent'],
-        required: false,
-      },
-      {
-        key: 'species_sightings',
-        label: 'Species Sightings',
-        type: 'textarea',
-        placeholder: 'e.g. Mountain gorilla – 3 sightings',
-        required: false,
-      },
-    ],
-  },
-  {
-    id: 'T05',
-    name: 'Biodiversity Finance Tracking',
-    icon: '💰',
-    color: '#0E6655',
-    accent: '#1ABC9C',
-    frequency: 'Annual',
-    output: 'Finance Gap Analysis',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      {
-        key: 'institution',
-        label: 'Institution Name',
-        type: 'text',
-        placeholder: 'Institution or partner',
-        required: true,
-      },
-      {
-        key: 'institution_type',
-        label: 'Institution Type',
-        type: 'select',
-        // Same groups as the Reporting Stakeholder dropdown (institutions.category).
-        options: [...STAKEHOLDER_CATEGORIES, 'Other'],
-        required: true,
-      },
-      {
-        key: 'year',
-        label: 'Fiscal Year',
-        type: 'select',
-        options: [
-          '2020',
-          '2021',
-          '2022',
-          '2023',
-          '2024',
-          '2025',
-          '2026',
-          '2027',
-          '2028',
-          '2029',
-          '2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'budget_allocated',
-        label: 'Budget Allocated (RWF)',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'budget_disbursed',
-        label: 'Budget Disbursed (RWF)',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'implementation_pct',
-        label: 'Implementation Status (%)',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'activity_funded',
-        label: 'Activity / Program Funded',
-        type: 'textarea',
-        placeholder: 'Description...',
-        required: false,
-      },
-    ],
-  },
-  {
-    id: 'T06',
     name: 'Private Sector Compliance',
     icon: '🏗️',
     color: '#922B21',
@@ -658,7 +374,7 @@ const ALL_TOOLKIT_TOOLS = [
     ],
   },
   {
-    id: 'T07',
+    id: 'T04',
     name: 'Research & Academic Contribution',
     icon: '🔬',
     color: '#1A5276',
@@ -731,9 +447,6 @@ const ALL_TOOLKIT_TOOLS = [
     ],
   },
 ];
-
-// Only the modules REMA uses can be opened (T01–T04); see utils/reportingTools.ts.
-const TOOLKIT_TOOLS = ALL_TOOLKIT_TOOLS.filter(t => isToolEnabled(t.id));
 
 // ── Report Form ───────────────────────────────────────────────
 const ReportForm = ({

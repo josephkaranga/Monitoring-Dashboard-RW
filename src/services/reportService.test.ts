@@ -115,14 +115,14 @@ describe('fetchToolWeight', () => {
     const info = await fetchToolWeight('T01');
 
     expect(info.toolId).toBe('T01');
-    expect(info.weight).toBe(0.25);
+    expect(info.weight).toBe(0.4);
     expect(info.description).toBe('National Institutional Reporting');
   });
 
   it('falls back to the built-in tool weight constants on a database error', async () => {
     mockState.toolWeightError = { message: 'connection failed' };
 
-    const info = await fetchToolWeight('T05');
+    const info = await fetchToolWeight('T04');
 
     expect(info.weight).toBe(0.1);
   });

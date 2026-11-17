@@ -43,9 +43,9 @@ const exampleToolWeights: ToolWeight[] = [
     updatedAt: new Date(),
   },
   {
-    toolId: ToolId.T06,
-    weight: TOOL_WEIGHTS[ToolId.T06], // 0.10 - for EIA compliance
-    description: TOOL_DESCRIPTIONS[ToolId.T06],
+    toolId: ToolId.T03,
+    weight: TOOL_WEIGHTS[ToolId.T03], // 0.10 - for EIA compliance
+    description: TOOL_DESCRIPTIONS[ToolId.T03],
     active: true,
     updatedAt: new Date(),
   },
@@ -69,14 +69,14 @@ const exampleUpdateResult: UpdateResult = {
   success: true,
   targetId: 1,
   progressUpdated: true,
-  eiaComplianceUpdated: false, // not a T06 report
+  eiaComplianceUpdated: false, // not a T03 report
   processingTime: 250, // milliseconds
   newProgress: exampleProgressCalculation.newProgress,
   updatedAt: new Date(),
   calculationDetails: exampleProgressCalculation,
 };
 
-// Example 4: EIA Compliance metrics from T06 reports
+// Example 4: EIA Compliance metrics from T03 reports
 const exampleEIAMetrics: EIAMetrics = {
   totalReports: 100,
   compliantReports: 80,
@@ -100,11 +100,11 @@ const exampleOrgConfig: OrganizationConfig = {
   updatedAt: new Date(),
 };
 
-// Example 6: Report submission with T06 EIA compliance data
+// Example 6: Report submission with T03 EIA compliance data
 const exampleT06ReportSubmission: ReportSubmission = {
   id: 'report-t06-001',
-  toolId: ToolId.T06, // Private Sector Compliance
-  toolName: getToolDescription(ToolId.T06),
+  toolId: ToolId.T03, // Private Sector Compliance
+  toolName: getToolDescription(ToolId.T03),
   submittedBy: 'user-123',
   status: 'pending',
   nbsapTargetId: 5, // linked to specific NBSAP target
@@ -134,7 +134,7 @@ const exampleBatchUpdate: BatchUpdate = {
   updates: [
     { targetId: 1, contribution: 10, toolId: ToolId.T01 }, // National reporting
     { targetId: 2, contribution: 8, toolId: ToolId.T02 }, // District monitoring
-    { targetId: 3, contribution: 5, toolId: ToolId.T06 }, // EIA compliance
+    { targetId: 3, contribution: 5, toolId: ToolId.T03 }, // EIA compliance
   ],
   createdAt: new Date(),
   timeout: 30,
@@ -161,9 +161,9 @@ export function demonstrateValidation(): void {
   console.log(`${ToolId.T01}: ${t01Description} (weight: ${t01Weight})`);
 
   // Convert between types
-  const reportType = toolIdToReportType(ToolId.T06);
+  const reportType = toolIdToReportType(ToolId.T03);
   const toolId = reportTypeToToolId(reportType);
-  console.log(`Conversion: ${ToolId.T06} <-> ${reportType} <-> ${toolId}`);
+  console.log(`Conversion: ${ToolId.T03} <-> ${reportType} <-> ${toolId}`);
 }
 
 // Example 11: Calculate weighted contribution for different tools

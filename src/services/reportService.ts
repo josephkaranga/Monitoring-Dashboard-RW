@@ -469,12 +469,15 @@ function buildStats(
     (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.wetland_ha) || 0),
     0
   );
-  const t04 = approved.filter(r => r.tool_id === 'T04');
+  // Human-wildlife conflict and finance came from retired modules (community
+  // monitoring, finance tracking); only their legacy reports count, as in
+  // the database's recalculate_system_metrics().
+  const t04 = approved.filter(r => (r.tool_id as string) === 'T04_LEGACY');
   const hwcIncidents = t04.reduce(
     (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.hwc_incidents) || 0),
     0
   );
-  const t05 = approved.filter(r => r.tool_id === 'T05');
+  const t05 = approved.filter(r => (r.tool_id as string) === 'T05_LEGACY');
   const financeAllocated = t05.reduce(
     (a, r) => a + (Number((r.form_data as Record<string, unknown>)?.budget_allocated) || 0),
     0

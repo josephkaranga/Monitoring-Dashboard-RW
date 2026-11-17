@@ -24,7 +24,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
 export const USER_ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   policy_monitoring: 'Read-only access to strategic dashboards and national progress summaries.',
   lead_government_ministry_reporting:
-    'Upload and review sector-level indicator data via T01–T07 reporting modules.',
+    'Upload and review sector-level indicator data via T01–T04 reporting modules.',
   local_reporting: 'Enter and validate district-level biodiversity monitoring data.',
   dashboard_management:
     'Full system access: verification queue, audit log, user management, all exports.',
@@ -373,7 +373,7 @@ export interface StrategicAction {
   institutions: { label: string; institution_id: number | null }[];
 }
 
-export type ReportType = 'T01' | 'T02' | 'T03' | 'T04' | 'T05' | 'T06' | 'T07';
+export type ReportType = 'T01' | 'T02' | 'T03' | 'T04';
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
 
 export interface ToolkitReport {
