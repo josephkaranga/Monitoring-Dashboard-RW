@@ -85,9 +85,7 @@ export default function DashboardLayout() {
     { to: '/reporting-toolkit?tool=T02', icon: 'fa-tree', label: 'T02 · District' },
     { to: '/reporting-toolkit?tool=T03', icon: 'fa-shield', label: 'T03 · Protected Areas' },
     { to: '/reporting-toolkit?tool=T04', icon: 'fa-people-group', label: 'T04 · Community' },
-    { to: '/reporting-toolkit?tool=T05', icon: 'fa-coins', label: 'T05 · Finance' },
-    { to: '/reporting-toolkit?tool=T06', icon: 'fa-building', label: 'T06 · Private Sector' },
-    { to: '/reporting-toolkit?tool=T07', icon: 'fa-flask', label: 'T07 · Research' },
+    // T05–T07 are not used by REMA (see utils/reportingTools.ts).
   ];
 
   const governanceNav = [

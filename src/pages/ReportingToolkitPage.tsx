@@ -38,6 +38,7 @@ import ResubmitReportModal from '../components/ResubmitReportModal';
 import DraftStatusBar from '../components/DraftStatusBar';
 import TwoStepStakeholderSelect from '../components/TwoStepStakeholderSelect';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
+import { isToolEnabled } from '../utils/reportingTools';
 import DataQualityChecklist from '../components/DataQualityChecklist';
 import QualityFlagsList from '../components/QualityFlagsList';
 import { useChecklistItems, useQualityPreview } from '../hooks/useDataQuality';
@@ -90,7 +91,7 @@ function toStakeholderConfig(inst: Institution | undefined): StakeholderConfig |
 }
 
 // ── Tool Definitions ─────────────────────────────────────────
-const TOOLKIT_TOOLS = [
+const ALL_TOOLKIT_TOOLS = [
   {
     id: 'T01',
     name: 'National Institutional Reporting',
@@ -730,6 +731,9 @@ const TOOLKIT_TOOLS = [
     ],
   },
 ];
+
+// Only the modules REMA uses can be opened (T01–T04); see utils/reportingTools.ts.
+const TOOLKIT_TOOLS = ALL_TOOLKIT_TOOLS.filter(t => isToolEnabled(t.id));
 
 // ── Report Form ───────────────────────────────────────────────
 const ReportForm = ({
@@ -2257,7 +2261,7 @@ export default function ReportingToolkitPage() {
         <span style={{ fontSize: '1.5rem' }}>📝</span>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
-            Integrated Reporting Modules (T01–T07)
+            Integrated Reporting Modules (T01–T04)
           </div>
           <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 2 }}>
             Structured templates linked to NBSAP targets and the 5-tier data pipeline. Each
