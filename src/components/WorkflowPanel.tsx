@@ -9,6 +9,7 @@ import { fetchReportHistory, type ReviewAction } from '../services/reportService
 import { WORKFLOW_LABELS, isFinalStage, stageProgress } from '../utils/workflow';
 import type { ReportHistoryEntry, ToolkitReport, ValidationStage } from '../types/index';
 import QualityFlagsList from './QualityFlagsList';
+import { ConfirmModal } from './common/ConfirmModal';
 
 const ACTION_LABEL: Record<string, string> = {
   submit: 'Submitted',
@@ -54,6 +55,14 @@ export default function WorkflowPanel({
   const [note, setNote] = useState('');
   const [history, setHistory] = useState<ReportHistoryEntry[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    action: ReviewAction;
+    note: string;
+    title: string;
+    message: string;
+    variant: 'primary' | 'danger' | 'warning' | 'success';
+    confirmLabel: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,7 +193,17 @@ export default function WorkflowPanel({
             {published ? (
               <button
                 disabled={busy || noteMissing}
-                onClick={() => onReview('return', note)}
+                onClick={() =>
+                  setPendingAction({
+                    action: 'return',
+                    note,
+                    title: 'Withdraw Publication',
+                    message:
+                      'Are you sure you want to withdraw this publication? It will be returned to the validation pipeline.',
+                    variant: 'warning',
+                    confirmLabel: 'Withdraw Publication',
+                  })
+                }
                 style={{
                   ...btn('#fff7ed', '#9a3412', '1px solid #fed7aa'),
                   opacity: noteMissing ? 0.5 : 1,
@@ -196,7 +215,18 @@ export default function WorkflowPanel({
               <>
                 <button
                   disabled={busy}
-                  onClick={() => onReview('approve', note)}
+                  onClick={() =>
+                    setPendingAction({
+                      action: 'approve',
+                      note,
+                      title: final ? 'Confirm Approval & Publication' : 'Confirm Stage Approval',
+                      message: final
+                        ? 'Are you sure you want to approve and publish this report? It will immediately count toward national target progress.'
+                        : 'Are you sure you want to approve this report and advance it to the next validation stage?',
+                      variant: 'success',
+                      confirmLabel: final ? 'Approve & Publish' : 'Approve & Advance',
+                    })
+                  }
                   style={btn('#16a34a')}
                 >
                   <i className="fa-solid fa-check" />
@@ -204,7 +234,17 @@ export default function WorkflowPanel({
                 </button>
                 <button
                   disabled={busy || noteMissing}
-                  onClick={() => onReview('return', note)}
+                  onClick={() =>
+                    setPendingAction({
+                      action: 'return',
+                      note,
+                      title: 'Return Report for Correction',
+                      message:
+                        'Are you sure you want to return this report to the submitter? They will be notified to correct and resubmit.',
+                      variant: 'warning',
+                      confirmLabel: 'Return for Correction',
+                    })
+                  }
                   title={noteMissing ? 'Write a note first' : undefined}
                   style={{ ...btn('#f59e0b'), opacity: noteMissing ? 0.5 : 1 }}
                 >
@@ -212,7 +252,17 @@ export default function WorkflowPanel({
                 </button>
                 <button
                   disabled={busy || noteMissing}
-                  onClick={() => onReview('reject', note)}
+                  onClick={() =>
+                    setPendingAction({
+                      action: 'reject',
+                      note,
+                      title: 'Confirm Report Rejection',
+                      message:
+                        'Are you sure you want to reject this submission? This will permanently mark this report as rejected.',
+                      variant: 'danger',
+                      confirmLabel: 'Reject Submission',
+                    })
+                  }
                   title={noteMissing ? 'Write a note first' : undefined}
                   style={{ ...btn('#dc2626'), opacity: noteMissing ? 0.5 : 1 }}
                 >
@@ -276,6 +326,25 @@ export default function WorkflowPanel({
             <i className="fa-solid fa-trash-can" /> Delete
           </button>
         </div>
+      )}
+
+      {/* Confirmation prompt before committing action */}
+      {pendingAction && (
+        <ConfirmModal
+          isOpen={true}
+          title={pendingAction.title}
+          message={pendingAction.message}
+          confirmLabel={pendingAction.confirmLabel}
+          confirmVariant={pendingAction.variant}
+          isLoading={busy}
+          onConfirm={() => {
+            const act = pendingAction.action;
+            const nt = pendingAction.note;
+            setPendingAction(null);
+            onReview(act, nt);
+          }}
+          onCancel={() => setPendingAction(null)}
+        />
       )}
     </div>
   );
