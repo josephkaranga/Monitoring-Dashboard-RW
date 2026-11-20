@@ -214,7 +214,7 @@ export function lookupField(key: string): FieldMeta {
   const match = FIELD_REGISTRY[key];
   if (match) return match;
 
-  const label = key.replace(/[_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const label = key.replace(/[_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   return { section: 'Other', label };
 }
 
