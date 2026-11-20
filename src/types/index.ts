@@ -246,6 +246,8 @@ export interface Indicator {
   disaggregations?: string[] | null;
   /** M05: false for duplicates kept for history. */
   in_use?: boolean;
+  /** Measurement unit for reported values (e.g. '%', 'ha', 'count'). */
+  unit?: string | null;
   created_at: string;
   updated_at: string;
 }

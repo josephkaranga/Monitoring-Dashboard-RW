@@ -7,6 +7,7 @@ import { progressColor } from '../utils/progressColors';
 import type { Indicator, IndicatorTier, IndicatorStatus } from '../types/index';
 import IndicatorReferencePanel from '../components/IndicatorReferencePanel';
 import ReferenceCompletenessBanner from '../components/ReferenceCompletenessBanner';
+import { ProgressCommentSection } from '../components/ProgressCommentSection';
 import { useMyScopes } from '../hooks/useInstitutions';
 
 // ── Goal config ───────────────────────────────────────────────
@@ -137,6 +138,7 @@ function IndicatorModal({
   onViewTarget: (targetId: number) => void;
   isAdmin: boolean;
 }) {
+  const navigate = useNavigate();
   const tier = TIER_CFG[i.tier];
   const status = STATUS_CFG[i.status];
   return (
@@ -385,7 +387,40 @@ function IndicatorModal({
           )}
           {/* M05: reference data and the one-page PDF sheet */}
           <IndicatorReferencePanel indicatorId={i.id} isAdmin={isAdmin} />
-          <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+
+          {/* Progress Commentary and Feedback */}
+          <ProgressCommentSection
+            targetId={i.nbsap_target_id}
+            indicatorId={i.id}
+            targetTitle={i.name}
+          />
+
+          <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                onClose();
+                navigate(
+                  `/reporting-toolkit?tool=T01&targetId=${i.nbsap_target_id}&indicatorId=${i.id}`
+                );
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 16px',
+                borderRadius: 8,
+                background: '#16a34a',
+                color: '#fff',
+                border: 'none',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+              title="Open Reporting Toolkit with this indicator pre-selected"
+            >
+              <i className="fa-solid fa-pen-to-square" /> Report on this Indicator
+            </button>
             <button
               onClick={() => {
                 onClose();

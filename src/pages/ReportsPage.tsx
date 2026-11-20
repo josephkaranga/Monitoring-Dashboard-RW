@@ -24,6 +24,10 @@ import { useAuth } from '../services/AuthContext';
 import { checkAccountStatus } from '../services/AuthContext';
 import { useDashboardStats, useReports } from '../hooks/useData';
 import { exportReportsToCSV } from '../services/reportService';
+import {
+  downloadNarrativeDocument,
+  downloadNarrativePDF,
+} from '../services/narrativeExportService';
 import { fetchTargets, fetchIndicators } from '../services/dataService';
 import { eventBus } from '../services/eventBus';
 import type { NBSAPTarget, Indicator } from '../types/index';
@@ -701,6 +705,36 @@ export function ReportsPage() {
     }
   }, [reports, targets, indicators, approved, pending, kpis]);
 
+  const handleNarrativeDoc = useCallback(() => {
+    try {
+      downloadNarrativeDocument({
+        targets,
+        indicators,
+        reports,
+        overallProgress: kpis.overallProgress,
+      });
+      toast.success('Narrative document (.doc) downloaded');
+    } catch (err) {
+      console.error(err);
+      toast.error('Narrative export failed');
+    }
+  }, [targets, indicators, reports, kpis.overallProgress]);
+
+  const handleNarrativePDF = useCallback(() => {
+    try {
+      downloadNarrativePDF({
+        targets,
+        indicators,
+        reports,
+        overallProgress: kpis.overallProgress,
+      });
+      toast.success('Narrative PDF downloaded');
+    } catch (err) {
+      console.error(err);
+      toast.error('Narrative PDF failed');
+    }
+  }, [targets, indicators, reports, kpis.overallProgress]);
+
   const handlePrint = useCallback(() => window.print(), []);
 
   // ── Early returns ──────────────────────────────────────────
@@ -839,6 +873,44 @@ export function ReportsPage() {
             }}
           >
             <i className="fa-solid fa-file-pdf" /> PDF
+          </button>
+          <button
+            onClick={handleNarrativeDoc}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 14px',
+              border: '1.5px solid #0d9488',
+              borderRadius: 8,
+              background: 'transparent',
+              color: '#0d9488',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            title="Download full narrative report formatted for Microsoft Word"
+          >
+            <i className="fa-solid fa-file-word" /> Narrative Doc
+          </button>
+          <button
+            onClick={handleNarrativePDF}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 14px',
+              border: '1.5px solid #16a34a',
+              borderRadius: 8,
+              background: 'transparent',
+              color: '#16a34a',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            title="Download full narrative report as multi-page PDF"
+          >
+            <i className="fa-solid fa-book" /> Narrative PDF
           </button>
           <button
             onClick={handlePrint}

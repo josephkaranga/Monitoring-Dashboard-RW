@@ -38,6 +38,8 @@ import ResubmitReportModal from '../components/ResubmitReportModal';
 import DraftStatusBar from '../components/DraftStatusBar';
 import TwoStepStakeholderSelect from '../components/TwoStepStakeholderSelect';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
+import { ConfirmModal, CoordinatePicker, DatePicker } from '../components/common';
+import { TOOLKIT_TOOLS } from '../config/toolkitTools';
 import DataQualityChecklist from '../components/DataQualityChecklist';
 import QualityFlagsList from '../components/QualityFlagsList';
 import DisaggregationFields from '../components/DisaggregationFields';
@@ -90,377 +92,22 @@ function toStakeholderConfig(inst: Institution | undefined): StakeholderConfig |
   };
 }
 
-// ── Tool Definitions ─────────────────────────────────────────
-// The four modules REMA uses (utils/reportingTools.ts).
-const TOOLKIT_TOOLS = [
-  {
-    id: 'T01',
-    name: 'National Institutional Reporting',
-    icon: '🏛️',
-    color: '#1B6CA8',
-    accent: '#4CA3DD',
-    frequency: 'Quarterly',
-    output: 'Institutional Compliance Scorecard',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      {
-        key: 'institution',
-        label: 'Lead Institution',
-        type: 'institution_auto',
-        required: true,
-      },
-      {
-        key: 'period',
-        label: 'Reporting Period',
-        type: 'select',
-        options: [
-          'Q1 2025',
-          'Q2 2025',
-          'Q3 2025',
-          'Q4 2025',
-          'Q1 2026',
-          'Q2 2026',
-          'Q3 2026',
-          'Q4 2026',
-          'Q1 2027',
-          'Q2 2027',
-          'Q3 2027',
-          'Q4 2027',
-          'Q1 2028',
-          'Q2 2028',
-          'Q3 2028',
-          'Q4 2028',
-          'Q1 2029',
-          'Q2 2029',
-          'Q3 2029',
-          'Q4 2029',
-          'Q1 2030',
-          'Q2 2030',
-          'Q3 2030',
-          'Q4 2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'reported_value',
-        label: 'Reported Value',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'budget_utilized',
-        label: 'Budget Utilized (RWF)',
-        type: 'number',
-        placeholder: 'e.g. 5000000 for 5M RWF',
-        hint: 'Enter the exact amount in Rwandan Francs (RWF)',
-        required: true,
-      },
-      {
-        key: 'activities',
-        label: 'Implementation Activities',
-        type: 'textarea',
-        placeholder: 'Describe completed activities...',
-        required: true,
-      },
-      {
-        key: 'challenges',
-        label: 'Challenges Encountered',
-        type: 'textarea',
-        placeholder: 'Describe constraints...',
-        required: false,
-      },
-    ],
-  },
-  {
-    id: 'T02',
-    name: 'District Biodiversity Monitoring',
-    icon: '🌿',
-    color: '#1E7D4B',
-    accent: '#4CBB7F',
-    frequency: 'Quarterly',
-    output: 'District Biodiversity Performance Index',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      { key: 'district', label: 'District Name', type: 'district_select', required: true },
-      {
-        key: 'officer',
-        label: 'Reporting Officer',
-        type: 'text',
-        placeholder: 'Officer name',
-        required: true,
-      },
-      {
-        key: 'period',
-        label: 'Reporting Period',
-        type: 'select',
-        options: [
-          'Q1 2025',
-          'Q2 2025',
-          'Q3 2025',
-          'Q4 2025',
-          'Q1 2026',
-          'Q2 2026',
-          'Q3 2026',
-          'Q4 2026',
-          'Q1 2027',
-          'Q2 2027',
-          'Q3 2027',
-          'Q4 2027',
-          'Q1 2028',
-          'Q2 2028',
-          'Q3 2028',
-          'Q4 2028',
-          'Q1 2029',
-          'Q2 2029',
-          'Q3 2029',
-          'Q4 2029',
-          'Q1 2030',
-          'Q2 2030',
-          'Q3 2030',
-          'Q4 2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'forest_ha',
-        label: 'Forest Restoration (ha)',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'wetland_ha',
-        label: 'Wetland Rehabilitation (ha)',
-        type: 'number',
-        placeholder: '0',
-        required: true,
-      },
-      {
-        key: 'agroforestry_hh',
-        label: 'Agroforestry Households',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'soil_structures',
-        label: 'Soil Conservation Structures',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'conservation_groups',
-        label: 'Conservation Groups',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'illegal_cases',
-        label: 'Illegal Activities Reported',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'notes',
-        label: 'Additional Notes',
-        type: 'textarea',
-        placeholder: 'Any observations...',
-        required: false,
-      },
-    ],
-  },
-  {
-    id: 'T03',
-    name: 'Private Sector Compliance',
-    icon: '🏗️',
-    color: '#922B21',
-    accent: '#E74C3C',
-    frequency: 'Annual',
-    output: 'Private-Sector Compliance Index',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      {
-        key: 'company',
-        label: 'Company Name',
-        type: 'text',
-        placeholder: 'Company name',
-        required: true,
-      },
-      {
-        key: 'sector',
-        label: 'Sector',
-        type: 'select',
-        options: [
-          'Infrastructure',
-          'Agribusiness',
-          'Mining',
-          'Tourism',
-          'Finance / Investment',
-          'Other',
-        ],
-        required: true,
-      },
-      {
-        key: 'year',
-        label: 'Reporting Year',
-        type: 'select',
-        options: [
-          '2020',
-          '2021',
-          '2022',
-          '2023',
-          '2024',
-          '2025',
-          '2026',
-          '2027',
-          '2028',
-          '2029',
-          '2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'eia_compliance',
-        label: 'EIA Compliance',
-        type: 'select',
-        options: ['Full compliance', 'Partial compliance', 'Non-compliant', 'Not applicable'],
-        required: true,
-      },
-      {
-        key: 'restoration_ha',
-        label: 'Restoration Commitments (ha)',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'esg_score',
-        label: 'ESG Biodiversity Score (1–100)',
-        type: 'number',
-        placeholder: '0',
-        required: false,
-      },
-      {
-        key: 'waste_management',
-        label: 'Waste Management Rating',
-        type: 'select',
-        options: ['Excellent', 'Good', 'Fair', 'Poor'],
-        required: false,
-      },
-    ],
-  },
-  {
-    id: 'T04',
-    name: 'Research & Academic Contribution',
-    icon: '🔬',
-    color: '#1A5276',
-    accent: '#2E86C1',
-    frequency: 'Annual',
-    output: 'Biodiversity Evidence Repository',
-    fields: [
-      {
-        key: 'stakeholder',
-        label: 'Reporting Stakeholder',
-        type: 'stakeholder_select',
-        required: true,
-      },
-      {
-        key: 'institution',
-        label: 'Lead Institution',
-        type: 'text',
-        placeholder: 'University or institute',
-        required: true,
-      },
-      {
-        key: 'study_title',
-        label: 'Study Title',
-        type: 'text',
-        placeholder: 'Full title',
-        required: true,
-      },
-      {
-        key: 'year',
-        label: 'Year Completed',
-        type: 'select',
-        options: [
-          '2020',
-          '2021',
-          '2022',
-          '2023',
-          '2024',
-          '2025',
-          '2026',
-          '2027',
-          '2028',
-          '2029',
-          '2030',
-        ],
-        required: true,
-      },
-      { key: 'nbsap_target', label: 'NBSAP Target', type: 'target_select', required: true },
-      { key: 'indicator', label: 'Related Indicator', type: 'indicator_select', required: true },
-      {
-        key: 'ecosystem_assessed',
-        label: 'Ecosystem Assessed',
-        type: 'select',
-        options: ['Forest', 'Wetland', 'Savanna', 'Aquatic', 'Agricultural', 'Urban', 'Multiple'],
-        required: true,
-      },
-      {
-        key: 'key_findings',
-        label: 'Key Findings Summary',
-        type: 'textarea',
-        placeholder: 'Summarize main findings...',
-        required: true,
-      },
-      {
-        key: 'policy_relevance',
-        label: 'Policy Relevance & NBSAP Linkage',
-        type: 'textarea',
-        placeholder: 'How does this support NBSAP?',
-        required: false,
-      },
-    ],
-  },
-];
-
 // ── Report Form ───────────────────────────────────────────────
 const ReportForm = ({
   tool,
   onBack,
   onSuccess,
   initialDraft,
+  initialTargetId,
+  initialIndicatorId,
 }: {
   tool: (typeof TOOLKIT_TOOLS)[0];
   onBack: () => void;
   onSuccess: () => void;
   /** M03: resume this draft (from any device). */
   initialDraft?: ReportDraft | null;
+  initialTargetId?: string | null;
+  initialIndicatorId?: string | null;
 }) => {
   const { settings, user } = useAuth();
   const { institutions, loading: loadingInstitutions } = useInstitutions();
@@ -473,13 +120,24 @@ const ReportForm = ({
     (key: string) => toStakeholderConfig(institutionsByCode.get(key)),
     [institutionsByCode]
   );
-  const [formData, setFormData] = useState<Record<string, string>>(
-    () => initialDraft?.form_data ?? {}
-  );
+  const [formData, setFormData] = useState<Record<string, string>>(() => {
+    const data = initialDraft?.form_data ? { ...initialDraft.form_data } : {};
+    if (!data.nbsap_target && initialTargetId) data.nbsap_target = initialTargetId;
+    if (!data.indicator && initialIndicatorId) data.indicator = initialIndicatorId;
+    return data;
+  });
   const [attachments, setAttachments] = useState<ReportAttachment[]>(
     () => initialDraft?.attachments ?? []
   );
   const [submitting, setSubmitting] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [allIndicators, setAllIndicators] = useState<Indicator[]>([]);
+  const [browseAllIndicators, setBrowseAllIndicators] = useState(false);
+  const [useExactDate, setUseExactDate] = useState(false);
+  const [valueFormat, setValueFormat] = useState<
+    'number' | 'percent' | 'currency' | 'qualitative' | 'text'
+  >('number');
+  const [showPublicationSection, setShowPublicationSection] = useState(false);
   // M04: data-quality checklist and a live preview of the database checks.
   const checklist = useChecklistItems();
   const [declaration, setDeclaration] = useState<DqaDeclaration>(emptyDeclaration);
@@ -657,6 +315,42 @@ const ReportForm = ({
     loadDistricts();
   }, [tool.id]);
 
+  // Load full indicator catalog (79 indicators) so users can work across all indicators
+  useEffect(() => {
+    fetchIndicators({ pageSize: 100 })
+      .then(setAllIndicators)
+      .catch(err => console.warn('Could not load all indicators:', err));
+  }, []);
+
+  // Pre-fill target and indicator from navigation params if provided
+  useEffect(() => {
+    if (initialTargetId && !formData.nbsap_target) {
+      setFormData(prev => ({ ...prev, nbsap_target: initialTargetId }));
+    }
+    if (initialIndicatorId && !formData.indicator) {
+      setFormData(prev => ({ ...prev, indicator: initialIndicatorId }));
+    }
+  }, [initialTargetId, initialIndicatorId]);
+
+  // Auto-detect unit and format when indicator changes
+  useEffect(() => {
+    if (formData.indicator) {
+      const ind = (allIndicators.length ? allIndicators : availableIndicators).find(
+        i => i.id === parseInt(formData.indicator, 10)
+      );
+      if (ind) {
+        if (ind.unit && !formData.reported_unit) {
+          setFormData(prev => ({ ...prev, reported_unit: ind.unit || '' }));
+        }
+        if (ind.unit?.includes('%')) {
+          setValueFormat('percent');
+        } else if (ind.unit?.toLowerCase().includes('rwf')) {
+          setValueFormat('currency');
+        }
+      }
+    }
+  }, [formData.indicator, allIndicators, availableIndicators]);
+
   // Load all indicators for the selected target.
   // The stakeholder already narrows the target list; filtering indicators
   // a second time by stakeholder adds no value and causes empty dropdowns
@@ -804,107 +498,119 @@ const ReportForm = ({
       }
       // ────────────────────────────────────────────────────────────────────────
 
-      setSubmitting(true);
+      // Prompt before committing actions (confirmation modal)
+      setShowSubmitConfirm(true);
+    },
+    [tool, formData, attachments, checklist.items, checklist.error, declaration, user?.id]
+  );
 
-      // Determine whether this report should bypass manual verification based on
-      // the submitting organization's automatic-update configuration. Falls back
-      // to the existing per-user setting if no organization config is available.
-      let orgConfig = null;
-      if (user?.organization) {
-        try {
-          orgConfig = await organizationConfigService.getOrCreateConfig(user.organization);
-        } catch (err) {
-          console.warn('Failed to load organization config, falling back to user settings:', err);
-        }
+  const executeSubmit = useCallback(async () => {
+    setShowSubmitConfirm(false);
+    setSubmitting(true);
+
+    // Determine whether this report should bypass manual verification based on
+    // the submitting organization's automatic-update configuration. Falls back
+    // to the existing per-user setting if no organization config is available.
+    let orgConfig = null;
+    if (user?.organization) {
+      try {
+        orgConfig = await organizationConfigService.getOrCreateConfig(user.organization);
+      } catch (err) {
+        console.warn('Failed to load organization config, falling back to user settings:', err);
       }
-      const requireVerification = true;
+    }
+    const requireVerification = true;
 
-      const nbsapTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
-      const indicatorId = formData.indicator ? parseInt(formData.indicator, 10) : null;
-      const stakeholderId = formData.stakeholder || null;
+    const nbsapTargetId = formData.nbsap_target ? parseInt(formData.nbsap_target, 10) : null;
+    const indicatorId = formData.indicator ? parseInt(formData.indicator, 10) : null;
+    const stakeholderId = formData.stakeholder || null;
 
-      const result = await submitReport(
-        tool.id as ReportType,
-        tool.name,
-        formData,
-        requireVerification,
-        attachments,
-        nbsapTargetId,
-        indicatorId,
-        declaration
+    const result = await submitReport(
+      tool.id as ReportType,
+      tool.name,
+      formData,
+      requireVerification,
+      attachments,
+      nbsapTargetId,
+      indicatorId,
+      declaration
+    );
+
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      const selectedTarget = (allIndicators.length ? responsibleTargets : filteredTargets).find(
+        t => t.id === nbsapTargetId
+      );
+      const selectedIndicator = (allIndicators.length ? allIndicators : availableIndicators).find(
+        i => i.id === indicatorId
+      );
+      const selectedStakeholder = stakeholderId ? getStakeholderConfig(stakeholderId) : null;
+
+      const targetInfo = selectedTarget
+        ? ` → Target ${selectedTarget.id}: ${selectedTarget.title}`
+        : '';
+      const indicatorInfo = selectedIndicator ? ` → Indicator: ${selectedIndicator.name}` : '';
+      const stakeholderInfo = selectedStakeholder
+        ? ` → Stakeholder: ${selectedStakeholder.name}`
+        : '';
+
+      await writeAuditEntry(
+        'submit',
+        `${tool.name} submitted${stakeholderInfo}${targetInfo}${indicatorInfo}`,
+        `Tool: ${tool.id} · Status: ${result.data?.status} · Stakeholder: ${stakeholderId || 'None'} · NBSAP Target: ${nbsapTargetId || 'None'} · Indicator: ${indicatorId || 'None'}`
       );
 
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        const selectedTarget = filteredTargets.find(t => t.id === nbsapTargetId);
-        const selectedIndicator = availableIndicators.find(i => i.id === indicatorId);
-        const selectedStakeholder = stakeholderId ? getStakeholderConfig(stakeholderId) : null;
-
-        const targetInfo = selectedTarget
-          ? ` → Target ${selectedTarget.id}: ${selectedTarget.title}`
-          : '';
-        const indicatorInfo = selectedIndicator ? ` → Indicator: ${selectedIndicator.name}` : '';
-        const stakeholderInfo = selectedStakeholder
-          ? ` → Stakeholder: ${selectedStakeholder.name}`
-          : '';
-
-        await writeAuditEntry(
-          'submit',
-          `${tool.name} submitted${stakeholderInfo}${targetInfo}${indicatorInfo}`,
-          `Tool: ${tool.id} · Status: ${result.data?.status} · Stakeholder: ${stakeholderId || 'None'} · NBSAP Target: ${nbsapTargetId || 'None'} · Indicator: ${indicatorId || 'None'}`
-        );
-
-        // Log the automatic-processing outcome for audit purposes. When the
-        // report was auto-approved, the progress update was already applied by
-        // the database trigger as part of the submission above.
-        if (orgConfig && result.data) {
-          await processReportAutomatic(result.data, orgConfig);
-        }
-
-        // Update district reporting status on the map when a T02 report is submitted
-        if (tool.id === 'T02' && formData.district) {
-          const matchedDistrict = allDistricts.find(d => d.name === formData.district);
-          if (matchedDistrict) {
-            const newDistrictStatus = requireVerification ? 'pending' : 'submitted';
-            await updateDistrictStatus(matchedDistrict.id, newDistrictStatus);
-            eventBus.emit('district-status-updated', {
-              districtId: matchedDistrict.id,
-              districtName: matchedDistrict.name,
-            });
-          }
-        }
-
-        // Enhanced success message
-        const successMsg = requireVerification
-          ? 'Submitted for validation ⏳' +
-            (selectedTarget
-              ? ` Data will count toward Target ${selectedTarget.id} once published.`
-              : '')
-          : 'Report submitted successfully ✓' +
-            (selectedTarget ? ` Target ${selectedTarget.id} updated automatically.` : '') +
-            (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
-
-        toast.success(successMsg);
-        await draft.finish({ discarded: false });
-        onSuccess();
+      // Log the automatic-processing outcome for audit purposes. When the
+      // report was auto-approved, the progress update was already applied by
+      // the database trigger as part of the submission above.
+      if (orgConfig && result.data) {
+        await processReportAutomatic(result.data, orgConfig);
       }
-      setSubmitting(false);
-    },
-    [
-      formData,
-      tool,
-      settings,
-      attachments,
-      onSuccess,
-      responsibleTargets,
-      allDistricts,
-      draft,
-      checklist.items,
-      checklist.error,
-      declaration,
-    ]
-  );
+
+      // Update district reporting status on the map when a T02 report is submitted
+      if (tool.id === 'T02' && formData.district) {
+        const matchedDistrict = allDistricts.find(d => d.name === formData.district);
+        if (matchedDistrict) {
+          const newDistrictStatus = requireVerification ? 'pending' : 'submitted';
+          await updateDistrictStatus(matchedDistrict.id, newDistrictStatus);
+          eventBus.emit('district-status-updated', {
+            districtId: matchedDistrict.id,
+            districtName: matchedDistrict.name,
+          });
+        }
+      }
+
+      // Enhanced success message
+      const successMsg = requireVerification
+        ? 'Submitted for validation ⏳' +
+          (selectedTarget
+            ? ` Data will count toward Target ${selectedTarget.id} once published.`
+            : '')
+        : 'Report submitted successfully ✓' +
+          (selectedTarget ? ` Target ${selectedTarget.id} updated automatically.` : '') +
+          (selectedIndicator ? ` Indicator "${selectedIndicator.name}" updated.` : '');
+
+      toast.success(successMsg);
+      await draft.finish({ discarded: false });
+      onSuccess();
+    }
+    setSubmitting(false);
+  }, [
+    formData,
+    tool,
+    attachments,
+    declaration,
+    user,
+    allDistricts,
+    allIndicators,
+    availableIndicators,
+    filteredTargets,
+    responsibleTargets,
+    getStakeholderConfig,
+    draft,
+    onSuccess,
+  ]);
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
@@ -1139,38 +845,83 @@ const ReportForm = ({
                     ))}
                   </select>
                 ) : f.type === 'indicator_select' ? (
-                  <select
-                    value={formData[f.key] || ''}
-                    onChange={e => {
-                      setFormData(d => ({ ...d, [f.key]: e.target.value }));
-                      setErrors(err => ({ ...err, [f.key]: false }));
-                    }}
-                    disabled={loadingIndicators || !formData.nbsap_target}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
-                      borderRadius: 8,
-                      fontSize: '0.83rem',
-                      fontFamily: "'DM Sans', sans-serif",
-                      outline: 'none',
-                      background: '#fff',
-                      color: '#0f172a',
-                    }}
-                  >
-                    <option value="">
-                      {!formData.nbsap_target
-                        ? 'Select target first'
-                        : loadingIndicators
-                          ? 'Loading indicators...'
-                          : '— Select Indicator —'}
-                    </option>
-                    {availableIndicators.map(indicator => (
-                      <option key={indicator.id} value={indicator.id}>
-                        {indicator.name} ({indicator.status})
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => setBrowseAllIndicators(!browseAllIndicators)}
+                        style={{
+                          background: browseAllIndicators ? '#e0f2fe' : '#f1f5f9',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 6,
+                          padding: '2px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: 600,
+                          color: browseAllIndicators ? '#0369a1' : '#475569',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                        title="Toggle between target indicators and full national indicator catalog"
+                      >
+                        <span className="fa-solid fa-list-check" />
+                        {browseAllIndicators
+                          ? '✓ Showing All 79 Indicators'
+                          : 'Browse All 79 Indicators'}
+                      </button>
+                    </div>
+                    <select
+                      value={formData[f.key] || ''}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const ind = (
+                          browseAllIndicators ? allIndicators : availableIndicators
+                        ).find(i => i.id === parseInt(val, 10));
+                        setFormData(d => ({
+                          ...d,
+                          [f.key]: val,
+                          ...(ind?.nbsap_target_id
+                            ? { nbsap_target: String(ind.nbsap_target_id) }
+                            : {}),
+                          ...(ind?.unit ? { reported_unit: ind.unit } : {}),
+                        }));
+                        setErrors(err => ({ ...err, [f.key]: false, nbsap_target: false }));
+                      }}
+                      disabled={
+                        loadingIndicators || (!browseAllIndicators && !formData.nbsap_target)
+                      }
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
+                        borderRadius: 8,
+                        fontSize: '0.83rem',
+                        fontFamily: "'DM Sans', sans-serif",
+                        outline: 'none',
+                        background: '#fff',
+                        color: '#0f172a',
+                      }}
+                    >
+                      <option value="">
+                        {browseAllIndicators
+                          ? '— Select from All 79 National Indicators —'
+                          : !formData.nbsap_target
+                            ? 'Select target first (or click "Browse All 79 Indicators" above)'
+                            : loadingIndicators
+                              ? 'Loading indicators...'
+                              : '— Select Indicator —'}
                       </option>
-                    ))}
-                  </select>
+                      {(browseAllIndicators ? allIndicators : availableIndicators).map(
+                        indicator => (
+                          <option key={indicator.id} value={indicator.id}>
+                            #{indicator.id}: {indicator.name} ({indicator.status || 'Active'}){' '}
+                            {indicator.unit ? `[${indicator.unit}]` : ''}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
                 ) : f.type === 'institution_auto' ? (
                   (() => {
                     const config = formData.stakeholder
@@ -1297,6 +1048,75 @@ const ReportForm = ({
                       );
                     })}
                   </select>
+                ) : f.key === 'period' ? (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => setUseExactDate(!useExactDate)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#1b6ca8',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: 0,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {useExactDate
+                          ? '← Switch to Quarter Select'
+                          : '📅 Switch to Exact Date Picker'}
+                      </button>
+                    </div>
+                    {useExactDate ? (
+                      <DatePicker
+                        value={formData.exact_date || ''}
+                        onChange={date => {
+                          let qStr = formData.period;
+                          if (date) {
+                            const parts = date.split('-');
+                            if (parts.length === 3) {
+                              const yr = parts[0];
+                              const m = parseInt(parts[1], 10);
+                              const q = Math.ceil(m / 3);
+                              qStr = `Q${q} ${yr}`;
+                            }
+                          }
+                          setFormData(d => ({ ...d, exact_date: date, period: qStr || date }));
+                          setErrors(err => ({ ...err, [f.key]: false }));
+                        }}
+                        placeholder="Select exact activity date"
+                      />
+                    ) : (
+                      <select
+                        value={formData[f.key] || ''}
+                        onChange={e => {
+                          setFormData(d => ({ ...d, [f.key]: e.target.value }));
+                          setErrors(err => ({ ...err, [f.key]: false }));
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
+                          borderRadius: 8,
+                          fontSize: '0.83rem',
+                          fontFamily: "'DM Sans', sans-serif",
+                          outline: 'none',
+                          background: '#fff',
+                          color: '#0f172a',
+                        }}
+                      >
+                        <option value="">— Select Reporting Period —</option>
+                        {f.options?.map(o => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                 ) : f.type === 'select' ? (
                   <select
                     value={formData[f.key] || ''}
@@ -1323,6 +1143,150 @@ const ReportForm = ({
                       </option>
                     ))}
                   </select>
+                ) : f.key === 'reported_value' ? (
+                  <div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 6,
+                        marginBottom: 6,
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>
+                        Format:
+                      </span>
+                      {(['number', 'percent', 'currency', 'qualitative', 'text'] as const).map(
+                        fmt => (
+                          <button
+                            key={fmt}
+                            type="button"
+                            onClick={() => {
+                              setValueFormat(fmt);
+                              setFormData(d => ({ ...d, value_format: fmt }));
+                            }}
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              fontSize: '0.68rem',
+                              fontWeight: 600,
+                              border: '1px solid',
+                              borderColor: valueFormat === fmt ? '#1b6ca8' : '#cbd5e1',
+                              background: valueFormat === fmt ? '#f0f9ff' : '#ffffff',
+                              color: valueFormat === fmt ? '#1b6ca8' : '#64748b',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {fmt === 'number'
+                              ? 'Numeric'
+                              : fmt === 'percent'
+                                ? 'Percent (%)'
+                                : fmt === 'currency'
+                                  ? 'RWF'
+                                  : fmt === 'qualitative'
+                                    ? 'Qualitative Status'
+                                    : 'Text'}
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    {valueFormat === 'qualitative' ? (
+                      <select
+                        value={formData[f.key] || ''}
+                        onChange={e => {
+                          setFormData(d => ({
+                            ...d,
+                            [f.key]: e.target.value,
+                            value_format: 'qualitative',
+                          }));
+                          setErrors(err => ({ ...err, [f.key]: false }));
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 12px',
+                          border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
+                          borderRadius: 8,
+                          fontSize: '0.83rem',
+                          fontFamily: "'DM Sans', sans-serif",
+                          outline: 'none',
+                          background: '#fff',
+                          color: '#0f172a',
+                        }}
+                      >
+                        <option value="">— Select Qualitative Status —</option>
+                        <option value="On Track">On Track (Meeting planned milestones)</option>
+                        <option value="Ahead of Schedule">Ahead of Schedule</option>
+                        <option value="Minor Delays">
+                          Minor Delays (Mitigation actions in place)
+                        </option>
+                        <option value="Significantly Delayed">
+                          Significantly Delayed (Action required)
+                        </option>
+                        <option value="Completed">Completed / Fully Achieved</option>
+                        <option value="Not Started">Not Started / Baseline</option>
+                      </select>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input
+                          type={valueFormat === 'text' ? 'text' : 'number'}
+                          step="any"
+                          min={
+                            valueFormat === 'number' ||
+                            valueFormat === 'currency' ||
+                            valueFormat === 'percent'
+                              ? 0
+                              : undefined
+                          }
+                          max={valueFormat === 'percent' ? 100 : undefined}
+                          value={formData[f.key] || ''}
+                          onChange={e => {
+                            setFormData(d => ({
+                              ...d,
+                              [f.key]: e.target.value,
+                              value_format: valueFormat,
+                            }));
+                            setErrors(err => ({ ...err, [f.key]: false }));
+                          }}
+                          placeholder={
+                            valueFormat === 'percent'
+                              ? 'e.g. 75 (%)'
+                              : valueFormat === 'currency'
+                                ? 'e.g. 5000000 (RWF)'
+                                : f.placeholder || 'Enter value'
+                          }
+                          style={{
+                            flex: 1,
+                            padding: '9px 12px',
+                            border: `1.5px solid ${errors[f.key] ? '#f43f5e' : '#e2e8f0'}`,
+                            borderRadius: 8,
+                            fontSize: '0.83rem',
+                            fontFamily: "'DM Sans', sans-serif",
+                            outline: 'none',
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Unit (e.g. ha, %, RWF)"
+                          value={formData.reported_unit || ''}
+                          onChange={e =>
+                            setFormData(d => ({ ...d, reported_unit: e.target.value }))
+                          }
+                          style={{
+                            width: 110,
+                            padding: '9px 10px',
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: 8,
+                            fontSize: '0.8rem',
+                            background: '#f8fafc',
+                            outline: 'none',
+                          }}
+                          title="Measurement unit"
+                        />
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <input
                     type={f.type}
@@ -1359,6 +1323,260 @@ const ReportForm = ({
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Location Coordinates Picker (M07) */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: 16,
+              marginBottom: 18,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 10,
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="fa-solid fa-map-location-dot" style={{ color: '#0284c7' }} />
+                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                  Site Location Coordinates (Optional)
+                </h4>
+              </div>
+              <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                Pick coordinates on interactive Leaflet map or retrieve from device GPS
+              </span>
+            </div>
+            <CoordinatePicker
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onChange={({ latitude, longitude }) => {
+                setFormData(d => ({ ...d, latitude, longitude }));
+                setErrors(err => ({ ...err, latitude: false, longitude: false }));
+              }}
+            />
+          </div>
+
+          {/* Public Work & Publication Reference */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: 16,
+              marginBottom: 18,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: showPublicationSection ? 12 : 0,
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowPublicationSection(!showPublicationSection)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="fa-solid fa-book-bookmark" style={{ color: '#1a5276' }} />
+                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                  Publication & Public Work Reference (Optional)
+                </h4>
+                {formData.publication_title && (
+                  <span
+                    style={{
+                      fontSize: '0.68rem',
+                      background: '#dcfce7',
+                      color: '#166534',
+                      padding: '2px 7px',
+                      borderRadius: 10,
+                      fontWeight: 700,
+                    }}
+                  >
+                    ✓ Referenced
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#1b6ca8',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {showPublicationSection ? 'Hide Reference Fields' : '+ Add Publication Reference'}
+              </button>
+            </div>
+
+            {showPublicationSection && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Publication / Study / Gazette Title
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Rwanda State of Environment and Outlook Report / National Biodiversity Assessment"
+                    value={formData.publication_title || ''}
+                    onChange={e => setFormData(d => ({ ...d, publication_title: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 8,
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Authoring Body / Lead Researcher
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. REMA, University of Rwanda, NISR, WCS"
+                    value={formData.publication_author || ''}
+                    onChange={e => setFormData(d => ({ ...d, publication_author: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 8,
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Public URL / DOI Link
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://... or doi.org/..."
+                    value={formData.publication_url || ''}
+                    onChange={e => setFormData(d => ({ ...d, publication_url: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 8,
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Publication Year
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2025"
+                    value={formData.publication_year || ''}
+                    onChange={e => setFormData(d => ({ ...d, publication_year: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 8,
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Reference Type
+                  </label>
+                  <select
+                    value={formData.publication_type || ''}
+                    onChange={e => setFormData(d => ({ ...d, publication_type: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 8,
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                      background: '#fff',
+                    }}
+                  >
+                    <option value="">— Select Type —</option>
+                    <option value="Government Gazette / National Policy">
+                      Government Gazette / National Policy
+                    </option>
+                    <option value="Peer-Reviewed Academic Publication">
+                      Peer-Reviewed Academic Publication
+                    </option>
+                    <option value="National Statistical Survey">National Statistical Survey</option>
+                    <option value="Official Institutional Report">
+                      Official Institutional Report
+                    </option>
+                    <option value="Development Partner / NGO Assessment">
+                      Development Partner / NGO Assessment
+                    </option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Selected Stakeholder Information */}
@@ -1767,6 +1985,85 @@ const ReportForm = ({
             </button>
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+          {/* Prompt before committing action: Confirmation modal */}
+          {showSubmitConfirm && (
+            <ConfirmModal
+              isOpen={true}
+              title="Confirm Report Submission"
+              confirmLabel="Confirm & Submit Report"
+              confirmVariant="primary"
+              isLoading={submitting}
+              onConfirm={executeSubmit}
+              onCancel={() => setShowSubmitConfirm(false)}
+              message={
+                <div>
+                  <p style={{ margin: '0 0 12px 0', fontSize: '0.85rem', color: '#475569' }}>
+                    Please review your submission summary below before committing to the national
+                    validation pipeline:
+                  </p>
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      borderRadius: 8,
+                      border: '1px solid #e2e8f0',
+                      padding: '12px 14px',
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                    }}
+                  >
+                    <div>
+                      <strong>Module:</strong> {tool.id} — {tool.name}
+                    </div>
+                    <div>
+                      <strong>Reporting Stakeholder:</strong>{' '}
+                      {formData.stakeholder
+                        ? getStakeholderConfig(formData.stakeholder)?.name || formData.stakeholder
+                        : '—'}
+                    </div>
+                    <div>
+                      <strong>Target:</strong>{' '}
+                      {formData.nbsap_target ? `Target ${formData.nbsap_target}` : '—'}
+                    </div>
+                    <div>
+                      <strong>Indicator:</strong>{' '}
+                      {(() => {
+                        const ind = (
+                          allIndicators.length ? allIndicators : availableIndicators
+                        ).find(i => String(i.id) === formData.indicator);
+                        return ind ? `#${ind.id}: ${ind.name}` : formData.indicator || '—';
+                      })()}
+                    </div>
+                    <div>
+                      <strong>Reporting Period / Date:</strong> {formData.period || '—'}{' '}
+                      {formData.exact_date ? `(${formData.exact_date})` : ''}
+                    </div>
+                    <div>
+                      <strong>Reported Value:</strong>{' '}
+                      <span style={{ fontWeight: 700, color: '#16a34a' }}>
+                        {formData.reported_value || '0'} {formData.reported_unit || ''}
+                      </span>
+                    </div>
+                    {formData.latitude && formData.longitude && (
+                      <div>
+                        <strong>GPS Coordinates:</strong> {formData.latitude}, {formData.longitude}
+                      </div>
+                    )}
+                    {formData.publication_title && (
+                      <div>
+                        <strong>Public Work / Publication:</strong> {formData.publication_title}
+                      </div>
+                    )}
+                    <div>
+                      <strong>Evidence Files Attached:</strong> {attachments.length} file(s)
+                    </div>
+                  </div>
+                </div>
+              }
+            />
+          )}
         </form>
       </div>
     </div>
@@ -1859,6 +2156,8 @@ export default function ReportingToolkitPage() {
     [institutions]
   );
   const initTool = searchParams.get('tool');
+  const initTargetId = searchParams.get('targetId');
+  const initIndicatorId = searchParams.get('indicatorId');
   const [activeTool, setActiveTool] = useState<(typeof TOOLKIT_TOOLS)[0] | null>(
     initTool ? TOOLKIT_TOOLS.find(t => t.id === initTool) || null : null
   );
@@ -1933,6 +2232,8 @@ export default function ReportingToolkitPage() {
         key={resumeDraft?.id ?? activeTool.id}
         tool={activeTool}
         initialDraft={resumeDraft}
+        initialTargetId={initTargetId}
+        initialIndicatorId={initIndicatorId}
         onBack={() => {
           setActiveTool(null);
           setShowSuccess(false);

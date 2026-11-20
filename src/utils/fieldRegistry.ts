@@ -19,11 +19,12 @@ export interface FieldMeta {
 // If a backend key is renamed, add the new key here — the old
 // one becomes an unknown that falls into "Other".
 const FIELD_REGISTRY: Record<string, FieldMeta> = {
-  // ── Identity & context ──────────────────────────────────
+  // ── Reporting Context ───────────────────────────────────
   stakeholder: { section: 'Reporting Context', label: 'Reporting Stakeholder' },
   institution: { section: 'Reporting Context', label: 'Institution' },
   institution_type: { section: 'Reporting Context', label: 'Institution Type' },
   period: { section: 'Reporting Context', label: 'Reporting Period' },
+  exact_date: { section: 'Reporting Context', label: 'Exact Activity Date' },
   year: { section: 'Reporting Context', label: 'Year' },
   officer: { section: 'Reporting Context', label: 'Reporting Officer' },
   reporter: { section: 'Reporting Context', label: 'Reporter / Group' },
@@ -36,15 +37,23 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
   district: { section: 'Location', label: 'District' },
   community: { section: 'Location', label: 'Community / Village' },
   area_name: { section: 'Location', label: 'Protected Area' },
+  latitude: { section: 'Location', label: 'Latitude', format: 'number' },
+  longitude: { section: 'Location', label: 'Longitude', format: 'number' },
 
   // ── NBSAP linkage ───────────────────────────────────────
   nbsap_target: { section: 'NBSAP Linkage', label: 'NBSAP Target' },
   indicator: { section: 'NBSAP Linkage', label: 'Related Indicator' },
   reported_value: { section: 'NBSAP Linkage', label: 'Reported Value' },
+  reported_unit: { section: 'NBSAP Linkage', label: 'Measurement Unit' },
+  value_format: { section: 'NBSAP Linkage', label: 'Value Format' },
   current_status: { section: 'NBSAP Linkage', label: 'Current Status / Value' },
 
   // ── Biodiversity data ───────────────────────────────────
-  forest_ha: { section: 'Biodiversity Data', label: 'Forest Restoration (ha)', format: 'number' },
+  forest_ha: {
+    section: 'Biodiversity Data',
+    label: 'Forest Restoration (ha)',
+    format: 'number',
+  },
   wetland_ha: {
     section: 'Biodiversity Data',
     label: 'Wetland Rehabilitation (ha)',
@@ -76,7 +85,11 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
     label: 'Habitat Quality (1–10)',
     format: 'number',
   },
-  restoration_ha: { section: 'Biodiversity Data', label: 'Restoration (ha)', format: 'number' },
+  restoration_ha: {
+    section: 'Biodiversity Data',
+    label: 'Restoration (ha)',
+    format: 'number',
+  },
   ecosystem_assessed: { section: 'Biodiversity Data', label: 'Ecosystem Assessed' },
   species_sightings: { section: 'Biodiversity Data', label: 'Species Sightings' },
 
@@ -96,24 +109,70 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
     label: 'Tree Planting Households',
     format: 'number',
   },
-  water_source_status: { section: 'Wildlife & Enforcement', label: 'Water Source Condition' },
+  water_source_status: {
+    section: 'Wildlife & Enforcement',
+    label: 'Water Source Condition',
+  },
 
   // ── Finance ─────────────────────────────────────────────
-  budget_utilized: { section: 'Finance', label: 'Budget Utilized (RWF)', format: 'currency' },
-  budget_allocated: { section: 'Finance', label: 'Budget Allocated (RWF)', format: 'currency' },
-  budget_disbursed: { section: 'Finance', label: 'Budget Disbursed (RWF)', format: 'currency' },
-  implementation_pct: { section: 'Finance', label: 'Implementation Status', format: 'percent' },
+  budget_utilized: {
+    section: 'Finance',
+    label: 'Budget Utilized (RWF)',
+    format: 'currency',
+  },
+  budget_allocated: {
+    section: 'Finance',
+    label: 'Budget Allocated (RWF)',
+    format: 'currency',
+  },
+  budget_disbursed: {
+    section: 'Finance',
+    label: 'Budget Disbursed (RWF)',
+    format: 'currency',
+  },
+  implementation_pct: {
+    section: 'Finance',
+    label: 'Implementation Status',
+    format: 'percent',
+  },
   activity_funded: { section: 'Finance', label: 'Activity / Program Funded' },
 
   // ── Compliance ──────────────────────────────────────────
   eia_compliance: { section: 'Compliance', label: 'EIA Compliance' },
-  esg_score: { section: 'Compliance', label: 'ESG Biodiversity Score (1–100)', format: 'number' },
+  esg_score: {
+    section: 'Compliance',
+    label: 'ESG Biodiversity Score (1–100)',
+    format: 'number',
+  },
   waste_management: { section: 'Compliance', label: 'Waste Management Rating' },
 
-  // ── Research ────────────────────────────────────────────
-  study_title: { section: 'Research', label: 'Study Title' },
-  key_findings: { section: 'Research', label: 'Key Findings' },
-  policy_relevance: { section: 'Research', label: 'Policy Relevance & NBSAP Linkage' },
+  // ── Research & Public Works ─────────────────────────────
+  study_title: { section: 'Research & Public Works', label: 'Study Title' },
+  key_findings: { section: 'Research & Public Works', label: 'Key Findings' },
+  policy_relevance: {
+    section: 'Research & Public Works',
+    label: 'Policy Relevance & NBSAP Linkage',
+  },
+  publication_title: {
+    section: 'Research & Public Works',
+    label: 'Publication / Work Title',
+  },
+  publication_author: {
+    section: 'Research & Public Works',
+    label: 'Author / Publishing Body',
+  },
+  publication_url: {
+    section: 'Research & Public Works',
+    label: 'Publication Link / DOI',
+  },
+  publication_year: {
+    section: 'Research & Public Works',
+    label: 'Publication Year',
+  },
+  publication_type: {
+    section: 'Research & Public Works',
+    label: 'Publication Type',
+  },
 
   // ── Narrative ───────────────────────────────────────────
   activities: { section: 'Narrative', label: 'Implementation Activities' },
@@ -140,6 +199,7 @@ const SECTION_ORDER = [
   'Wildlife & Enforcement',
   'Finance',
   'Compliance',
+  'Research & Public Works',
   'Research',
   'Narrative',
   'Other',

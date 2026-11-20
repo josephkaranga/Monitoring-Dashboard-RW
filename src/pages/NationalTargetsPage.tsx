@@ -5,6 +5,7 @@ import { useLiveTargetProgress } from '../hooks/useLiveTargetProgress';
 import { fetchTargets } from '../services/dataService';
 import { eventBus } from '../services/eventBus';
 import { progressColor, progressHex } from '../utils/progressColors';
+import { ProgressCommentSection } from '../components/ProgressCommentSection';
 import type { NBSAPTarget, Indicator, IndicatorTier } from '../types/index';
 
 const GOAL_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
@@ -1220,6 +1221,9 @@ export default function NationalTargetsPage() {
                         </div>
                       );
                     })()}
+
+                    {/* Progress commentary and feedback */}
+                    <ProgressCommentSection targetId={t.id} targetTitle={t.title} />
 
                     {/* Navigation buttons */}
                     <div
