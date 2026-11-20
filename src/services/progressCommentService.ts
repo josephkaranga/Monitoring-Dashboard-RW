@@ -40,7 +40,7 @@ function saveLocalComments(comments: ProgressComment[]) {
 
 export async function fetchProgressComments(
   targetId: number,
-  indicatorId?: number
+  indicatorId?: number,
 ): Promise<ProgressComment[]> {
   try {
     let query = supabase
@@ -57,24 +57,31 @@ export async function fetchProgressComments(
     if (error || !data) {
       // Fallback to local storage if table is not yet migrated in Supabase
       const local = getLocalComments().filter(
-        (c) => c.target_id === targetId && (!indicatorId || c.indicator_id === indicatorId)
+        (c) =>
+          c.target_id === targetId &&
+          (!indicatorId || c.indicator_id === indicatorId),
       );
       return local;
     }
 
     // Merge with any offline local comments
     const local = getLocalComments().filter(
-      (c) => c.target_id === targetId && (!indicatorId || c.indicator_id === indicatorId)
+      (c) =>
+        c.target_id === targetId &&
+        (!indicatorId || c.indicator_id === indicatorId),
     );
     const existingIds = new Set(data.map((d: ProgressComment) => d.id));
     const merged = [...data, ...local.filter((l) => !existingIds.has(l.id))];
     merged.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
     return merged;
   } catch {
     return getLocalComments().filter(
-      (c) => c.target_id === targetId && (!indicatorId || c.indicator_id === indicatorId)
+      (c) =>
+        c.target_id === targetId &&
+        (!indicatorId || c.indicator_id === indicatorId),
     );
   }
 }
