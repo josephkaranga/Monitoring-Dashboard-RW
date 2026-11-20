@@ -1,6 +1,10 @@
 import { supabase } from '../utils/supabase';
 
-export type CommentCategory = 'progress_update' | 'bottleneck' | 'milestone' | 'general';
+export type CommentCategory =
+  | 'progress_update'
+  | 'bottleneck'
+  | 'milestone'
+  | 'general';
 
 export interface ProgressComment {
   id: string;
