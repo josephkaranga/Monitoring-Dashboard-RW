@@ -153,26 +153,11 @@ const FIELD_REGISTRY: Record<string, FieldMeta> = {
     section: 'Research & Public Works',
     label: 'Policy Relevance & NBSAP Linkage',
   },
-  publication_title: {
-    section: 'Research & Public Works',
-    label: 'Publication / Work Title',
-  },
-  publication_author: {
-    section: 'Research & Public Works',
-    label: 'Author / Publishing Body',
-  },
-  publication_url: {
-    section: 'Research & Public Works',
-    label: 'Publication Link / DOI',
-  },
-  publication_year: {
-    section: 'Research & Public Works',
-    label: 'Publication Year',
-  },
-  publication_type: {
-    section: 'Research & Public Works',
-    label: 'Publication Type',
-  },
+  publication_title: { section: 'Research & Public Works', label: 'Publication / Work Title' },
+  publication_author: { section: 'Research & Public Works', label: 'Author / Publishing Body' },
+  publication_url: { section: 'Research & Public Works', label: 'Publication Link / DOI' },
+  publication_year: { section: 'Research & Public Works', label: 'Publication Year' },
+  publication_type: { section: 'Research & Public Works', label: 'Publication Type' },
 
   // ── Narrative ───────────────────────────────────────────
   activities: { section: 'Narrative', label: 'Implementation Activities' },

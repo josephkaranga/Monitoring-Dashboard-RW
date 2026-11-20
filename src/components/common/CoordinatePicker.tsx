@@ -23,13 +23,13 @@ export interface CoordinatePickerProps {
 const RWANDA_CENTER: [number, number] = [-1.9403, 29.8739];
 const PRESETS = [
   { name: 'Kigali City', coords: [-1.9536, 30.0605] },
-  { name: 'Musanze (North)', coords: [-1.4998, 29.6350] },
+  { name: 'Musanze (North)', coords: [-1.4998, 29.635] },
   { name: 'Huye (South)', coords: [-2.5967, 29.7394] },
   { name: 'Rubavu (West)', coords: [-1.6741, 29.2602] },
   { name: 'Nyagatare (East)', coords: [-1.2982, 30.3243] },
-  { name: 'Volcanoes NP', coords: [-1.4700, 29.4900] },
+  { name: 'Volcanoes NP', coords: [-1.47, 29.49] },
   { name: 'Akagera NP', coords: [-1.8833, 30.7167] },
-  { name: 'Nyungwe NP', coords: [-2.5400, 29.2319] },
+  { name: 'Nyungwe NP', coords: [-2.54, 29.2319] },
 ];
 
 export function CoordinatePicker({
@@ -91,7 +91,9 @@ export function CoordinatePicker({
       }).addTo(map);
 
       if (hasCoords) {
-        marker.bindPopup(`Selected: ${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`).openPopup();
+        marker
+          .bindPopup(`Selected: ${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`)
+          .openPopup();
       }
 
       markerRef.current = marker;
@@ -182,7 +184,7 @@ export function CoordinatePicker({
   const handleClear = () => {
     setTempLat('');
     setTempLng('');
-    onChange({ latitude: '', longitude: '', });
+    onChange({ latitude: '', longitude: '' });
   };
 
   const hasCoords = !!latitude && !!longitude;
@@ -315,16 +317,23 @@ export function CoordinatePicker({
       </div>
 
       {hasCoords && (
-        <div style={{ marginTop: 4, fontSize: '0.73rem', color: '#16a34a', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: '0.73rem',
+            color: '#16a34a',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
           <span className="fa-solid fa-circle-check" />
           Coordinates set: {latitude}, {longitude}
         </div>
       )}
 
       {geoError && (
-        <div style={{ marginTop: 4, fontSize: '0.73rem', color: '#e11d48' }}>
-          {geoError}
-        </div>
+        <div style={{ marginTop: 4, fontSize: '0.73rem', color: '#e11d48' }}>{geoError}</div>
       )}
 
       {/* Interactive Map Modal */}
@@ -407,7 +416,14 @@ export function CoordinatePicker({
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 Quick Landmarks:
               </span>
               {PRESETS.map(p => (

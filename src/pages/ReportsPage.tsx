@@ -24,7 +24,10 @@ import { useAuth } from '../services/AuthContext';
 import { checkAccountStatus } from '../services/AuthContext';
 import { useDashboardStats, useReports } from '../hooks/useData';
 import { exportReportsToCSV } from '../services/reportService';
-import { downloadNarrativeDocument, downloadNarrativePDF } from '../services/narrativeExportService';
+import {
+  downloadNarrativeDocument,
+  downloadNarrativePDF,
+} from '../services/narrativeExportService';
 import { fetchTargets, fetchIndicators } from '../services/dataService';
 import { eventBus } from '../services/eventBus';
 import type { NBSAPTarget, Indicator } from '../types/index';

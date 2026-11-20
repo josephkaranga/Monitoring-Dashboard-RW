@@ -17,9 +17,22 @@ export interface NarrativeExportOptions {
 }
 
 export function generateNarrativeHTML(options: NarrativeExportOptions): string {
-  const { targets, indicators, reports, overallProgress = 0, timeframe = '2025–2030', authorName = 'REMA M&E Team' } = options;
-  const approvedReports = reports.filter(r => r.status === 'approved' || r.workflow_status === 'published');
-  const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const {
+    targets,
+    indicators,
+    reports,
+    overallProgress = 0,
+    timeframe = '2025–2030',
+    authorName = 'REMA M&E Team',
+  } = options;
+  const approvedReports = reports.filter(
+    r => r.status === 'approved' || r.workflow_status === 'published'
+  );
+  const now = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Group reports by target
   const reportsByTarget: Record<number, ToolkitReport[]> = {};
@@ -31,53 +44,64 @@ export function generateNarrativeHTML(options: NarrativeExportOptions): string {
   }
 
   // Build target sections
-  const targetNarratives = targets.map(t => {
-    const targetReports = reportsByTarget[t.id] || [];
-    const relatedIndicators = indicators.filter(i => i.nbsap_target_id === t.id);
+  const targetNarratives = targets
+    .map(t => {
+      const targetReports = reportsByTarget[t.id] || [];
+      const relatedIndicators = indicators.filter(i => i.nbsap_target_id === t.id);
 
-    // Collect activities & challenges from form_data
-    const activities: string[] = [];
-    const challenges: string[] = [];
-    const observations: string[] = [];
+      // Collect activities & challenges from form_data
+      const activities: string[] = [];
+      const challenges: string[] = [];
+      const observations: string[] = [];
 
-    for (const rep of targetReports) {
-      if (rep.form_data) {
-        if (rep.form_data.activities) activities.push(String(rep.form_data.activities));
-        if (rep.form_data.challenges) challenges.push(String(rep.form_data.challenges));
-        if (rep.form_data.notes) observations.push(String(rep.form_data.notes));
-        if (rep.form_data.key_findings) observations.push(String(rep.form_data.key_findings));
+      for (const rep of targetReports) {
+        if (rep.form_data) {
+          if (rep.form_data.activities) activities.push(String(rep.form_data.activities));
+          if (rep.form_data.challenges) challenges.push(String(rep.form_data.challenges));
+          if (rep.form_data.notes) observations.push(String(rep.form_data.notes));
+          if (rep.form_data.key_findings) observations.push(String(rep.form_data.key_findings));
+        }
       }
-    }
 
-    return `
+      return `
       <div class="target-card">
         <h3>Target ${t.id}: ${t.title}</h3>
         <p class="meta"><strong>Strategic Goal:</strong> ${t.goal} &nbsp;|&nbsp; <strong>Cumulative Progress:</strong> ${t.progress}% &nbsp;|&nbsp; <strong>Submissions:</strong> ${targetReports.length}</p>
         <p><strong>Baseline Context:</strong> ${t.baseline || 'Baseline monitoring active under 2025–2030 framework.'}</p>
         
         <h4>1. Implementation Narrative & Key Activities</h4>
-        <p>${activities.length > 0 
-          ? activities.map(a => `• ${a}`).join('<br>') 
-          : 'Lead institutions are executing aligned biodiversity conservation activities and operational baseline indicators under this national target.'
+        <p>${
+          activities.length > 0
+            ? activities.map(a => `• ${a}`).join('<br>')
+            : 'Lead institutions are executing aligned biodiversity conservation activities and operational baseline indicators under this national target.'
         }</p>
 
         <h4>2. Operational Challenges & Bottlenecks</h4>
-        <p>${challenges.length > 0
-          ? challenges.map(c => `• ${c}`).join('<br>')
-          : 'No acute institutional bottlenecks were logged in this reporting period; routine cross-sector monitoring continues.'
+        <p>${
+          challenges.length > 0
+            ? challenges.map(c => `• ${c}`).join('<br>')
+            : 'No acute institutional bottlenecks were logged in this reporting period; routine cross-sector monitoring continues.'
         }</p>
 
-        ${observations.length > 0 ? `
+        ${
+          observations.length > 0
+            ? `
           <h4>3. Field Observations & Research Notes</h4>
           <p>${observations.map(o => `• ${o}`).join('<br>')}</p>
-        ` : ''}
+        `
+            : ''
+        }
 
         <p class="indicator-tag">Related National Indicators (${relatedIndicators.length}): ${
-          relatedIndicators.map(i => i.name).slice(0, 4).join(', ') || 'General target indicators'
+          relatedIndicators
+            .map(i => i.name)
+            .slice(0, 4)
+            .join(', ') || 'General target indicators'
         }${relatedIndicators.length > 4 ? ` and ${relatedIndicators.length - 4} more` : ''}</p>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 
   return `
     <!DOCTYPE html>
@@ -245,7 +269,11 @@ export function downloadNarrativePDF(options: NarrativeExportOptions, filename?:
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Period: ${timeframe} | Generated: ${new Date().toLocaleDateString()} | Total Reports: ${reports.length}`, 15, y);
+  doc.text(
+    `Period: ${timeframe} | Generated: ${new Date().toLocaleDateString()} | Total Reports: ${reports.length}`,
+    15,
+    y
+  );
   y += 10;
 
   // Executive Summary Box
@@ -280,7 +308,11 @@ export function downloadNarrativePDF(options: NarrativeExportOptions, filename?:
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Progress: ${t.progress}% | Goal: ${t.goal} | Baseline: ${t.baseline ? t.baseline.slice(0, 50) : 'Active'}`, 15, y);
+    doc.text(
+      `Progress: ${t.progress}% | Goal: ${t.goal} | Baseline: ${t.baseline ? t.baseline.slice(0, 50) : 'Active'}`,
+      15,
+      y
+    );
     y += 5;
 
     // Narrative text

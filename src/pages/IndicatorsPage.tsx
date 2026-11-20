@@ -389,13 +389,19 @@ function IndicatorModal({
           <IndicatorReferencePanel indicatorId={i.id} isAdmin={isAdmin} />
 
           {/* Progress Commentary and Feedback */}
-          <ProgressCommentSection targetId={i.nbsap_target_id} indicatorId={i.id} targetTitle={i.name} />
+          <ProgressCommentSection
+            targetId={i.nbsap_target_id}
+            indicatorId={i.id}
+            targetTitle={i.name}
+          />
 
           <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               onClick={() => {
                 onClose();
-                navigate(`/reporting-toolkit?tool=T01&targetId=${i.nbsap_target_id}&indicatorId=${i.id}`);
+                navigate(
+                  `/reporting-toolkit?tool=T01&targetId=${i.nbsap_target_id}&indicatorId=${i.id}`
+                );
               }}
               style={{
                 display: 'flex',

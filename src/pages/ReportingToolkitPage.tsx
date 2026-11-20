@@ -134,7 +134,9 @@ const ReportForm = ({
   const [allIndicators, setAllIndicators] = useState<Indicator[]>([]);
   const [browseAllIndicators, setBrowseAllIndicators] = useState(false);
   const [useExactDate, setUseExactDate] = useState(false);
-  const [valueFormat, setValueFormat] = useState<'number' | 'percent' | 'currency' | 'qualitative' | 'text'>('number');
+  const [valueFormat, setValueFormat] = useState<
+    'number' | 'percent' | 'currency' | 'qualitative' | 'text'
+  >('number');
   const [showPublicationSection, setShowPublicationSection] = useState(false);
   // M04: data-quality checklist and a live preview of the database checks.
   const checklist = useChecklistItems();
@@ -499,15 +501,7 @@ const ReportForm = ({
       // Prompt before committing actions (confirmation modal)
       setShowSubmitConfirm(true);
     },
-    [
-      tool,
-      formData,
-      attachments,
-      checklist.items,
-      checklist.error,
-      declaration,
-      user?.id,
-    ]
+    [tool, formData, attachments, checklist.items, checklist.error, declaration, user?.id]
   );
 
   const executeSubmit = useCallback(async () => {
@@ -872,25 +866,31 @@ const ReportForm = ({
                         title="Toggle between target indicators and full national indicator catalog"
                       >
                         <span className="fa-solid fa-list-check" />
-                        {browseAllIndicators ? '✓ Showing All 79 Indicators' : 'Browse All 79 Indicators'}
+                        {browseAllIndicators
+                          ? '✓ Showing All 79 Indicators'
+                          : 'Browse All 79 Indicators'}
                       </button>
                     </div>
                     <select
                       value={formData[f.key] || ''}
                       onChange={e => {
                         const val = e.target.value;
-                        const ind = (browseAllIndicators ? allIndicators : availableIndicators).find(
-                          i => i.id === parseInt(val, 10)
-                        );
+                        const ind = (
+                          browseAllIndicators ? allIndicators : availableIndicators
+                        ).find(i => i.id === parseInt(val, 10));
                         setFormData(d => ({
                           ...d,
                           [f.key]: val,
-                          ...(ind?.nbsap_target_id ? { nbsap_target: String(ind.nbsap_target_id) } : {}),
+                          ...(ind?.nbsap_target_id
+                            ? { nbsap_target: String(ind.nbsap_target_id) }
+                            : {}),
                           ...(ind?.unit ? { reported_unit: ind.unit } : {}),
                         }));
                         setErrors(err => ({ ...err, [f.key]: false, nbsap_target: false }));
                       }}
-                      disabled={loadingIndicators || (!browseAllIndicators && !formData.nbsap_target)}
+                      disabled={
+                        loadingIndicators || (!browseAllIndicators && !formData.nbsap_target)
+                      }
                       style={{
                         width: '100%',
                         padding: '9px 12px',
@@ -912,11 +912,14 @@ const ReportForm = ({
                               ? 'Loading indicators...'
                               : '— Select Indicator —'}
                       </option>
-                      {(browseAllIndicators ? allIndicators : availableIndicators).map(indicator => (
-                        <option key={indicator.id} value={indicator.id}>
-                          #{indicator.id}: {indicator.name} ({indicator.status || 'Active'}) {indicator.unit ? `[${indicator.unit}]` : ''}
-                        </option>
-                      ))}
+                      {(browseAllIndicators ? allIndicators : availableIndicators).map(
+                        indicator => (
+                          <option key={indicator.id} value={indicator.id}>
+                            #{indicator.id}: {indicator.name} ({indicator.status || 'Active'}){' '}
+                            {indicator.unit ? `[${indicator.unit}]` : ''}
+                          </option>
+                        )
+                      )}
                     </select>
                   </div>
                 ) : f.type === 'institution_auto' ? (
@@ -1062,7 +1065,9 @@ const ReportForm = ({
                           textDecoration: 'underline',
                         }}
                       >
-                        {useExactDate ? '← Switch to Quarter Select' : '📅 Switch to Exact Date Picker'}
+                        {useExactDate
+                          ? '← Switch to Quarter Select'
+                          : '📅 Switch to Exact Date Picker'}
                       </button>
                     </div>
                     {useExactDate ? (
@@ -1140,46 +1145,62 @@ const ReportForm = ({
                   </select>
                 ) : f.key === 'reported_value' ? (
                   <div>
-                    <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Format:</span>
-                      {(['number', 'percent', 'currency', 'qualitative', 'text'] as const).map(fmt => (
-                        <button
-                          key={fmt}
-                          type="button"
-                          onClick={() => {
-                            setValueFormat(fmt);
-                            setFormData(d => ({ ...d, value_format: fmt }));
-                          }}
-                          style={{
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: '0.68rem',
-                            fontWeight: 600,
-                            border: '1px solid',
-                            borderColor: valueFormat === fmt ? '#1b6ca8' : '#cbd5e1',
-                            background: valueFormat === fmt ? '#f0f9ff' : '#ffffff',
-                            color: valueFormat === fmt ? '#1b6ca8' : '#64748b',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {fmt === 'number'
-                            ? 'Numeric'
-                            : fmt === 'percent'
-                              ? 'Percent (%)'
-                              : fmt === 'currency'
-                                ? 'RWF'
-                                : fmt === 'qualitative'
-                                  ? 'Qualitative Status'
-                                  : 'Text'}
-                        </button>
-                      ))}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 6,
+                        marginBottom: 6,
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>
+                        Format:
+                      </span>
+                      {(['number', 'percent', 'currency', 'qualitative', 'text'] as const).map(
+                        fmt => (
+                          <button
+                            key={fmt}
+                            type="button"
+                            onClick={() => {
+                              setValueFormat(fmt);
+                              setFormData(d => ({ ...d, value_format: fmt }));
+                            }}
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              fontSize: '0.68rem',
+                              fontWeight: 600,
+                              border: '1px solid',
+                              borderColor: valueFormat === fmt ? '#1b6ca8' : '#cbd5e1',
+                              background: valueFormat === fmt ? '#f0f9ff' : '#ffffff',
+                              color: valueFormat === fmt ? '#1b6ca8' : '#64748b',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {fmt === 'number'
+                              ? 'Numeric'
+                              : fmt === 'percent'
+                                ? 'Percent (%)'
+                                : fmt === 'currency'
+                                  ? 'RWF'
+                                  : fmt === 'qualitative'
+                                    ? 'Qualitative Status'
+                                    : 'Text'}
+                          </button>
+                        )
+                      )}
                     </div>
 
                     {valueFormat === 'qualitative' ? (
                       <select
                         value={formData[f.key] || ''}
                         onChange={e => {
-                          setFormData(d => ({ ...d, [f.key]: e.target.value, value_format: 'qualitative' }));
+                          setFormData(d => ({
+                            ...d,
+                            [f.key]: e.target.value,
+                            value_format: 'qualitative',
+                          }));
                           setErrors(err => ({ ...err, [f.key]: false }));
                         }}
                         style={{
@@ -1197,8 +1218,12 @@ const ReportForm = ({
                         <option value="">— Select Qualitative Status —</option>
                         <option value="On Track">On Track (Meeting planned milestones)</option>
                         <option value="Ahead of Schedule">Ahead of Schedule</option>
-                        <option value="Minor Delays">Minor Delays (Mitigation actions in place)</option>
-                        <option value="Significantly Delayed">Significantly Delayed (Action required)</option>
+                        <option value="Minor Delays">
+                          Minor Delays (Mitigation actions in place)
+                        </option>
+                        <option value="Significantly Delayed">
+                          Significantly Delayed (Action required)
+                        </option>
                         <option value="Completed">Completed / Fully Achieved</option>
                         <option value="Not Started">Not Started / Baseline</option>
                       </select>
@@ -1207,11 +1232,21 @@ const ReportForm = ({
                         <input
                           type={valueFormat === 'text' ? 'text' : 'number'}
                           step="any"
-                          min={valueFormat === 'number' || valueFormat === 'currency' || valueFormat === 'percent' ? 0 : undefined}
+                          min={
+                            valueFormat === 'number' ||
+                            valueFormat === 'currency' ||
+                            valueFormat === 'percent'
+                              ? 0
+                              : undefined
+                          }
                           max={valueFormat === 'percent' ? 100 : undefined}
                           value={formData[f.key] || ''}
                           onChange={e => {
-                            setFormData(d => ({ ...d, [f.key]: e.target.value, value_format: valueFormat }));
+                            setFormData(d => ({
+                              ...d,
+                              [f.key]: e.target.value,
+                              value_format: valueFormat,
+                            }));
                             setErrors(err => ({ ...err, [f.key]: false }));
                           }}
                           placeholder={
@@ -1235,7 +1270,9 @@ const ReportForm = ({
                           type="text"
                           placeholder="Unit (e.g. ha, %, RWF)"
                           value={formData.reported_unit || ''}
-                          onChange={e => setFormData(d => ({ ...d, reported_unit: e.target.value }))}
+                          onChange={e =>
+                            setFormData(d => ({ ...d, reported_unit: e.target.value }))
+                          }
                           style={{
                             width: 110,
                             padding: '9px 10px',
@@ -1401,9 +1438,7 @@ const ReportForm = ({
                     type="text"
                     placeholder="e.g. Rwanda State of Environment and Outlook Report / National Biodiversity Assessment"
                     value={formData.publication_title || ''}
-                    onChange={e =>
-                      setFormData(d => ({ ...d, publication_title: e.target.value }))
-                    }
+                    onChange={e => setFormData(d => ({ ...d, publication_title: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -1431,9 +1466,7 @@ const ReportForm = ({
                     type="text"
                     placeholder="e.g. REMA, University of Rwanda, NISR, WCS"
                     value={formData.publication_author || ''}
-                    onChange={e =>
-                      setFormData(d => ({ ...d, publication_author: e.target.value }))
-                    }
+                    onChange={e => setFormData(d => ({ ...d, publication_author: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -1489,9 +1522,7 @@ const ReportForm = ({
                     type="number"
                     placeholder="e.g. 2025"
                     value={formData.publication_year || ''}
-                    onChange={e =>
-                      setFormData(d => ({ ...d, publication_year: e.target.value }))
-                    }
+                    onChange={e => setFormData(d => ({ ...d, publication_year: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -1517,9 +1548,7 @@ const ReportForm = ({
                   </label>
                   <select
                     value={formData.publication_type || ''}
-                    onChange={e =>
-                      setFormData(d => ({ ...d, publication_type: e.target.value }))
-                    }
+                    onChange={e => setFormData(d => ({ ...d, publication_type: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -1970,7 +1999,8 @@ const ReportForm = ({
               message={
                 <div>
                   <p style={{ margin: '0 0 12px 0', fontSize: '0.85rem', color: '#475569' }}>
-                    Please review your submission summary below before committing to the national validation pipeline:
+                    Please review your submission summary below before committing to the national
+                    validation pipeline:
                   </p>
                   <div
                     style={{
@@ -2000,15 +2030,15 @@ const ReportForm = ({
                     <div>
                       <strong>Indicator:</strong>{' '}
                       {(() => {
-                        const ind = (allIndicators.length ? allIndicators : availableIndicators).find(
-                          i => String(i.id) === formData.indicator
-                        );
+                        const ind = (
+                          allIndicators.length ? allIndicators : availableIndicators
+                        ).find(i => String(i.id) === formData.indicator);
                         return ind ? `#${ind.id}: ${ind.name}` : formData.indicator || '—';
                       })()}
                     </div>
                     <div>
-                      <strong>Reporting Period / Date:</strong>{' '}
-                      {formData.period || '—'} {formData.exact_date ? `(${formData.exact_date})` : ''}
+                      <strong>Reporting Period / Date:</strong> {formData.period || '—'}{' '}
+                      {formData.exact_date ? `(${formData.exact_date})` : ''}
                     </div>
                     <div>
                       <strong>Reported Value:</strong>{' '}

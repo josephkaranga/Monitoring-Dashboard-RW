@@ -14,10 +14,28 @@ interface Props {
   targetTitle?: string;
 }
 
-const CATEGORY_META: Record<CommentCategory, { label: string; color: string; bg: string; icon: string }> = {
-  progress_update: { label: 'Progress Update', color: '#16a34a', bg: '#f0fdf4', icon: 'fa-arrow-trend-up' },
-  bottleneck: { label: 'Bottleneck / Risk', color: '#e11d48', bg: '#fff1f2', icon: 'fa-triangle-exclamation' },
-  milestone: { label: 'Milestone Reached', color: '#2563eb', bg: '#eff6ff', icon: 'fa-flag-checkered' },
+const CATEGORY_META: Record<
+  CommentCategory,
+  { label: string; color: string; bg: string; icon: string }
+> = {
+  progress_update: {
+    label: 'Progress Update',
+    color: '#16a34a',
+    bg: '#f0fdf4',
+    icon: 'fa-arrow-trend-up',
+  },
+  bottleneck: {
+    label: 'Bottleneck / Risk',
+    color: '#e11d48',
+    bg: '#fff1f2',
+    icon: 'fa-triangle-exclamation',
+  },
+  milestone: {
+    label: 'Milestone Reached',
+    color: '#2563eb',
+    bg: '#eff6ff',
+    icon: 'fa-flag-checkered',
+  },
   general: { label: 'General Remark', color: '#64748b', bg: '#f8fafc', icon: 'fa-comment' },
 };
 
@@ -85,9 +103,8 @@ export function ProgressCommentSection({ targetId, indicatorId, targetTitle }: P
     }
   };
 
-  const filteredComments = activeFilter === 'all'
-    ? comments
-    : comments.filter(c => c.category === activeFilter);
+  const filteredComments =
+    activeFilter === 'all' ? comments : comments.filter(c => c.category === activeFilter);
 
   return (
     <div
@@ -114,9 +131,7 @@ export function ProgressCommentSection({ targetId, indicatorId, targetTitle }: P
             Progress Commentary & Feedback ({comments.length})
           </h4>
           {targetTitle && (
-            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-              · Target {targetId}
-            </span>
+            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>· Target {targetId}</span>
           )}
         </div>
 
@@ -254,7 +269,8 @@ export function ProgressCommentSection({ targetId, indicatorId, targetTitle }: P
                       fontSize: '0.7rem',
                       fontWeight: activeFilter === catKey ? 700 : 500,
                       border: 'none',
-                      background: activeFilter === catKey ? CATEGORY_META[catKey].bg : 'transparent',
+                      background:
+                        activeFilter === catKey ? CATEGORY_META[catKey].bg : 'transparent',
                       color: CATEGORY_META[catKey].color,
                       borderRadius: 4,
                       cursor: 'pointer',
@@ -269,11 +285,25 @@ export function ProgressCommentSection({ targetId, indicatorId, targetTitle }: P
 
           {/* Comments List */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '12px 0', color: '#94a3b8', fontSize: '0.8rem' }}>
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '12px 0',
+                color: '#94a3b8',
+                fontSize: '0.8rem',
+              }}
+            >
               <span className="fa-solid fa-spinner fa-spin" /> Loading progress comments...
             </div>
           ) : filteredComments.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '16px 0', color: '#94a3b8', fontSize: '0.8rem' }}>
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '16px 0',
+                color: '#94a3b8',
+                fontSize: '0.8rem',
+              }}
+            >
               No progress comments yet. Be the first to add an update on this target.
             </div>
           ) : (
