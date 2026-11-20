@@ -30,7 +30,11 @@ interface ImportResult {
   rows: { row: number; ok: boolean; errors: string[]; warnings: string[] }[];
 }
 
-const row = (i: number, form: Record<string, string> = {}, extra: Record<string, unknown> = {}) => ({
+const row = (
+  i: number,
+  form: Record<string, string> = {},
+  extra: Record<string, unknown> = {}
+) => ({
   tool_id: 'T02',
   tool_name: 'District Biodiversity Monitoring',
   period: pastPeriod(i % 28),
@@ -44,7 +48,7 @@ const row = (i: number, form: Record<string, string> = {}, extra: Record<string,
 });
 
 async function importRows(rows: unknown[], dryRun: boolean, decl: unknown = declaration) {
-  return asUser(db, officer, async tx => {
+  return asUser(db, officer, async (tx) => {
     const r = await tx.query<{ r: ImportResult }>(
       `SELECT public.import_reports($1::jsonb, $2::jsonb, $3) AS r`,
       [JSON.stringify(rows), JSON.stringify(decl), dryRun]
@@ -54,7 +58,9 @@ async function importRows(rows: unknown[], dryRun: boolean, decl: unknown = decl
 }
 
 async function reportCount(): Promise<number> {
-  const r = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM public.toolkit_reports`);
+  const r = await db.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM public.toolkit_reports`
+  );
   return r.rows[0].n;
 }
 
@@ -63,7 +69,9 @@ beforeAll(async () => {
   officer = await createUser(db, 'officer@musanze.gov.rw');
   await setRole(db, officer, 'local_reporting');
   await grantScope(db, officer, 'data_entry', 'District Authorities', 'Musanze');
-  declaration = (await db.query<{ d: unknown }>(`SELECT ${FULL_DECLARATION} AS d`)).rows[0].d;
+  declaration = (
+    await db.query<{ d: unknown }>(`SELECT ${FULL_DECLARATION} AS d`)
+  ).rows[0].d;
 }, 180_000);
 
 describe('Done when: a 500-row file returns row-level errors with nothing partly saved', () => {
@@ -79,8 +87,8 @@ describe('Done when: a 500-row file returns row-level errors with nothing partly
     expect(r.ok).toBe(false);
     expect(r.imported).toBe(0);
     expect(r.failed).toBe(4);
-    const bad = r.rows.filter(x => !x.ok);
-    expect(bad.map(x => x.row)).toEqual([10, 200, 350, 450]);
+    const bad = r.rows.filter((x) => !x.ok);
+    expect(bad.map((x) => x.row)).toEqual([10, 200, 350, 450]);
     expect(bad[0].errors[0]).toMatch(/Forest Restoration is -4; it cannot be below 0 ha/);
     expect(bad[1].errors[0]).toMatch(/may not submit for this institution or district/);
     expect(bad[2].errors[0]).toMatch(/outside the NBSAP reporting period/);
@@ -110,7 +118,12 @@ describe('Done when: a 500-row file imports cleanly', () => {
     expect(r).toMatchObject({ ok: true, dry_run: false, imported: 500, failed: 0 });
     expect(await reportCount()).toBe(before + 500);
 
-    const s = await db.query<{ n: number; pending: number; declared: number; scoped: number }>(
+    const s = await db.query<{
+      n: number;
+      pending: number;
+      declared: number;
+      scoped: number;
+    }>(
       `SELECT count(*)::int AS n,
               count(*) FILTER (WHERE status = 'pending' AND workflow_status = 'submitted')::int AS pending,
               count(*) FILTER (WHERE dqa_declaration->>'declared_by' = $1)::int AS declared,
@@ -124,8 +137,9 @@ describe('Done when: a 500-row file imports cleanly', () => {
 
 describe('row checks', () => {
   it('a duplicate within the file is reported on the second row', async () => {
-    const target = (await db.query<{ id: number }>(`SELECT min(id) AS id FROM public.nbsap_targets`))
-      .rows[0].id;
+    const target = (
+      await db.query<{ id: number }>(`SELECT min(id) AS id FROM public.nbsap_targets`)
+    ).rows[0].id;
     const r = await importRows(
       [
         row(0, {}, { nbsap_target_id: target, period: 'Q3 2023' }),
@@ -133,7 +147,7 @@ describe('row checks', () => {
       ],
       true
     );
-    expect(r.rows.map(x => x.ok)).toEqual([true, false]);
+    expect(r.rows.map((x) => x.ok)).toEqual([true, false]);
     expect(r.rows[1].errors[0]).toMatch(/Duplicate/);
   });
 
@@ -150,20 +164,26 @@ describe('row checks', () => {
 
   it('refuses an empty file, more than 1000 rows, and anonymous callers', async () => {
     expect(
-      (await errorAsUser(db, officer, tx => tx.query(`SELECT public.import_reports('[]', '{}')`)))
-        ?.message
+      (
+        await errorAsUser(db, officer, (tx) =>
+          tx.query(`SELECT public.import_reports('[]', '{}')`)
+        )
+      )?.message
     ).toMatch(/no rows/);
     const many = JSON.stringify(Array.from({ length: 1001 }, (_, i) => row(i)));
     expect(
       (
-        await errorAsUser(db, officer, tx =>
+        await errorAsUser(db, officer, (tx) =>
           tx.query(`SELECT public.import_reports($1::jsonb, '{}')`, [many])
         )
       )?.message
     ).toMatch(/At most 1000 rows/);
     expect(
-      (await errorAsUser(db, null, tx => tx.query(`SELECT public.import_reports('[]', '{}')`)))
-        ?.message
+      (
+        await errorAsUser(db, null, (tx) =>
+          tx.query(`SELECT public.import_reports('[]', '{}')`)
+        )
+      )?.message
     ).toMatch(/permission denied|Not authenticated/);
   });
 });
